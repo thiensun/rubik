@@ -595,9 +595,9 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       </div>
 
       {/* Center Stage: Grand Digital Precision Timer Focal Point */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center w-full my-auto py-4 sm:py-8">
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-between w-full py-4 sm:py-8">
         {/* State Pill & Arming Feedback (Hidden on mobile to declutter view, active glow takes over) */}
-        <div className="hidden sm:flex flex-col items-center gap-2">
+        <div className="hidden sm:flex flex-col items-center gap-2 shrink-0">
           {renderStatePill()}
 
           <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-2">
@@ -613,10 +613,10 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
           </div>
         </div>
 
-        {/* Huge, Commanding Monospace Digital Timer */}
+        {/* Huge, Commanding Monospace Digital Timer - Fills vertical center space */}
         <div
           id="click-trigger-area"
-          className="relative z-10 my-4 sm:my-8 cursor-pointer transform transition-transform active:scale-[0.99] group text-center max-w-full overflow-hidden w-full flex flex-col items-center justify-center"
+          className="relative z-10 flex-1 flex flex-col items-center justify-center cursor-pointer transform transition-transform active:scale-[0.99] group text-center max-w-full overflow-hidden w-full my-auto"
         >
           <div className="flex items-baseline justify-center max-w-full px-1">
             {(() => {
@@ -633,7 +633,11 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
               );
             })()}
           </div>
-          <p className="text-mono-400 text-xs sm:text-sm font-sans tracking-wide mt-2 sm:mt-4 group-hover:text-mono-700 transition-colors">
+        </div>
+
+        {/* Bottom Section inside Timer card: Inspection prompt & ao5/ao12 pushed to bottom */}
+        <div className="w-full flex flex-col items-center justify-center gap-2 pt-2 sm:pt-4 shrink-0">
+          <p className="text-mono-400 text-xs sm:text-sm font-sans tracking-wide text-center">
             {timerState === 'inspection'
               ? 'Đang xem trước 15s · Nhấn giữ Spacebar hoặc click giữ để vào trạng thái Sẵn sàng'
               : inspectionEnabled
@@ -641,8 +645,8 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
               : 'Click, tap screen, or hold Spacebar'}
           </p>
 
-          {/* Quick Stats HUD directly beneath Timer (csTimer style: ao5, ao12) */}
-          <div className="flex items-center justify-center gap-5 sm:gap-8 mt-3 text-mono-600 font-mono text-sm sm:text-base">
+          {/* Quick Stats HUD pushed cleanly to bottom of timer card */}
+          <div className="flex items-center justify-center gap-5 sm:gap-8 text-mono-600 font-mono text-xs sm:text-base">
             <span className="flex items-center gap-1.5">
               <span className="text-mono-400 font-medium">ao5:</span>
               <span className="font-bold text-mono-900">08.52</span>

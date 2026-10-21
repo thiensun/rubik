@@ -44,6 +44,7 @@ import {
   isCubeSolved,
   invertMoves,
   expandAlgorithmNotation,
+  rotateWhiteToBottom,
 } from '../../utils/cubeState';
 import { getCrossAdvisor } from '../../utils/crossAnalysis';
 
@@ -184,13 +185,21 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
 
   // Task 1: Live mathematical state tracking at step k
   const baseCubeState = useMemo(() => {
+    let raw: CubeNetState;
     if (customAlgorithm) {
       const sanitizedNotation = expandAlgorithmNotation(customAlgorithm.notation);
-      return applyScramble(invertMoves(sanitizedNotation));
+      raw = applyScramble(invertMoves(sanitizedNotation));
+    } else if (scannedCubeState) {
+      raw = scannedCubeState;
+    } else {
+      const targetScramble = demoScramble || DEMO_SCRAMBLES[activeLevel] || CFOP_DEMO_SCRAMBLE;
+      raw = applyScramble(targetScramble);
     }
-    if (scannedCubeState) return scannedCubeState;
-    const targetScramble = demoScramble || DEMO_SCRAMBLES[activeLevel] || CFOP_DEMO_SCRAMBLE;
-    return applyScramble(targetScramble);
+    // Rubik 3D: "Còn về rubik 3d sẽ làm cross trắng dựa theo scramble đã scan, thì lúc đó rubik 3d sẽ xoay mặt tâm trắng xuống dưới để làm."
+    if (raw.U?.[4] === 'white') {
+      return rotateWhiteToBottom(raw);
+    }
+    return raw;
   }, [customAlgorithm, scannedCubeState, demoScramble, activeLevel]);
 
   const currentCubeState = useMemo(() => {

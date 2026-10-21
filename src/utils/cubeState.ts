@@ -28,6 +28,7 @@ export const CUBE_HEX_COLORS: Record<CubeColor, string> = {
   red: '#EF4444',
 };
 
+// Solving Solved State (White bottom D, Yellow top U, Green front F)
 export const SOLVED_CUBE: CubeNetState = {
   U: Array(9).fill('yellow') as CubeFaceState,
   D: Array(9).fill('white') as CubeFaceState,
@@ -36,6 +37,60 @@ export const SOLVED_CUBE: CubeNetState = {
   L: Array(9).fill('orange') as CubeFaceState,
   R: Array(9).fill('red') as CubeFaceState,
 };
+
+// Scramble & Camera Scan standard orientation (WCA / csTimer: White top U, Green front F, Yellow bottom D)
+export const SCRAMBLE_SOLVED_CUBE: CubeNetState = {
+  U: Array(9).fill('white') as CubeFaceState,
+  D: Array(9).fill('yellow') as CubeFaceState,
+  F: Array(9).fill('green') as CubeFaceState,
+  B: Array(9).fill('blue') as CubeFaceState,
+  L: Array(9).fill('orange') as CubeFaceState,
+  R: Array(9).fill('red') as CubeFaceState,
+};
+
+export const SOLVED_CUBE_SOLVING: CubeNetState = SOLVED_CUBE;
+
+// Rotate cube so White face moves from top (U) to bottom (D) for White Cross 3D solving
+export function rotateWhiteToBottom(c: CubeNetState): CubeNetState {
+  const n: CubeNetState = {
+    U: Array(9) as any,
+    D: Array(9) as any,
+    F: Array(9) as any,
+    B: Array(9) as any,
+    L: Array(9) as any,
+    R: Array(9) as any,
+  };
+
+  // U and D swap
+  n.D[0] = c.U[6]; n.D[1] = c.U[7]; n.D[2] = c.U[8];
+  n.D[3] = c.U[3]; n.D[4] = c.U[4]; n.D[5] = c.U[5];
+  n.D[6] = c.U[0]; n.D[7] = c.U[1]; n.D[8] = c.U[2];
+
+  n.U[0] = c.D[6]; n.U[1] = c.D[7]; n.U[2] = c.D[8];
+  n.U[3] = c.D[3]; n.U[4] = c.D[4]; n.U[5] = c.D[5];
+  n.U[6] = c.D[0]; n.U[7] = c.D[1]; n.U[8] = c.D[2];
+
+  // Side faces vertical flip (Row 0 <-> Row 2)
+  for (const f of ['F', 'B', 'L', 'R'] as const) {
+    n[f][0] = c[f][6]; n[f][1] = c[f][7]; n[f][2] = c[f][8];
+    n[f][3] = c[f][3]; n[f][4] = c[f][4]; n[f][5] = c[f][5];
+    n[f][6] = c[f][0]; n[f][7] = c[f][1]; n[f][8] = c[f][2];
+  }
+  return n;
+}
+
+export const rotateWhiteToTop = rotateWhiteToBottom;
+
+// Apply scramble starting from WCA White-top orientation for 2D scramble preview
+export function applyScrambleForNet(scrambleStr: string): CubeNetState {
+  const expanded = expandAlgorithmNotation(scrambleStr);
+  const moves = expanded.split(/\s+/).filter(Boolean);
+  let state = cloneCube(SCRAMBLE_SOLVED_CUBE);
+  for (const m of moves) {
+    state = applyMove(state, m);
+  }
+  return state;
+}
 
 // Expand repetition groups like (R U R' U')3, strip brackets, and collapse extra spaces
 export function expandAlgorithmNotation(notation: string): string {

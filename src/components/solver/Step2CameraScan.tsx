@@ -17,7 +17,7 @@ import {
   Settings2,
   Copy,
 } from 'lucide-react';
-import { CubeColor, CubeNetState, CUBE_HEX_COLORS, applyScramble, SOLVED_CUBE } from '../../utils/cubeState';
+import { CubeColor, CubeNetState, CUBE_HEX_COLORS, applyScramble, applyScrambleForNet, SOLVED_CUBE, SCRAMBLE_SOLVED_CUBE } from '../../utils/cubeState';
 import { validateCubeState, CubeValidationResult } from '../../utils/cubeValidator';
 import { CFOP_DEMO_SCRAMBLE, DEMO_SCRAMBLES } from '../../utils/solutionStages';
 import { SolverLevelId } from '../../types/cubing';
@@ -54,9 +54,9 @@ const FACES_ORDER: FaceMeta[] = [
   { key: 'F', name: 'Front', vietnameseName: 'Mặt Trước (Xanh lá)', centerColor: 'green', centerHex: '#009B48', centerLabel: 'GREEN CTR', nextPrompt: 'Xoay khối 90° sang Mặt Phải (Đỏ)' },
   { key: 'R', name: 'Right', vietnameseName: 'Mặt Phải (Đỏ)', centerColor: 'red', centerHex: '#B71234', centerLabel: 'RED CTR', nextPrompt: 'Xoay khối 90° sang Mặt Sau (Xanh dương)' },
   { key: 'B', name: 'Back', vietnameseName: 'Mặt Sau (Xanh dương)', centerColor: 'blue', centerHex: '#0046AD', centerLabel: 'BLUE CTR', nextPrompt: 'Xoay khối 90° sang Mặt Trái (Cam)' },
-  { key: 'L', name: 'Left', vietnameseName: 'Mặt Trái (Cam)', centerColor: 'orange', centerHex: '#FF5800', centerLabel: 'ORANGE CTR', nextPrompt: 'Nghiêng khối lên Mặt Đỉnh U (Vàng)' },
-  { key: 'U', name: 'Up', vietnameseName: 'Mặt Đỉnh U (Vàng)', centerColor: 'yellow', centerHex: '#FFD000', centerLabel: 'YELLOW (UP)', nextPrompt: 'Nghiêng khối xuống Mặt Đáy D (Trắng)' },
-  { key: 'D', name: 'Down', vietnameseName: 'Mặt Đáy D (Trắng)', centerColor: 'white', centerHex: '#FFFFFF', centerLabel: 'WHITE (DOWN)', nextPrompt: 'Quét hoàn tất! Đã thu thập đủ 6 mặt.' },
+  { key: 'L', name: 'Left', vietnameseName: 'Mặt Trái (Cam)', centerColor: 'orange', centerHex: '#FF5800', centerLabel: 'ORANGE CTR', nextPrompt: 'Nghiêng khối lên Mặt Đỉnh U (Trắng)' },
+  { key: 'U', name: 'Up', vietnameseName: 'Mặt Đỉnh U (Trắng)', centerColor: 'white', centerHex: '#FFFFFF', centerLabel: 'WHITE (UP)', nextPrompt: 'Nghiêng khối xuống Mặt Đáy D (Vàng)' },
+  { key: 'D', name: 'Down', vietnameseName: 'Mặt Đáy D (Vàng)', centerColor: 'yellow', centerHex: '#FFD000', centerLabel: 'YELLOW (DOWN)', nextPrompt: 'Quét hoàn tất! Đã thu thập đủ 6 mặt.' },
 ];
 
 
@@ -123,12 +123,12 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   // State of all 54 stickers across 6 faces
   const [cubeNetData, setCubeNetData] = useState<Record<FaceKey, CubeColor[]>>(() => {
     return {
-      U: ['yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow'],
+      U: ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'],
       F: ['green', 'green', 'green', 'green', 'green', 'green', 'green', 'green', 'green'],
       R: ['red', 'red', 'red', 'red', 'red', 'red', 'red', 'red', 'red'],
       B: ['blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'blue'],
       L: ['orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange'],
-      D: ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'],
+      D: ['yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow'],
     };
   });
 
@@ -528,7 +528,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   // Load Demo Scrambled Cube (Alt+D)
   const handleLoadDemo = useCallback(() => {
     sound.playPBChord();
-    const demoState = applyScramble(DEMO_SCRAMBLE);
+    const demoState = applyScrambleForNet(DEMO_SCRAMBLE);
     setCubeNetData({
       U: [...demoState.U],
       F: [...demoState.F],
@@ -555,12 +555,12 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   const handleResetAllToSolved = useCallback(() => {
     sound.playPBChord();
     setCubeNetData({
-      U: [...SOLVED_CUBE.U],
-      F: [...SOLVED_CUBE.F],
-      R: [...SOLVED_CUBE.R],
-      B: [...SOLVED_CUBE.B],
-      L: [...SOLVED_CUBE.L],
-      D: [...SOLVED_CUBE.D],
+      U: [...SCRAMBLE_SOLVED_CUBE.U],
+      F: [...SCRAMBLE_SOLVED_CUBE.F],
+      R: [...SCRAMBLE_SOLVED_CUBE.R],
+      B: [...SCRAMBLE_SOLVED_CUBE.B],
+      L: [...SCRAMBLE_SOLVED_CUBE.L],
+      D: [...SCRAMBLE_SOLVED_CUBE.D],
     });
     setVerifiedFaces({
       U: false,
@@ -1197,9 +1197,9 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
               {/* Cross Layout Container */}
               <div className="bg-[#F8F9FA] border border-[#EAECEF] rounded-2xl p-2 sm:p-4 flex flex-col items-center justify-center my-2 overflow-x-auto">
                 <div className="grid grid-cols-4 gap-1.5 sm:gap-2 items-center">
-                  {/* Row 1: U is at column 2 (Yellow - Last Layer) */}
+                  {/* Row 1: U is at column 2 (White - Scramble Standard) */}
                   <div className="col-start-2">
-                    {renderNetFace('U', 'U - VÀNG (ĐỈNH)')}
+                    {renderNetFace('U', 'U - TRẮNG')}
                   </div>
 
                   {/* Row 2: L, F, R, B across all 4 cols */}
@@ -1210,9 +1210,9 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
                     <div>{renderNetFace('B', 'B - XANH DƯƠNG')}</div>
                   </div>
 
-                  {/* Row 3: D is at column 2 (White - Cross) */}
+                  {/* Row 3: D is at column 2 (Yellow) */}
                   <div className="col-start-2">
-                    {renderNetFace('D', 'D - TRẮNG (CROSS)')}
+                    {renderNetFace('D', 'D - VÀNG')}
                   </div>
                 </div>
               </div>

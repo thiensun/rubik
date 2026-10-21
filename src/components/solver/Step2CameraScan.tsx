@@ -51,12 +51,12 @@ interface FaceMeta {
 }
 
 const FACES_ORDER: FaceMeta[] = [
-  { key: 'D', name: 'Down', vietnameseName: 'Mặt Đáy (Cross Trắng)', centerColor: 'white', centerHex: '#FFFFFF', centerLabel: 'WHITE (CROSS)', nextPrompt: 'Xoay khối Rubik lên Mặt Trước (Xanh lá)' },
-  { key: 'F', name: 'Front', vietnameseName: 'Mặt Trước', centerColor: 'green', centerHex: '#009B48', centerLabel: 'GREEN CTR', nextPrompt: 'Xoay khối 90° sang Mặt Phải (Đỏ)' },
-  { key: 'R', name: 'Right', vietnameseName: 'Mặt Phải', centerColor: 'red', centerHex: '#B71234', centerLabel: 'RED CTR', nextPrompt: 'Xoay khối 90° sang Mặt Sau (Xanh dương)' },
-  { key: 'B', name: 'Back', vietnameseName: 'Mặt Sau', centerColor: 'blue', centerHex: '#0046AD', centerLabel: 'BLUE CTR', nextPrompt: 'Xoay khối 90° sang Mặt Trái (Cam)' },
-  { key: 'L', name: 'Left', vietnameseName: 'Mặt Trái', centerColor: 'orange', centerHex: '#FF5800', centerLabel: 'ORANGE CTR', nextPrompt: 'Xoay khối lên Mặt Đỉnh (Vàng)' },
-  { key: 'U', name: 'Up', vietnameseName: 'Mặt Đỉnh (Last Layer Vàng)', centerColor: 'yellow', centerHex: '#FFD000', centerLabel: 'YELLOW (LAST LAYER)', nextPrompt: 'Quét hoàn tất! Đã thu thập đủ 6 mặt.' },
+  { key: 'F', name: 'Front', vietnameseName: 'Mặt Trước (Xanh lá)', centerColor: 'green', centerHex: '#009B48', centerLabel: 'GREEN CTR', nextPrompt: 'Xoay khối 90° sang Mặt Phải (Đỏ)' },
+  { key: 'R', name: 'Right', vietnameseName: 'Mặt Phải (Đỏ)', centerColor: 'red', centerHex: '#B71234', centerLabel: 'RED CTR', nextPrompt: 'Xoay khối 90° sang Mặt Sau (Xanh dương)' },
+  { key: 'B', name: 'Back', vietnameseName: 'Mặt Sau (Xanh dương)', centerColor: 'blue', centerHex: '#0046AD', centerLabel: 'BLUE CTR', nextPrompt: 'Xoay khối 90° sang Mặt Trái (Cam)' },
+  { key: 'L', name: 'Left', vietnameseName: 'Mặt Trái (Cam)', centerColor: 'orange', centerHex: '#FF5800', centerLabel: 'ORANGE CTR', nextPrompt: 'Nghiêng khối lên Mặt Đỉnh U (Vàng)' },
+  { key: 'U', name: 'Up', vietnameseName: 'Mặt Đỉnh U (Vàng)', centerColor: 'yellow', centerHex: '#FFD000', centerLabel: 'YELLOW (UP)', nextPrompt: 'Nghiêng khối xuống Mặt Đáy D (Trắng)' },
+  { key: 'D', name: 'Down', vietnameseName: 'Mặt Đáy D (Trắng)', centerColor: 'white', centerHex: '#FFFFFF', centerLabel: 'WHITE (DOWN)', nextPrompt: 'Quét hoàn tất! Đã thu thập đủ 6 mặt.' },
 ];
 
 

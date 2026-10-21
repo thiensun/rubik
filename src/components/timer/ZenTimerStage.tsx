@@ -433,7 +433,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
           }
         }
       }}
-      className="w-full relative flex flex-col items-center justify-between min-h-[58vh] sm:min-h-[68vh] md:min-h-[75vh] pt-4 sm:pt-8 pb-8 sm:pb-16 px-2.5 sm:px-10 select-none bg-white rounded-3xl border border-mono-200/70 shadow-apple-float transition-all overflow-visible"
+      className="w-full relative flex flex-col items-center justify-between min-h-[75vh] sm:min-h-[82vh] md:min-h-[85vh] pt-4 sm:pt-8 pb-6 sm:pb-12 px-2.5 sm:px-10 select-none bg-white rounded-3xl border border-mono-200/70 shadow-apple-float transition-all overflow-visible"
     >
       {/* Subtle Zen backdrop aura effect */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-mono-100/40 via-transparent to-transparent pointer-events-none opacity-60 rounded-3xl" />
@@ -451,7 +451,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       />
 
       {/* Scramble Zone: Centered Directly Above Timer with Minimalist Tooltipped Icon Actions */}
-      <div className="relative z-20 w-full max-w-4xl flex flex-col items-center text-center gap-1.5 sm:gap-2.5 mb-2 sm:mb-6 shrink-0">
+      <div className="relative z-20 w-full max-w-4xl flex flex-col items-center text-center gap-1.5 sm:gap-2.5 mb-2 sm:mb-4 shrink-0">
         {/* Metadata chips */}
         <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-mono-100 text-mono-600 font-mono text-[10px] sm:text-[11px] font-medium border border-mono-200/50">
@@ -595,26 +595,28 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       </div>
 
       {/* Center Stage: Grand Digital Precision Timer Focal Point */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center w-full my-auto py-2 sm:py-6">
-        {/* State Pill & Arming Feedback */}
-        {renderStatePill()}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center w-full my-auto py-4 sm:py-8">
+        {/* State Pill & Arming Feedback (Hidden on mobile to declutter view, active glow takes over) */}
+        <div className="hidden sm:flex flex-col items-center gap-2">
+          {renderStatePill()}
 
-        <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-2">
-          <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-mono bg-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-            Hold: Amber Glow
-          </span>
-          <span className="text-mono-300 text-xs">→</span>
-          <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Ready: Emerald Green
-          </span>
+          <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-2">
+            <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-mono bg-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              Hold: Amber Glow
+            </span>
+            <span className="text-mono-300 text-xs">→</span>
+            <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Ready: Emerald Green
+            </span>
+          </div>
         </div>
 
         {/* Huge, Commanding Monospace Digital Timer */}
         <div
           id="click-trigger-area"
-          className="relative z-10 my-3 sm:my-8 cursor-pointer transform transition-transform active:scale-[0.99] group text-center max-w-full overflow-hidden w-full flex flex-col items-center justify-center"
+          className="relative z-10 my-4 sm:my-8 cursor-pointer transform transition-transform active:scale-[0.99] group text-center max-w-full overflow-hidden w-full flex flex-col items-center justify-center"
         >
           <div className="flex items-baseline justify-center max-w-full px-1">
             {(() => {
@@ -640,7 +642,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
           </p>
 
           {/* Quick Stats HUD directly beneath Timer (csTimer style: ao5, ao12) */}
-          <div className="flex items-center justify-center gap-4 sm:gap-6 mt-3 text-mono-600 font-mono text-xs sm:text-sm">
+          <div className="flex items-center justify-center gap-5 sm:gap-8 mt-3 text-mono-600 font-mono text-sm sm:text-base">
             <span className="flex items-center gap-1.5">
               <span className="text-mono-400 font-medium">ao5:</span>
               <span className="font-bold text-mono-900">08.52</span>
@@ -654,8 +656,8 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
         </div>
       </div>
 
-      {/* Subtle keyboard hints underneath */}
-      <div className="relative z-10 flex items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-mono text-mono-400 pt-1 sm:pt-2 shrink-0">
+      {/* Subtle keyboard hints underneath (Hidden on touch mobile devices) */}
+      <div className="relative z-10 hidden sm:flex items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-mono text-mono-400 pt-1 sm:pt-2 shrink-0">
         <span className="flex items-center gap-1">
           <kbd className="px-1.5 py-0.5 rounded bg-mono-100 text-mono-600 border border-mono-200/50">
             Space

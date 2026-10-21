@@ -633,24 +633,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       </div>
 
       {/* Center Stage: Grand Digital Precision Timer Focal Point */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-between w-full py-4 sm:py-8">
-        {/* State Pill & Arming Feedback (Hidden on mobile to declutter view, active glow takes over) */}
-        <div className="hidden sm:flex flex-col items-center gap-2 shrink-0">
-          {renderStatePill()}
-
-          <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-2">
-            <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-mono bg-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              Hold: Amber Glow
-            </span>
-            <span className="text-mono-300 text-xs">→</span>
-            <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              Ready: Emerald Green
-            </span>
-          </div>
-        </div>
-
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-between w-full py-2 sm:py-6">
         {/* Huge, Commanding Monospace Digital Timer - Fills vertical center space */}
         <div
           id="click-trigger-area"

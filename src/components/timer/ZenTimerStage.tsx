@@ -433,7 +433,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
           }
         }
       }}
-      className="w-full relative flex flex-col items-center justify-between min-h-[75vh] sm:min-h-[82vh] md:min-h-[85vh] pt-4 sm:pt-8 pb-6 sm:pb-12 px-2.5 sm:px-10 select-none bg-white rounded-3xl border border-mono-200/70 shadow-apple-float transition-all overflow-visible"
+      className="w-full relative flex flex-col items-center justify-between min-h-[75vh] min-h-[75dvh] sm:min-h-[82vh] sm:min-h-[82dvh] md:min-h-[85vh] md:min-h-[85dvh] pt-3 sm:pt-8 pb-5 sm:pb-12 px-2 sm:px-10 select-none bg-white rounded-3xl border border-mono-200/70 shadow-apple-float transition-all overflow-visible"
     >
       {/* Subtle Zen backdrop aura effect */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-mono-100/40 via-transparent to-transparent pointer-events-none opacity-60 rounded-3xl" />
@@ -451,7 +451,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       />
 
       {/* Scramble Zone: Centered Directly Above Timer with Minimalist Tooltipped Icon Actions */}
-      <div className="relative z-20 w-full max-w-4xl flex flex-col items-center text-center gap-1.5 sm:gap-2.5 mb-2 sm:mb-4 shrink-0">
+      <div className="relative z-20 w-full max-w-4xl flex flex-col items-center text-center gap-1 sm:gap-2.5 mb-1.5 sm:mb-4 shrink-0">
         {/* Metadata chips */}
         <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-mono-100 text-mono-600 font-mono text-[10px] sm:text-[11px] font-medium border border-mono-200/50">
@@ -469,7 +469,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
         <div className="w-full px-1 sm:px-2">
           <p
             id="current-scramble"
-            className="font-mono text-sm sm:text-xl md:text-2xl leading-snug sm:leading-relaxed tracking-normal sm:tracking-wider text-mono-950 font-semibold break-words select-all text-center max-h-20 sm:max-h-none overflow-y-auto"
+            className="font-mono text-xs xs:text-sm sm:text-xl md:text-2xl leading-snug sm:leading-relaxed tracking-tight xs:tracking-normal sm:tracking-wider text-mono-950 font-semibold break-words select-all text-center max-h-16 xs:max-h-20 sm:max-h-none overflow-y-auto"
           >
             {scramble}
           </p>

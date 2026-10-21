@@ -137,6 +137,8 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   const [liveDetected, setLiveDetected] = useState<ColorDetectionResult[]>(() => {
     return Array(9).fill(null).map(() => classifyRubikColor(240, 240, 240));
   });
+  const liveDetectedRef = useRef<ColorDetectionResult[]>(liveDetected);
+  liveDetectedRef.current = liveDetected;
 
   const activeFaceMeta = FACES_ORDER[activeFaceIdx];
 
@@ -364,13 +366,15 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
               );
               setIsCameraBlockedOrGreen(allGreenGlitch);
 
-              // Track stability history: 9 colors serialized
+              // Track stability history: 9 colors serialized (tolerant to minor single-flicker noise)
               const currentFingerprint = sampled.map((s) => s.color).join('-');
               const history = stabilityHistoryRef.current;
               history.push(currentFingerprint);
-              if (history.length > 6) history.shift();
+              if (history.length > 5) history.shift();
 
-              const isStable = history.length >= 5 && history.every((fp) => fp === currentFingerprint);
+              // Stable if at least 3 consecutive frames or 4 out of last 5 frames match
+              const matchCount = history.filter((fp) => fp === currentFingerprint).length;
+              const isStable = history.length >= 3 && matchCount >= history.length - 1;
 
               // Check if center tile matches current target face center
               const centerDetected = sampled[4].color;
@@ -466,7 +470,8 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
     setTimeout(() => setIsShutterFlashing(false), 200);
 
     // Save detected 9 colors into the current face of cubeNetData
-    const capturedColors = liveDetected.map((d) => d.color);
+    const currentSampled = liveDetectedRef.current;
+    const capturedColors = currentSampled.map((d) => d.color);
     capturedColors[4] = activeFaceMeta.centerColor;
 
     setCubeNetData((prev) => {
@@ -492,7 +497,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
     } else {
       sound.playPBChord();
     }
-  }, [activeFaceIdx, activeFaceMeta, liveDetected, onUpdateScannedCube]);
+  }, [activeFaceIdx, activeFaceMeta, onUpdateScannedCube]);
 
   // Auto-Scan timer logic: when center matches and auto mode is on
   useEffect(() => {
@@ -502,14 +507,14 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
     if (scanMode === 'auto' && centerAligned && !verifiedFaces[activeFaceMeta.key] && !isCameraBlockedOrGreen) {
       let currentProgress = 0;
       stepInterval = window.setInterval(() => {
-        currentProgress += 12.5; // reaches 100% in 800ms
-        setAutoHoldProgress(Math.min(100, currentProgress));
+        currentProgress += 16.6; // reaches 100% in 600ms
+        setAutoHoldProgress(Math.min(100, Math.round(currentProgress)));
       }, 100);
 
       holdTimer = window.setTimeout(() => {
         handleCaptureFace();
         setAutoHoldProgress(0);
-      }, 800);
+      }, 600);
     } else {
       setAutoHoldProgress(0);
     }
@@ -518,7 +523,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
       if (holdTimer) clearTimeout(holdTimer);
       if (stepInterval) clearInterval(stepInterval);
     };
-  }, [scanMode, centerAligned, verifiedFaces, activeFaceMeta.key, handleCaptureFace, isCameraBlockedOrGreen]);
+  }, [scanMode, centerAligned, verifiedFaces[activeFaceMeta.key], activeFaceMeta.key, handleCaptureFace, isCameraBlockedOrGreen]);
 
   // Load Demo Scrambled Cube (Alt+D)
   const handleLoadDemo = useCallback(() => {

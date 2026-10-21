@@ -162,8 +162,8 @@ describe('Challenger 2 Empirical Verification: Milestone 1', () => {
       expect(isCrossSolved(state1), 'Stage 1 must physically solve White Cross').toBe(true);
       expect(isF2LSolved(state1), 'Stage 1 must physically solve F2L').toBe(true);
       expect(
-        state1.U[1] === 'white' && state1.U[3] === 'white' && state1.U[5] === 'white' && state1.U[7] === 'white',
-        'Stage 1 (VHLS) must orient white edges on U'
+        state1.U[1] === 'yellow' && state1.U[3] === 'yellow' && state1.U[5] === 'yellow' && state1.U[7] === 'yellow',
+        'Stage 1 (VHLS) must orient yellow edges on U'
       ).toBe(true);
 
       // Stage 2: ZBLL 1-look
@@ -185,17 +185,17 @@ describe('Challenger 2 Empirical Verification: Milestone 1', () => {
         if (i === 0) {
           expect(isCrossSolved(cur), 'LBL Stage 1 must solve White Cross').toBe(true);
         } else if (i === 1) {
-          // First layer complete (Yellow face solved + side bottom row matches centers)
-          expect(isCrossSolved(cur), 'LBL Stage 2 must preserve Yellow Cross').toBe(true);
-          expect(cur.D.every((c) => c === 'yellow'), 'LBL Stage 2 must complete Yellow face').toBe(true);
+          // First layer complete (White face solved + side bottom row matches centers)
+          expect(isCrossSolved(cur), 'LBL Stage 2 must preserve White Cross').toBe(true);
+          expect(cur.D.every((c) => c === 'white'), 'LBL Stage 2 must complete White face').toBe(true);
           expect(cur.F[6] === 'green' && cur.F[7] === 'green' && cur.F[8] === 'green').toBe(true);
         } else if (i === 2) {
           expect(isF2LSolved(cur), 'LBL Stage 3 must solve F2L').toBe(true);
         } else if (i === 3) {
           expect(isF2LSolved(cur), 'LBL Stage 4 must preserve F2L').toBe(true);
           expect(
-            cur.U[1] === 'white' && cur.U[3] === 'white' && cur.U[5] === 'white' && cur.U[7] === 'white',
-            'LBL Stage 4 must solve White Cross'
+            cur.U[1] === 'yellow' && cur.U[3] === 'yellow' && cur.U[5] === 'yellow' && cur.U[7] === 'yellow',
+            'LBL Stage 4 must solve Yellow Cross'
           ).toBe(true);
         } else if (i === 4) {
           expect(isF2LSolved(cur), 'LBL Stage 5 must preserve F2L').toBe(true);
@@ -289,17 +289,17 @@ describe('Challenger 2 Empirical Verification: Milestone 1', () => {
           const moves = solveRes.stages[s].moves.map((m) => m.move);
           cur = applyMoves(cur, moves);
           if (s === 0) {
-            expect(isCrossSolved(cur), `Scramble ${i} Stage 1: Yellow Cross`).toBe(true);
+            expect(isCrossSolved(cur), `Scramble ${i} Stage 1: White Cross`).toBe(true);
           } else if (s === 1) {
             expect(isCrossSolved(cur), `Scramble ${i} Stage 2: Cross preserved`).toBe(true);
-            expect(cur.D.every((c) => c === 'yellow'), `Scramble ${i} Stage 2: Yellow face`).toBe(true);
+            expect(cur.D.every((c) => c === 'white'), `Scramble ${i} Stage 2: White face`).toBe(true);
           } else if (s === 2) {
             expect(isF2LSolved(cur), `Scramble ${i} Stage 3: F2L`).toBe(true);
           } else if (s === 3) {
             expect(isF2LSolved(cur), `Scramble ${i} Stage 4: F2L preserved`).toBe(true);
             expect(
-              cur.U[1] === 'white' && cur.U[3] === 'white' && cur.U[5] === 'white' && cur.U[7] === 'white',
-              `Scramble ${i} Stage 4: White Cross`
+              cur.U[1] === 'yellow' && cur.U[3] === 'yellow' && cur.U[5] === 'yellow' && cur.U[7] === 'yellow',
+              `Scramble ${i} Stage 4: Yellow Cross`
             ).toBe(true);
           } else if (s === 4) {
             expect(isF2LSolved(cur), `Scramble ${i} Stage 5: F2L preserved`).toBe(true);
@@ -331,7 +331,7 @@ describe('Challenger 2 Empirical Verification: Milestone 1', () => {
 
     it('confirms invalid sticker count triggers warning banner and disables action', () => {
       const badCube = cloneCube(SOLVED_CUBE);
-      badCube.D[0] = 'white'; // 10 white, 8 yellow
+      badCube.U[0] = 'white'; // 10 white, 8 yellow
       const res = validateCubeState(badCube);
       expect(res.isValid).toBe(false);
       expect(res.errors.length).toBeGreaterThan(0);
@@ -437,7 +437,7 @@ describe('Challenger 2 Empirical Verification: Milestone 1', () => {
 
     it('gracefully rejects invalid cube state passed to solveCube', () => {
       const badCube = cloneCube(SOLVED_CUBE);
-      badCube.D[0] = 'white';
+      badCube.U[0] = 'white';
       const res = solveCube(badCube, 'level-2');
       expect(res.success).toBe(false);
       expect(res.errorMessage).toBeDefined();

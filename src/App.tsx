@@ -209,7 +209,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <main className="w-full pt-20 pb-16 flex-1 flex flex-col justify-start">
+      <main className="w-full pt-16 sm:pt-20 pb-16 flex-1 flex flex-col justify-start">
         {/* TAB 1: Solve & Learn */}
         {activeTab === 'solve-learn' && (
           <div className="max-w-[1440px] w-full mx-auto px-3 sm:px-6 lg:px-8">

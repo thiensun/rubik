@@ -433,7 +433,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
           }
         }
       }}
-      className="w-full relative flex flex-col items-center justify-center pt-4 sm:pt-8 pb-8 sm:pb-20 px-2.5 sm:px-10 select-none bg-white rounded-3xl border border-mono-200/70 shadow-apple-float transition-all overflow-visible"
+      className="w-full relative flex flex-col items-center justify-between min-h-[58vh] sm:min-h-[68vh] md:min-h-[75vh] pt-4 sm:pt-8 pb-8 sm:pb-16 px-2.5 sm:px-10 select-none bg-white rounded-3xl border border-mono-200/70 shadow-apple-float transition-all overflow-visible"
     >
       {/* Subtle Zen backdrop aura effect */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-mono-100/40 via-transparent to-transparent pointer-events-none opacity-60 rounded-3xl" />
@@ -451,7 +451,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       />
 
       {/* Scramble Zone: Centered Directly Above Timer with Minimalist Tooltipped Icon Actions */}
-      <div className="relative z-20 w-full max-w-4xl flex flex-col items-center text-center gap-1.5 sm:gap-2.5 mb-3 sm:mb-8">
+      <div className="relative z-20 w-full max-w-4xl flex flex-col items-center text-center gap-1.5 sm:gap-2.5 mb-2 sm:mb-6 shrink-0">
         {/* Metadata chips */}
         <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-mono-100 text-mono-600 font-mono text-[10px] sm:text-[11px] font-medium border border-mono-200/50">
@@ -595,54 +595,54 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       </div>
 
       {/* Center Stage: Grand Digital Precision Timer Focal Point */}
-      <div className="relative z-10 flex flex-col items-center gap-1.5 sm:gap-3">
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center w-full my-auto py-2 sm:py-6">
         {/* State Pill & Arming Feedback */}
         {renderStatePill()}
 
-        <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5">
-          <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-mono bg-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
+        <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-2">
+          <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-mono bg-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
             Hold: Amber Glow
           </span>
           <span className="text-mono-300 text-xs">→</span>
-          <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-sm">
+          <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Ready: Emerald Green
           </span>
         </div>
-      </div>
 
-      {/* Huge, Commanding Monospace Digital Timer */}
-      <div
-        id="click-trigger-area"
-        className="relative z-10 my-2 sm:my-8 cursor-pointer transform transition-transform active:scale-[0.99] group text-center max-w-full overflow-hidden"
-      >
-        <div className="flex items-baseline justify-center max-w-full px-1">
-          {(() => {
-            const formattedTime = formatDigits(currentMs);
-            return (
-              <span
-                id="timer-main"
-                className={`font-mono-dotted leading-none font-bold tabular-nums transition-colors ${getTimerFontSizeClass(
-                  formattedTime
-                )} ${getTimerColorClass()}`}
-              >
-                {formattedTime}
-              </span>
-            );
-          })()}
+        {/* Huge, Commanding Monospace Digital Timer */}
+        <div
+          id="click-trigger-area"
+          className="relative z-10 my-3 sm:my-8 cursor-pointer transform transition-transform active:scale-[0.99] group text-center max-w-full overflow-hidden w-full flex flex-col items-center justify-center"
+        >
+          <div className="flex items-baseline justify-center max-w-full px-1">
+            {(() => {
+              const formattedTime = formatDigits(currentMs);
+              return (
+                <span
+                  id="timer-main"
+                  className={`font-mono-dotted leading-none font-bold tabular-nums transition-colors ${getTimerFontSizeClass(
+                    formattedTime
+                  )} ${getTimerColorClass()}`}
+                >
+                  {formattedTime}
+                </span>
+              );
+            })()}
+          </div>
+          <p className="text-mono-400 text-xs sm:text-sm font-sans tracking-wide mt-2 sm:mt-4 group-hover:text-mono-700 transition-colors">
+            {timerState === 'inspection'
+              ? 'Đang xem trước 15s · Nhấn giữ Spacebar hoặc click giữ để vào trạng thái Sẵn sàng'
+              : inspectionEnabled
+              ? 'Nhấn Spacebar hoặc click để bắt đầu 15s Inspection'
+              : 'Click, tap screen, or hold Spacebar'}
+          </p>
         </div>
-        <p className="text-mono-400 text-[11px] sm:text-xs font-sans tracking-wide mt-1.5 sm:mt-3 group-hover:text-mono-700 transition-colors">
-          {timerState === 'inspection'
-            ? 'Đang xem trước 15s · Nhấn giữ Spacebar hoặc click giữ để vào trạng thái Sẵn sàng'
-            : inspectionEnabled
-            ? 'Nhấn Spacebar hoặc click để bắt đầu 15s Inspection'
-            : 'Click, tap screen, or hold Spacebar'}
-        </p>
       </div>
 
       {/* Subtle keyboard hints underneath */}
-      <div className="relative z-10 flex items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-mono text-mono-400 pt-1 sm:pt-2">
+      <div className="relative z-10 flex items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-mono text-mono-400 pt-1 sm:pt-2 shrink-0">
         <span className="flex items-center gap-1">
           <kbd className="px-1.5 py-0.5 rounded bg-mono-100 text-mono-600 border border-mono-200/50">
             Space

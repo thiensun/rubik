@@ -29,8 +29,8 @@ export const CUBE_HEX_COLORS: Record<CubeColor, string> = {
 };
 
 export const SOLVED_CUBE: CubeNetState = {
-  U: Array(9).fill('yellow') as CubeFaceState,
-  D: Array(9).fill('white') as CubeFaceState,
+  U: Array(9).fill('white') as CubeFaceState,
+  D: Array(9).fill('yellow') as CubeFaceState,
   F: Array(9).fill('green') as CubeFaceState,
   B: Array(9).fill('blue') as CubeFaceState,
   L: Array(9).fill('orange') as CubeFaceState,

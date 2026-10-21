@@ -22,24 +22,24 @@ Tài liệu này lưu trữ toàn bộ Knowledge Items (KI), các quyết địn
   - Xanh lá (Green) đối diện Xanh dương (Blue).
   - Đỏ (Red) đối diện Cam (Orange).
 
-### 2.2. Chiều Không Gian 3D (Right-Hand Rule)
-Hệ thống solver toán học và 3D viewport chuẩn hóa theo chuẩn thi đấu CFOP:
-- **Đỉnh U (Up)**: Màu **Vàng (Yellow)** — Tầng Last Layer.
-- **Đáy D (Down)**: Màu **Trắng (White)** — Tầng làm Cross CFOP.
+### 2.2. Chiều Không Gian 3D (Right-Hand Rule - Phương Án 2)
+Hệ thống solver toán học, 2D net và 3D viewport chuẩn hóa theo Phương Án 2:
+- **Đỉnh U (Up)**: Màu **Trắng (White)**.
+- **Đáy D (Down)**: Màu **Vàng (Yellow)**.
 - **Mặt Trước F (Front)**: Màu **Xanh lá (Green)**.
 - **Mặt Sau B (Back)**: Màu **Xanh dương (Blue)**.
-- **Mặt Phải R (Right)**: Màu **Cam (Orange)**.
-- **Mặt Trái L (Left)**: Màu **Đỏ (Red)**.
+- **Mặt Phải R (Right)**: Màu **Đỏ (Red)**.
+- **Mặt Trái L (Left)**: Màu **Cam (Orange)**.
 
 > [!IMPORTANT]
-> **Quy Tắc Chirality (Định Hướng Góc Không Gian)**:
-> Khi Đỉnh là Vàng ($U$) và Trước là Xanh lá ($F$), thì Bên Phải **bắt buộc phải là Cam ($R$)** và Bên Trái là Đỏ ($L$). Nếu cố tình đổi Bên Phải thành Đỏ trong khi Đỉnh là Vàng, các viên góc như $UFL$ sẽ vi phạm tính đối xứng không gian (Chirality Violation / Phản xạ không gian), dẫn đến bộ toán học `cubeValidator` báo lỗi *"Lỗi góc nghịch hướng (Chirality) tại UFL: Viên góc bị dán sai thứ tự không gian phản xạ"*.
+> **Quy Tắc Chirality & Trục Không Gian**:
+> Khi Đỉnh là Trắng ($U$) và Trước là Xanh lá ($F$), Bên Phải **bắt buộc là Đỏ ($R$)** và Bên Trái là Cam ($L$). Đây là hệ trục tọa độ bàn tay phải chuẩn ($+X \times +Y = +Z$), bảo toàn hoàn hảo tính đối xứng không gian (Chirality) và chẵn lẻ hoán vị (Parity).
 
 ### 2.3. Sơ Đồ Chiếu Phẳng 2D Net
 Cả trong Bước 2 (Quét Camera) và thẻ hiển thị Scramble Net 2D:
-- **Hàng 1**: Đỉnh **U (Vàng)**
-- **Hàng 2**: **L (Đỏ)** — **F (Xanh lá)** — **R (Cam)** — **B (Xanh dương)**
-- **Hàng 3**: Đáy **D (Trắng)**
+- **Hàng 1**: Đỉnh **U (Trắng)**
+- **Hàng 2**: **L (Cam)** — **F (Xanh lá)** — **R (Đỏ)** — **B (Xanh dương)**
+- **Hàng 3**: Đáy **D (Vàng)**
 
 ---
 
@@ -48,11 +48,11 @@ Cả trong Bước 2 (Quét Camera) và thẻ hiển thị Scramble Net 2D:
 ### 3.1. Thứ Tự Quét 6 Mặt Tự Nhiên Nhất
 Người dùng cầm khối Rubik nhìn thẳng vào mặt trước và xoay theo trình tự:
 1. **F (Front - Xanh lá)**: Cầm khối nhìn trực diện.
-2. **R (Right - Cam)**: Xoay khối 90° sang phải.
+2. **R (Right - Đỏ)**: Xoay khối 90° sang phải.
 3. **B (Back - Xanh dương)**: Tiếp tục xoay 90° sang phải.
-4. **L (Left - Đỏ)**: Tiếp tục xoay 90° sang phải.
-5. **U (Up - Vàng)**: Nghiêng khối nhìn mặt đỉnh (Last layer).
-6. **D (Down - Trắng)**: Nghiêng khối nhìn mặt đáy (Cross) $\rightarrow$ Hoàn tất 6 mặt.
+4. **L (Left - Cam)**: Tiếp tục xoay 90° sang phải.
+5. **U (Up - Trắng)**: Nghiêng khối nhìn mặt đỉnh.
+6. **D (Down - Vàng)**: Nghiêng khối nhìn mặt đáy $\rightarrow$ Hoàn tất 6 mặt.
 
 ### 3.2. Tính Năng Auto-Scan & Ổn Định Hình Ảnh
 - **Tự động chụp khi đúng tâm & ổn định**: Khi tâm mặt được camera nhận diện trùng khớp với màu tâm yêu cầu (`targetCenterColor`), đồng thời tín hiệu màu ổn định trong 600ms, hệ thống sẽ tự động kích hoạt chụp và chuyển sang mặt kế tiếp.

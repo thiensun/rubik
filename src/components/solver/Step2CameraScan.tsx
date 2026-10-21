@@ -51,12 +51,12 @@ interface FaceMeta {
 }
 
 const FACES_ORDER: FaceMeta[] = [
-  { key: 'D', name: 'Down', vietnameseName: 'Mặt Đáy (Cross Trắng)', centerColor: 'white', centerHex: '#FFFFFF', centerLabel: 'WHITE (CROSS)', nextPrompt: 'Xoay khối Rubik lên Mặt Trước (Xanh lá)' },
-  { key: 'F', name: 'Front', vietnameseName: 'Mặt Trước', centerColor: 'green', centerHex: '#009B48', centerLabel: 'GREEN CTR', nextPrompt: 'Xoay khối 90° sang Mặt Phải (Đỏ)' },
-  { key: 'R', name: 'Right', vietnameseName: 'Mặt Phải', centerColor: 'red', centerHex: '#B71234', centerLabel: 'RED CTR', nextPrompt: 'Xoay khối 90° sang Mặt Sau (Xanh dương)' },
-  { key: 'B', name: 'Back', vietnameseName: 'Mặt Sau', centerColor: 'blue', centerHex: '#0046AD', centerLabel: 'BLUE CTR', nextPrompt: 'Xoay khối 90° sang Mặt Trái (Cam)' },
-  { key: 'L', name: 'Left', vietnameseName: 'Mặt Trái', centerColor: 'orange', centerHex: '#FF5800', centerLabel: 'ORANGE CTR', nextPrompt: 'Xoay khối lên Mặt Đỉnh (Vàng)' },
-  { key: 'U', name: 'Up', vietnameseName: 'Mặt Đỉnh (Last Layer Vàng)', centerColor: 'yellow', centerHex: '#FFD000', centerLabel: 'YELLOW (LAST LAYER)', nextPrompt: 'Quét hoàn tất! Đã thu thập đủ 6 mặt.' },
+  { key: 'F', name: 'Front', vietnameseName: 'Mặt Trước (Xanh lá)', centerColor: 'green', centerHex: '#009B48', centerLabel: 'GREEN CTR', nextPrompt: 'Xoay khối 90° sang Mặt Phải (Đỏ)' },
+  { key: 'R', name: 'Right', vietnameseName: 'Mặt Phải (Đỏ)', centerColor: 'red', centerHex: '#B71234', centerLabel: 'RED CTR', nextPrompt: 'Xoay khối 90° sang Mặt Sau (Xanh dương)' },
+  { key: 'B', name: 'Back', vietnameseName: 'Mặt Sau (Xanh dương)', centerColor: 'blue', centerHex: '#0046AD', centerLabel: 'BLUE CTR', nextPrompt: 'Xoay khối 90° sang Mặt Trái (Cam)' },
+  { key: 'L', name: 'Left', vietnameseName: 'Mặt Trái (Cam)', centerColor: 'orange', centerHex: '#FF5800', centerLabel: 'ORANGE CTR', nextPrompt: 'Nghiêng khối lên Mặt Đỉnh U (Vàng)' },
+  { key: 'U', name: 'Up', vietnameseName: 'Mặt Đỉnh U (Vàng)', centerColor: 'yellow', centerHex: '#FFD000', centerLabel: 'YELLOW (UP)', nextPrompt: 'Nghiêng khối xuống Mặt Đáy D (Trắng)' },
+  { key: 'D', name: 'Down', vietnameseName: 'Mặt Đáy D (Trắng)', centerColor: 'white', centerHex: '#FFFFFF', centerLabel: 'WHITE (DOWN)', nextPrompt: 'Quét hoàn tất! Đã thu thập đủ 6 mặt.' },
 ];
 
 
@@ -99,6 +99,11 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   // Diagnosis: Solid Green Glitch (YUV uninitialized driver lock)
   const [isCameraBlockedOrGreen, setIsCameraBlockedOrGreen] = useState<boolean>(false);
 
+  // AI Optical Stability & Lighting tracking
+  const [aiConfidenceScore, setAiConfidenceScore] = useState<number>(95);
+  const [isLightingGood, setIsLightingGood] = useState<boolean>(true);
+  const stabilityHistoryRef = useRef<string[]>([]);
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -132,6 +137,8 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   const [liveDetected, setLiveDetected] = useState<ColorDetectionResult[]>(() => {
     return Array(9).fill(null).map(() => classifyRubikColor(240, 240, 240));
   });
+  const liveDetectedRef = useRef<ColorDetectionResult[]>(liveDetected);
+  liveDetectedRef.current = liveDetected;
 
   const activeFaceMeta = FACES_ORDER[activeFaceIdx];
 
@@ -154,7 +161,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   }, []);
 
   // Start real webcam stream with robust constraints & device selection
-  const startCamera = useCallback(async (deviceIdOverride?: string) => {
+  const startCamera = useCallback(async (deviceIdOverride?: string, facingOverride?: 'user' | 'environment') => {
     setCameraStatus('requesting');
     setIsCameraBlockedOrGreen(false);
 
@@ -166,15 +173,16 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
 
     if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       try {
-        const targetDeviceId = deviceIdOverride || selectedDeviceId;
+        const targetDeviceId = deviceIdOverride !== undefined ? deviceIdOverride : selectedDeviceId;
+        const targetFacing = facingOverride !== undefined ? facingOverride : cameraFacing;
 
-        // Use ideal constraints for desktop laptop compatibility
+        // Use ideal constraints for desktop laptop and mobile compatibility
         const videoConstraints: MediaTrackConstraints = targetDeviceId
           ? { deviceId: { exact: targetDeviceId } }
           : {
               width: { ideal: 1280 },
               height: { ideal: 720 },
-              facingMode: { ideal: cameraFacing },
+              facingMode: { ideal: targetFacing },
             };
 
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -184,6 +192,34 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
 
         streamRef.current = stream;
         setActiveStream(stream);
+
+        // Detect actual facing mode from the active track if available, or infer from device label
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          const settings = videoTrack.getSettings ? videoTrack.getSettings() : null;
+          const trackFacing = settings?.facingMode as 'user' | 'environment' | undefined;
+          const trackLabel = (videoTrack.label || '').toLowerCase();
+
+          if (trackFacing === 'environment' || trackFacing === 'user') {
+            setCameraFacing(trackFacing);
+          } else if (
+            trackLabel.includes('back') ||
+            trackLabel.includes('rear') ||
+            trackLabel.includes('environment') ||
+            trackLabel.includes('sau')
+          ) {
+            setCameraFacing('environment');
+          } else if (
+            trackLabel.includes('front') ||
+            trackLabel.includes('user') ||
+            trackLabel.includes('trước') ||
+            trackLabel.includes('selfie')
+          ) {
+            setCameraFacing('user');
+          } else if (targetFacing) {
+            setCameraFacing(targetFacing);
+          }
+        }
 
         // Populate device labels now that permission is granted
         await refreshDevicesList();
@@ -258,20 +294,30 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
     };
   }, [startCamera]);
 
-  // Switch to next available video device
+  // Switch to next available video device or flip front/back
   const handleSwitchToNextDevice = useCallback(() => {
     if (videoDevices.length > 1) {
       const currentIndex = videoDevices.findIndex((d) => d.deviceId === selectedDeviceId);
       const nextIndex = (currentIndex + 1) % videoDevices.length;
       const nextDevice = videoDevices[nextIndex];
       setSelectedDeviceId(nextDevice.deviceId);
-      startCamera(nextDevice.deviceId);
+
+      // Infer facing from label if present
+      const label = (nextDevice.label || '').toLowerCase();
+      let nextFacing: 'user' | 'environment' | undefined = undefined;
+      if (label.includes('back') || label.includes('rear') || label.includes('environment') || label.includes('sau')) {
+        nextFacing = 'environment';
+      } else if (label.includes('front') || label.includes('user') || label.includes('trước') || label.includes('selfie')) {
+        nextFacing = 'user';
+      }
+
+      startCamera(nextDevice.deviceId, nextFacing);
       sound.playTick();
     } else {
       // Toggle facingMode between user and environment
       const nextFacing = cameraFacing === 'user' ? 'environment' : 'user';
       setCameraFacing(nextFacing);
-      startCamera();
+      startCamera(undefined, nextFacing);
       sound.playTick();
     }
   }, [videoDevices, selectedDeviceId, cameraFacing, startCamera]);
@@ -307,16 +353,33 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
             if (sampled.length === 9) {
               setLiveDetected(sampled);
 
+              // Calculate overall AI Confidence & Lighting Metrics
+              const avgConf = Math.round(sampled.reduce((sum, s) => sum + s.confidence, 0) / 9);
+              setAiConfidenceScore(avgConf);
+
+              const avgV = sampled.reduce((sum, s) => sum + s.hsv[2], 0) / 9;
+              setIsLightingGood(avgV >= 0.28 && avgV <= 0.95);
+
               // Check if stream is returning uninitialized YUV (all pure green ~ #008700 with R<25, G>50, B<25)
               const allGreenGlitch = sampled.every(
                 (s) => s.rgb[0] < 30 && s.rgb[1] > 50 && s.rgb[2] < 30
               );
               setIsCameraBlockedOrGreen(allGreenGlitch);
 
+              // Track stability history: 9 colors serialized (tolerant to minor single-flicker noise)
+              const currentFingerprint = sampled.map((s) => s.color).join('-');
+              const history = stabilityHistoryRef.current;
+              history.push(currentFingerprint);
+              if (history.length > 5) history.shift();
+
+              // Stable if at least 3 consecutive frames or 4 out of last 5 frames match
+              const matchCount = history.filter((fp) => fp === currentFingerprint).length;
+              const isStable = history.length >= 3 && matchCount >= history.length - 1;
+
               // Check if center tile matches current target face center
               const centerDetected = sampled[4].color;
               const matchesCenter = centerDetected === activeFaceMeta.centerColor;
-              setCenterAligned(matchesCenter);
+              setCenterAligned(matchesCenter && isStable);
             }
           }
         } else if (cameraStatus === 'virtual') {
@@ -407,7 +470,8 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
     setTimeout(() => setIsShutterFlashing(false), 200);
 
     // Save detected 9 colors into the current face of cubeNetData
-    const capturedColors = liveDetected.map((d) => d.color);
+    const currentSampled = liveDetectedRef.current;
+    const capturedColors = currentSampled.map((d) => d.color);
     capturedColors[4] = activeFaceMeta.centerColor;
 
     setCubeNetData((prev) => {
@@ -433,7 +497,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
     } else {
       sound.playPBChord();
     }
-  }, [activeFaceIdx, activeFaceMeta, liveDetected, onUpdateScannedCube]);
+  }, [activeFaceIdx, activeFaceMeta, onUpdateScannedCube]);
 
   // Auto-Scan timer logic: when center matches and auto mode is on
   useEffect(() => {
@@ -443,14 +507,14 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
     if (scanMode === 'auto' && centerAligned && !verifiedFaces[activeFaceMeta.key] && !isCameraBlockedOrGreen) {
       let currentProgress = 0;
       stepInterval = window.setInterval(() => {
-        currentProgress += 12.5; // reaches 100% in 800ms
-        setAutoHoldProgress(Math.min(100, currentProgress));
+        currentProgress += 16.6; // reaches 100% in 600ms
+        setAutoHoldProgress(Math.min(100, Math.round(currentProgress)));
       }, 100);
 
       holdTimer = window.setTimeout(() => {
         handleCaptureFace();
         setAutoHoldProgress(0);
-      }, 800);
+      }, 600);
     } else {
       setAutoHoldProgress(0);
     }
@@ -459,7 +523,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
       if (holdTimer) clearTimeout(holdTimer);
       if (stepInterval) clearInterval(stepInterval);
     };
-  }, [scanMode, centerAligned, verifiedFaces, activeFaceMeta.key, handleCaptureFace, isCameraBlockedOrGreen]);
+  }, [scanMode, centerAligned, verifiedFaces[activeFaceMeta.key], activeFaceMeta.key, handleCaptureFace, isCameraBlockedOrGreen]);
 
   // Load Demo Scrambled Cube (Alt+D)
   const handleLoadDemo = useCallback(() => {
@@ -737,14 +801,19 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
                   }}
                   className="flex-1 min-w-0 bg-white border border-[#D0D5DD] rounded-lg px-2 py-1 text-[11px] sm:text-xs font-medium text-neutral-900 focus:outline-none focus:ring-1 focus:ring-black truncate"
                 >
-                  {videoDevices.map((dev, idx) => (
-                    <option key={dev.deviceId || idx} value={dev.deviceId}>
-                      {dev.label || `Camera ${idx + 1}`}
-                    </option>
-                  ))}
+                  {videoDevices.map((dev, idx) => {
+                    const label = dev.label || `Camera ${idx + 1}`;
+                    return (
+                      <option key={dev.deviceId || idx} value={dev.deviceId}>
+                        {label}
+                      </option>
+                    );
+                  })}
                 </select>
               ) : (
-                <span className="text-neutral-500 font-normal truncate text-[11px] sm:text-xs">Default Camera</span>
+                <span className="text-neutral-500 font-normal truncate text-[11px] sm:text-xs">
+                  {cameraFacing === 'environment' ? 'Camera Sau (Rear)' : 'Camera Trước (Front)'}
+                </span>
               )}
             </div>
 
@@ -752,11 +821,11 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
               <button
                 type="button"
                 onClick={handleSwitchToNextDevice}
-                className="px-2 py-1 rounded-lg bg-white border border-[#D0D5DD] hover:bg-neutral-100 text-neutral-800 text-[10.5px] sm:text-[11px] font-bold flex items-center gap-1 shadow-2xs"
-                title="Đổi camera khác hoặc đổi trước/sau"
+                className="px-2.5 py-1 rounded-lg bg-white border border-[#D0D5DD] hover:bg-neutral-100 text-neutral-800 text-[10.5px] sm:text-[11px] font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                title="Đổi camera trước / sau hoặc đổi ống kính"
               >
-                <FlipHorizontal className="w-3 h-3 text-neutral-500" />
-                <span>Đổi Cam</span>
+                <FlipHorizontal className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{cameraFacing === 'environment' ? 'Dùng Cam Sau' : 'Dùng Cam Trước'}</span>
               </button>
 
               <button
@@ -880,8 +949,10 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
               </div>
 
               <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/15 text-white font-mono text-[10px] sm:text-[11px] shadow-sm">
-                <Sun className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
-                <span>EV: Balanced</span>
+                <Sun className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${isLightingGood ? 'text-amber-400' : 'text-red-400'}`} />
+                <span>{isLightingGood ? 'AI Light: Optimal' : 'AI Light: Sub-optimal'}</span>
+                <span className="text-slate-400">•</span>
+                <span className="text-cyan-400 font-bold">{aiConfidenceScore}% Acc</span>
               </div>
             </div>
 

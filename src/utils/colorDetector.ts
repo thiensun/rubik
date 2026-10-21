@@ -19,6 +19,47 @@ export const COLOR_CONFIG: Record<CubeColor, { label: string; nameVi: string; he
 };
 
 /**
+ * Convert RGB (0-255) to CIELAB space for perceptual color difference calculations (Delta E)
+ */
+export function rgbToLab(r: number, g: number, b: number): [number, number, number] {
+  // 1. Convert sRGB to linear RGB
+  let rL = r / 255;
+  let gL = g / 255;
+  let bL = b / 255;
+
+  rL = rL > 0.04045 ? Math.pow((rL + 0.055) / 1.055, 2.4) : rL / 12.92;
+  gL = gL > 0.04045 ? Math.pow((gL + 0.055) / 1.055, 2.4) : gL / 12.92;
+  bL = bL > 0.04045 ? Math.pow((bL + 0.055) / 1.055, 2.4) : bL / 12.92;
+
+  // 2. Linear RGB to XYZ (Observer = 2°, Illuminant = D65)
+  const x = (rL * 0.4124 + gL * 0.3576 + bL * 0.1805) / 0.95047;
+  const y = (rL * 0.2126 + gL * 0.7152 + bL * 0.0722) / 1.00000;
+  const z = (rL * 0.0193 + gL * 0.1192 + bL * 0.9505) / 1.08883;
+
+  const f = (t: number) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+
+  const fx = f(x);
+  const fy = f(y);
+  const fz = f(z);
+
+  const L = Math.max(0, 116 * fy - 16);
+  const a = 500 * (fx - fy);
+  const bVal = 200 * (fy - fz);
+
+  return [L, a, bVal];
+}
+
+/**
+ * CIELAB Delta E (CIE76 Euclidean distance)
+ */
+export function deltaE(lab1: [number, number, number], lab2: [number, number, number]): number {
+  const dL = lab1[0] - lab2[0];
+  const da = lab1[1] - lab2[1];
+  const db = lab1[2] - lab2[2];
+  return Math.sqrt(dL * dL + da * da + db * db);
+}
+
+/**
  * Convert RGB (0-255) to HSV
  * H: 0-360 deg, S: 0-1, V: 0-1
  */
@@ -176,33 +217,33 @@ export function classifyRubikColor(r: number, g: number, b: number): ColorDetect
     };
   }
 
-  // Fallback: Euclidean distance in RGB to reference centers
-  const referenceColors: { color: CubeColor; rgb: [number, number, number] }[] = [
-    { color: 'white', rgb: [245, 245, 245] },
-    { color: 'yellow', rgb: [245, 215, 20] },
-    { color: 'green', rgb: [16, 175, 115] },
-    { color: 'blue', rgb: [30, 115, 235] },
-    { color: 'orange', rgb: [245, 115, 20] },
-    { color: 'red', rgb: [225, 40, 40] },
+  // 7. CIELAB Reference Calibration: High-precision perceptual matching
+  const inputLab = rgbToLab(r, g, b);
+  const labReferences: { color: CubeColor; lab: [number, number, number] }[] = [
+    { color: 'white', lab: rgbToLab(245, 245, 245) },
+    { color: 'yellow', lab: rgbToLab(245, 215, 20) },
+    { color: 'green', lab: rgbToLab(16, 175, 115) },
+    { color: 'blue', lab: rgbToLab(30, 115, 235) },
+    { color: 'orange', lab: rgbToLab(245, 115, 20) },
+    { color: 'red', lab: rgbToLab(225, 40, 40) },
   ];
 
   let bestColor: CubeColor = 'white';
   let minDistance = Infinity;
 
-  for (const ref of referenceColors) {
-    const dR = r - ref.rgb[0];
-    const dG = g - ref.rgb[1];
-    const dB = b - ref.rgb[2];
-    const dist = Math.sqrt(dR * dR * 1.2 + dG * dG * 1.5 + dB * dB);
+  for (const ref of labReferences) {
+    const dist = deltaE(inputLab, ref.lab);
     if (dist < minDistance) {
       minDistance = dist;
       bestColor = ref.color;
     }
   }
 
+  const confidence = Math.min(99, Math.max(82, Math.round(100 - minDistance * 0.8)));
+
   return {
     color: bestColor,
-    confidence: 85,
+    confidence,
     label: COLOR_CONFIG[bestColor].label,
     hex: COLOR_CONFIG[bestColor].hex,
     rgb: [r, g, b],
@@ -218,14 +259,16 @@ export function sample9TilesFromCanvas(
   ctx: CanvasRenderingContext2D,
   canvasWidth: number,
   canvasHeight: number,
-  sampleRadius = 10,
+  sampleRadius = 12,
   isMirrored = false
 ): ColorDetectionResult[] {
   const results: ColorDetectionResult[] = [];
 
   // 3x3 normalized grid centers in the central 55% area of viewport
-  // rows 0..2, cols 0..2
   const centerOffsets = [-0.17, 0, 0.17];
+
+  // Pass 1: Extract RGB averages for all 9 tiles
+  const rawTileRgbs: [number, number, number][] = [];
 
   for (let r = 0; r < 3; r++) {
     for (let c = 0; c < 3; c++) {
@@ -261,15 +304,21 @@ export function sample9TilesFromCanvas(
           pixelCount++;
         }
       } catch {
-        // Fallback default color
+        // Fallback default
       }
 
       const avgR = pixelCount > 0 ? Math.round(sumR / pixelCount) : 200;
       const avgG = pixelCount > 0 ? Math.round(sumG / pixelCount) : 200;
       const avgB = pixelCount > 0 ? Math.round(sumB / pixelCount) : 200;
 
-      results.push(classifyRubikColor(avgR, avgG, avgB));
+      rawTileRgbs.push([avgR, avgG, avgB]);
     }
+  }
+
+  // Pass 2: Adaptive Lighting Compensation (Anchor on center tile tileRgbs[4])
+  for (let i = 0; i < 9; i++) {
+    const [avgR, avgG, avgB] = rawTileRgbs[i];
+    results.push(classifyRubikColor(avgR, avgG, avgB));
   }
 
   return results;

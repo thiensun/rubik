@@ -30,7 +30,7 @@ export const getTimerFontSizeClass = (formattedTime: string): string => {
   if (formattedTime.length > 5) {
     return 'text-5xl xs:text-6xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tight font-mono';
   }
-  return 'text-6xl xs:text-7xl sm:text-8xl md:text-9xl lg:text-[216px] tracking-tight font-mono';
+  return 'text-6xl xs:text-7xl sm:text-8xl md:text-9xl lg:text-[216px] text-[20vw] sm:text-[18vw] md:text-[14vw] tracking-tight font-mono';
 };
 
 export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
@@ -638,6 +638,19 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
               ? 'Nhấn Spacebar hoặc click để bắt đầu 15s Inspection'
               : 'Click, tap screen, or hold Spacebar'}
           </p>
+
+          {/* Quick Stats HUD directly beneath Timer (csTimer style: ao5, ao12) */}
+          <div className="flex items-center justify-center gap-4 sm:gap-6 mt-3 text-mono-600 font-mono text-xs sm:text-sm">
+            <span className="flex items-center gap-1.5">
+              <span className="text-mono-400 font-medium">ao5:</span>
+              <span className="font-bold text-mono-900">08.52</span>
+            </span>
+            <span className="text-mono-300">•</span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-mono-400 font-medium">ao12:</span>
+              <span className="font-bold text-mono-900">07.81</span>
+            </span>
+          </div>
         </div>
       </div>
 

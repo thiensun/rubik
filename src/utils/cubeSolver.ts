@@ -7,6 +7,7 @@ import {
   cloneCube,
   applyMove,
   isCubeSolved,
+  rotateWhiteToBottom,
 } from './cubeState';
 import { SolverLevelId } from '../types/cubing';
 import { SolutionStage, createMoves } from './solutionStages';
@@ -785,8 +786,11 @@ export function solveCube(
     };
   }
 
+  // If cube is in Scramble orientation (White on top U), rotate White to bottom D for White Cross solving
+  const workingCube = cube.U?.[4] === 'white' ? rotateWhiteToBottom(cube) : cube;
+
   // 1. White Cross
-  const cross = solveWhiteCross(cube);
+  const cross = solveWhiteCross(workingCube);
 
   // 2. White Corners (LBL Stage 2)
   const corners = solveWhiteCorners(cross.state);

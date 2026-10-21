@@ -12,7 +12,7 @@ import { AuditLogModal } from './components/history/AuditLogModal';
 import { SettingsModal } from './components/SettingsModal';
 import { SolveRecord, PenaltyType } from './types/cubing';
 import { SEED_SOLVES, computeSessionStats } from './utils/cubingStats';
-import { applyScramble, generateWCAScramble, CubeNetState } from './utils/cubeState';
+import { applyScramble, applyScrambleForNet, generateWCAScramble, CubeNetState } from './utils/cubeState';
 import { sound } from './utils/audio';
 import confetti from 'canvas-confetti';
 import { CustomAlgorithmData } from './components/solver/Step3SolveInteractive';
@@ -30,7 +30,7 @@ export const App: React.FC = () => {
 
   // Scramble State
   const [scramble, setScramble] = useState<string>(DEFAULT_SCRAMBLE);
-  const [cubeNetState, setCubeNetState] = useState<CubeNetState>(() => applyScramble(DEFAULT_SCRAMBLE));
+  const [cubeNetState, setCubeNetState] = useState<CubeNetState>(() => applyScrambleForNet(DEFAULT_SCRAMBLE));
 
   // Solve History from LocalStorage or Seed Data
   const [solves, setSolves] = useState<SolveRecord[]>(() => {
@@ -76,7 +76,7 @@ export const App: React.FC = () => {
   const handleNextScramble = useCallback(() => {
     const next = generateWCAScramble(21);
     setScramble(next);
-    setCubeNetState(applyScramble(next));
+    setCubeNetState(applyScrambleForNet(next));
     sound.playTick();
   }, []);
 
@@ -130,7 +130,7 @@ export const App: React.FC = () => {
     // Prepare next scramble automatically
     const nextScramble = generateWCAScramble(21);
     setScramble(nextScramble);
-    setCubeNetState(applyScramble(nextScramble));
+    setCubeNetState(applyScrambleForNet(nextScramble));
   };
 
   // Manual solve entry (from external Stackmat timer, hand timer, etc.)
@@ -169,7 +169,7 @@ export const App: React.FC = () => {
     // Refresh scramble for next solve
     const nextScramble = generateWCAScramble(21);
     setScramble(nextScramble);
-    setCubeNetState(applyScramble(nextScramble));
+    setCubeNetState(applyScrambleForNet(nextScramble));
   };
 
   // Edit existing solve time

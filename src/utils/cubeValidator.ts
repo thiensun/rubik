@@ -1,5 +1,5 @@
 // 54-Sticker Cube State Validation & Mathematical Parity Engine
-import { CubeNetState, CubeColor, FaceKey, SOLVED_CUBE } from './cubeState';
+import { CubeNetState, CubeColor, FaceKey, SOLVED_CUBE, rotateWhiteToBottom } from './cubeState';
 
 export interface CubeValidationResult {
   isValid: boolean;
@@ -16,10 +16,20 @@ export interface CubeValidationResult {
   };
 }
 
-// Standard WCA Face Centers
+// Standard WCA Face Centers (Solving orientation: U=yellow, D=white)
 const EXPECTED_CENTERS: Record<FaceKey, CubeColor> = {
   U: 'yellow',
   D: 'white',
+  F: 'green',
+  B: 'blue',
+  L: 'orange',
+  R: 'red',
+};
+
+// Standard WCA Scramble & Camera Scan Face Centers (Scramble orientation: U=white, D=yellow)
+const SCRAMBLE_EXPECTED_CENTERS: Record<FaceKey, CubeColor> = {
+  U: 'white',
+  D: 'yellow',
   F: 'green',
   B: 'blue',
   L: 'orange',
@@ -220,11 +230,15 @@ export function validateCubeState(cube: CubeNetState): CubeValidationResult {
     );
   }
 
-  // 2. Fixed Centers Check (U=yellow, D=white, F=green, B=blue, L=orange, R=red)
+  // 2. Fixed Centers Check (supports both Scramble orientation U=white, D=yellow and Solving orientation U=yellow, D=white)
+  const isScrambleOrientation = cube.U?.[4] === 'white';
+  const targetCenters = isScrambleOrientation ? SCRAMBLE_EXPECTED_CENTERS : EXPECTED_CENTERS;
+  const testCube = isScrambleOrientation ? rotateWhiteToBottom(cube) : cube;
+
   let centersValid = true;
   for (const f of faces) {
     const centerColor = cube[f]?.[4];
-    const expected = EXPECTED_CENTERS[f];
+    const expected = targetCenters[f];
     if (centerColor !== expected) {
       centersValid = false;
       errors.push(
@@ -242,8 +256,8 @@ export function validateCubeState(cube: CubeNetState): CubeValidationResult {
 
   for (let slotIdx = 0; slotIdx < EDGE_SLOTS.length; slotIdx++) {
     const slot = EDGE_SLOTS[slotIdx];
-    const c1 = cube[slot.face1]?.[slot.idx1];
-    const c2 = cube[slot.face2]?.[slot.idx2];
+    const c1 = testCube[slot.face1]?.[slot.idx1];
+    const c2 = testCube[slot.face2]?.[slot.idx2];
 
     if (!c1 || !c2) {
       edgesValid = false;
@@ -298,9 +312,9 @@ export function validateCubeState(cube: CubeNetState): CubeValidationResult {
 
   for (let slotIdx = 0; slotIdx < CORNER_SLOTS.length; slotIdx++) {
     const slot = CORNER_SLOTS[slotIdx];
-    const s0 = cube[slot.stickers[0].face]?.[slot.stickers[0].idx];
-    const s1 = cube[slot.stickers[1].face]?.[slot.stickers[1].idx];
-    const s2 = cube[slot.stickers[2].face]?.[slot.stickers[2].idx];
+    const s0 = testCube[slot.stickers[0].face]?.[slot.stickers[0].idx];
+    const s1 = testCube[slot.stickers[1].face]?.[slot.stickers[1].idx];
+    const s2 = testCube[slot.stickers[2].face]?.[slot.stickers[2].idx];
 
     if (!s0 || !s1 || !s2) {
       cornersValid = false;

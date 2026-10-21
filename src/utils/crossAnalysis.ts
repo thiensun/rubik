@@ -1,6 +1,6 @@
 // Real-world Speedcubing Inspection & Cross Evaluation System
 // Based on WCA Inspection Regulations (Rule B4) and CFOP Cross Efficiency Principles
-import { CubeNetState, CubeColor, FaceKey, CUBE_HEX_COLORS } from './cubeState';
+import { CubeNetState, CubeColor, FaceKey, CUBE_HEX_COLORS, rotateWhiteToBottom } from './cubeState';
 import { SolverLevelId } from '../types/cubing';
 
 export interface CrossFaceAnalysis {
@@ -200,7 +200,9 @@ export function getCrossAdvisor(
     R: Array(9).fill('red') as any,
   };
 
-  const actualCube = cubeState || fallbackCube;
+  const actualCube = cubeState
+    ? (cubeState.U?.[4] === 'white' ? rotateWhiteToBottom(cubeState) : cubeState)
+    : fallbackCube;
   const faces: FaceKey[] = ['D', 'U', 'F', 'B', 'R', 'L'];
   const options = faces.map((f) => evaluateFaceCross(actualCube, f));
 

@@ -9,7 +9,7 @@ Tài liệu này lưu trữ toàn bộ Knowledge Items (KI), các quyết địn
 - **Điểm khác biệt (USP)**: Tích hợp công nghệ AI (Camera Color Recognition, CIELAB Delta-E, CFOP Solver, WCA Inspection 15s) giúp người dùng quét và giải khối Rubik thực tế một cách trực quan, chính xác vượt trội so với các trang web thông thường.
 - **Tech Stack**:
   - Frontend: React + TypeScript + Vite + Tailwind CSS + Three.js (Interactive 3D Viewport) + Lucide Icons.
-  - Test Suite: Vitest (395/395 automated tests, 14 test suites).
+  - Test Suite: Vitest (399/399 automated tests, 15 test suites).
   - Code Splitting: Bundle chunks tách riêng Three.js, Lucide, React-vendor đảm bảo build không vượt quá ngưỡng cảnh báo 500 kB.
 
 ---
@@ -22,24 +22,31 @@ Tài liệu này lưu trữ toàn bộ Knowledge Items (KI), các quyết địn
   - Xanh lá (Green) đối diện Xanh dương (Blue).
   - Đỏ (Red) đối diện Cam (Orange).
 
-### 2.2. Chiều Không Gian 3D (Right-Hand Rule & Standard WCA Scheme)
-Hệ thống solver toán học, 2D net và 3D viewport chuẩn hóa theo chuẩn quốc tế WCA:
-- **Đáy D (Down)**: Màu **Trắng (White)** — Tầng đáy luôn luôn làm **Cross Trắng (White Cross)** và F2L theo quy chuẩn CFOP/LBL.
-- **Đỉnh U (Up)**: Màu **Vàng (Yellow)** — Tầng đỉnh giải OLL và PLL (Last Layer).
-- **Mặt Trước F (Front)**: Màu **Xanh lá (Green)**.
-- **Mặt Sau B (Back)**: Màu **Xanh dương (Blue)**.
+### 2.2. Quy Ước Scramble (Step 1 Timer & Scramble Net) & Camera Scan (Step 2)
+Tuân thủ 100% chuẩn quy ước thi đấu quốc tế WCA (Rule 4d) và csTimer:
+- **Đỉnh U (Up)**: Màu **Trắng (White)** — Tâm trắng luôn hướng lên trên khi xáo khối và vẽ sơ đồ 2D.
+- **Mặt Trước F (Front)**: Màu **Xanh lá (Green)** — Nhìn trực diện.
 - **Mặt Phải R (Right)**: Màu **Đỏ (Red)**.
 - **Mặt Trái L (Left)**: Màu **Cam (Orange)**.
+- **Mặt Sau B (Back)**: Màu **Xanh dương (Blue)**.
+- **Đáy D (Down)**: Màu **Vàng (Yellow)**.
 
-> [!IMPORTANT]
-> **Quy Tắc Chirality & Hệ Trục Không Gian**:
-> Khi Đáy là Trắng ($D$), Đỉnh là Vàng ($U$) và Trước là Xanh lá ($F$), Bên Phải **bắt buộc là Đỏ ($R$)** và Bên Trái là Cam ($L$). Đây là hệ trục tọa độ bàn tay phải chuẩn quốc tế ($+X \text{ Đỏ} \times +Y \text{ Vàng} = +Z \text{ Xanh lá}$), bảo toàn hoàn hảo tính đối xứng không gian (Chirality) và chẵn lẻ hoán vị (Parity).
-
-### 2.3. Sơ Đồ Chiếu Phẳng 2D Net
-Cả trong Bước 2 (Quét Camera) và thẻ hiển thị Scramble Net 2D:
-- **Hàng 1**: Đỉnh **U (Vàng)**
+### 2.3. Sơ Đồ Chiếu Phẳng 2D Net (Step 1 Scramble Preview & Step 2 Camera Scan)
+- **Hàng 1**: Đỉnh **U (Trắng)**
 - **Hàng 2**: **L (Cam)** — **F (Xanh lá)** — **R (Đỏ)** — **B (Xanh dương)**
-- **Hàng 3**: Đáy **D (Trắng - Cross)**
+- **Hàng 3**: Đáy **D (Vàng)**
+
+### 2.4. Quy Ước Rubik 3D & Solver (Step 3 Interactive Solver)
+- **Tự động lật xoay tâm Trắng xuống đáy (`rotateWhiteToBottom`)**:
+  Dựa trên khối Rubik đã quét hoặc mẫu Scramble (vốn có Trắng ở trên), khi chuyển sang bước giải 3D:
+  - Khối 3D tự động xoay tâm Trắng xuống mặt đáy ($D$), đưa tâm Vàng lên mặt đỉnh ($U$).
+  - **Đáy D (Down)**: Màu **Trắng (White)** — Tầng đáy **luôn luôn giải Cross Trắng (White Cross)** và F2L theo chuẩn CFOP/LBL.
+  - **Đỉnh U (Up)**: Màu **Vàng (Yellow)** — Tầng đỉnh giải OLL và PLL (Last Layer).
+  - **Mặt Trước F (Front)**: Màu **Xanh lá (Green)**.
+  - **Mặt Phải R (Right)**: Màu **Đỏ (Red)**.
+  - **Mặt Trái L (Left)**: Màu **Cam (Orange)**.
+  - **Mặt Sau B (Back)**: Màu **Xanh dương (Blue)**.
+- **Bảo toàn vật lý & toán học**: Hàm `rotateWhiteToBottom` hoán đổi tọa độ $U \leftrightarrow D$ và lật đối xứng các mặt bên ($F, B, L, R$), bảo toàn nguyên vẹn 100% cấu trúc viên góc, viên cạnh và tính chẵn lẻ hoán vị (Parity).
 
 ---
 
@@ -51,8 +58,8 @@ Người dùng cầm khối Rubik nhìn thẳng vào mặt trước và xoay the
 2. **R (Right - Đỏ)**: Xoay khối 90° sang phải (nhìn mặt Đỏ).
 3. **B (Back - Xanh dương)**: Tiếp tục xoay 90° sang phải (nhìn mặt Xanh dương).
 4. **L (Left - Cam)**: Tiếp tục xoay 90° sang phải (nhìn mặt Cam).
-5. **U (Up - Vàng)**: Nghiêng khối nhìn mặt đỉnh (nhìn mặt Vàng).
-6. **D (Down - Trắng)**: Nghiêng khối nhìn mặt đáy (nhìn mặt Trắng làm Cross) $\rightarrow$ Hoàn tất 6 mặt.
+5. **U (Up - Trắng)**: Nghiêng khối nhìn mặt đỉnh (nhìn mặt Trắng).
+6. **D (Down - Vàng)**: Nghiêng khối nhìn mặt đáy (nhìn mặt Vàng) $\rightarrow$ Hoàn tất 6 mặt.
 
 ### 3.2. Tính Năng Auto-Scan & Ổn Định Hình Ảnh
 - **Tự động chụp khi đúng tâm & ổn định**: Khi tâm mặt được camera nhận diện trùng khớp với màu tâm yêu cầu (`targetCenterColor`), đồng thời tín hiệu màu ổn định trong 600ms, hệ thống sẽ tự động kích hoạt chụp và chuyển sang mặt kế tiếp.
@@ -75,7 +82,7 @@ Người dùng cầm khối Rubik nhìn thẳng vào mặt trước và xoay the
 ---
 
 ## 5. Quy Chuẩn Đóng Gói, Test & Triển Khai (CI/CD)
-- **Kiểm thử tự động bắt buộc**: Trước khi commit và push bất kỳ thay đổi nào, bắt buộc phải chạy `npm test` và đảm bảo **395/395 tests PASS** (14/14 test suites).
+- **Kiểm thử tự động bắt buộc**: Trước khi commit và push bất kỳ thay đổi nào, bắt buộc phải chạy `npm test` và đảm bảo **399/399 tests PASS** (15/15 test suites).
 - **Production Build**: Chạy `npm run build` để kiểm tra độ tương thích TypeScript và kích thước gói bundle không vượt ngưỡng warning của Vite.
 - **Git Remote**: Nhánh chính là `main`, remote `origin` trỏ về `https://github.com/thiensun/rubik.git`.
 - **Đồng bộ song song**: Luôn giữ đồng bộ giữa thư mục phát triển chính `D:\Projects\rubik` và worktree `C:\Users\diamo\.gemini\antigravity\worktrees\rubik\audit_and_refactor_code`.

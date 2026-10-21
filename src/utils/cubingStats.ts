@@ -20,6 +20,55 @@ export function formatTime(ms: number | null | undefined, penalty: PenaltyType =
   return `${pad(totalSeconds)}.${pad(hundredths)}`;
 }
 
+/**
+ * Parse flexible user input strings into milliseconds:
+ * Examples:
+ *  - "9.31" or "9,31" -> 9310
+ *  - "931" (meaning 9.31 if length >= 3 or direct digits)
+ *  - "1:04.25" or "1:04,25" -> 64250
+ *  - "10.5" -> 10500
+ *  - "45" -> 45000 (if >= 10 and no dot, or 45s)
+ */
+export function parseTimeInput(input: string): number | null {
+  if (!input) return null;
+  const clean = input.trim().replace(',', '.');
+
+  // Case 1: mm:ss.xx or m:ss.xx (e.g. "1:04.25" or "1:15")
+  if (clean.includes(':')) {
+    const parts = clean.split(':');
+    if (parts.length === 2) {
+      const minutes = parseInt(parts[0], 10);
+      const seconds = parseFloat(parts[1]);
+      if (!isNaN(minutes) && !isNaN(seconds) && minutes >= 0 && seconds >= 0 && seconds < 60) {
+        return Math.round((minutes * 60 + seconds) * 1000);
+      }
+    }
+    return null;
+  }
+
+  // Case 2: standard decimal seconds "9.31", "12.5", "0.47"
+  if (clean.includes('.')) {
+    const sec = parseFloat(clean);
+    if (!isNaN(sec) && sec >= 0) {
+      return Math.round(sec * 1000);
+    }
+    return null;
+  }
+
+  // Case 3: pure integer input, e.g. "931" (meaning 9.31s) or "15" (15s)
+  const num = parseInt(clean, 10);
+  if (!isNaN(num) && num >= 0) {
+    if (clean.length >= 3) {
+      // "931" -> 9.31s -> 9310ms, "1245" -> 12.45s -> 12450ms
+      return num * 10;
+    }
+    // "15" -> 15.00s -> 15000ms
+    return num * 1000;
+  }
+
+  return null;
+}
+
 // Get effective milliseconds accounting for penalty
 export function getEffectiveTime(solve: SolveRecord): number {
   if (solve.penalty === 'dnf') return Infinity;

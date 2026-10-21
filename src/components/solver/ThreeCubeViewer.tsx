@@ -179,8 +179,8 @@ function getCubeletFaceColor(
   const fallbackColors = {
     R: 0xb71234, // Red
     L: 0xff5800, // Orange
-    U: 0xffffff, // White (Top - Đỉnh)
-    D: 0xffd000, // Yellow (Down - Đáy)
+    U: 0xffd000, // Yellow (Top - Last Layer)
+    D: 0xffffff, // White (Down - Cross)
     F: 0x009b48, // Green
     B: 0x0046ad, // Blue
   };
@@ -192,10 +192,10 @@ function getCubeletFaceColor(
   let colorName: CubeColor = 'white';
   switch (face) {
     case 'U':
-      colorName = initialCubeState.U[(z + 1) * 3 + (x + 1)] || 'white';
+      colorName = initialCubeState.U[(z + 1) * 3 + (x + 1)] || 'yellow';
       break;
     case 'D':
-      colorName = initialCubeState.D[(1 - z) * 3 + (x + 1)] || 'yellow';
+      colorName = initialCubeState.D[(1 - z) * 3 + (x + 1)] || 'white';
       break;
     case 'F':
       colorName = initialCubeState.F[(1 - y) * 3 + (x + 1)] || 'green';

@@ -109,7 +109,7 @@ describe('Empirical Challenger M1 — Rigorous Verification Suite', () => {
 
       it('rejects 10 white and 8 yellow stickers', () => {
         const badCube = cloneCube(SOLVED_CUBE);
-        badCube.D[0] = 'white';
+        badCube.U[0] = 'white';
         const res = validateCubeState(badCube);
         expect(res.isValid).toBe(false);
         expect(res.details.colorCountsValid).toBe(false);
@@ -129,7 +129,7 @@ describe('Empirical Challenger M1 — Rigorous Verification Suite', () => {
     describe('Illegal Center Colors', () => {
       it('rejects non-standard center colors with Vietnamese diagnostic', () => {
         const badCube = cloneCube(SOLVED_CUBE);
-        badCube.D[4] = 'white';
+        badCube.D[4] = 'yellow';
         const res = validateCubeState(badCube);
         expect(res.isValid).toBe(false);
         expect(res.details.centersValid).toBe(false);
@@ -151,10 +151,10 @@ describe('Empirical Challenger M1 — Rigorous Verification Suite', () => {
 
       it('rejects duplicate corner piece with Vietnamese error', () => {
         const badCube = cloneCube(SOLVED_CUBE);
-        // Replace DBR with DFR (yellow, green, red) with correct chirality
+        // Replace DBR with DFR (white, green, red) with correct chirality
         // DBR slot: sticker 0 is D[8], sticker 1 is R[8], sticker 2 is B[6]
-        // DFR standard piece colors: ['yellow', 'green', 'red']
-        badCube.D[8] = 'yellow';
+        // DFR standard piece colors: ['white', 'green', 'red']
+        badCube.D[8] = 'white';
         badCube.R[8] = 'green';
         badCube.B[6] = 'red';
         const res = validateCubeState(badCube);
@@ -457,7 +457,7 @@ describe('Empirical Challenger M1 — Rigorous Verification Suite', () => {
     describe('Solver Behavior when solving invalid state', () => {
       it('returns success: false and includes Vietnamese error message if cube is invalid', () => {
         const badCube = cloneCube(SOLVED_CUBE);
-        badCube.D[0] = 'white'; // invalid color counts (10 white, 8 yellow)
+        badCube.U[0] = 'white'; // invalid color counts
         const res = solveCube(badCube);
         expect(res.success).toBe(false);
         expect(res.moves.length).toBe(0);

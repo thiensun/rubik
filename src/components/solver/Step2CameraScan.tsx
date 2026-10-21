@@ -54,9 +54,9 @@ const FACES_ORDER: FaceMeta[] = [
   { key: 'F', name: 'Front', vietnameseName: 'Mặt Trước (Xanh lá)', centerColor: 'green', centerHex: '#009B48', centerLabel: 'GREEN CTR', nextPrompt: 'Xoay khối 90° sang Mặt Phải (Đỏ)' },
   { key: 'R', name: 'Right', vietnameseName: 'Mặt Phải (Đỏ)', centerColor: 'red', centerHex: '#B71234', centerLabel: 'RED CTR', nextPrompt: 'Xoay khối 90° sang Mặt Sau (Xanh dương)' },
   { key: 'B', name: 'Back', vietnameseName: 'Mặt Sau (Xanh dương)', centerColor: 'blue', centerHex: '#0046AD', centerLabel: 'BLUE CTR', nextPrompt: 'Xoay khối 90° sang Mặt Trái (Cam)' },
-  { key: 'L', name: 'Left', vietnameseName: 'Mặt Trái (Cam)', centerColor: 'orange', centerHex: '#FF5800', centerLabel: 'ORANGE CTR', nextPrompt: 'Nghiêng khối lên Mặt Đỉnh U (Trắng)' },
-  { key: 'U', name: 'Up', vietnameseName: 'Mặt Đỉnh U (Trắng)', centerColor: 'white', centerHex: '#FFFFFF', centerLabel: 'WHITE (UP)', nextPrompt: 'Nghiêng khối xuống Mặt Đáy D (Vàng)' },
-  { key: 'D', name: 'Down', vietnameseName: 'Mặt Đáy D (Vàng)', centerColor: 'yellow', centerHex: '#FFD000', centerLabel: 'YELLOW (DOWN)', nextPrompt: 'Quét hoàn tất! Đã thu thập đủ 6 mặt.' },
+  { key: 'L', name: 'Left', vietnameseName: 'Mặt Trái (Cam)', centerColor: 'orange', centerHex: '#FF5800', centerLabel: 'ORANGE CTR', nextPrompt: 'Nghiêng khối lên Mặt Đỉnh U (Vàng)' },
+  { key: 'U', name: 'Up', vietnameseName: 'Mặt Đỉnh U (Vàng)', centerColor: 'yellow', centerHex: '#FFD000', centerLabel: 'YELLOW (UP)', nextPrompt: 'Nghiêng khối xuống Mặt Đáy D (Trắng)' },
+  { key: 'D', name: 'Down', vietnameseName: 'Mặt Đáy D (Trắng)', centerColor: 'white', centerHex: '#FFFFFF', centerLabel: 'WHITE (DOWN)', nextPrompt: 'Quét hoàn tất! Đã thu thập đủ 6 mặt.' },
 ];
 
 
@@ -123,12 +123,12 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   // State of all 54 stickers across 6 faces
   const [cubeNetData, setCubeNetData] = useState<Record<FaceKey, CubeColor[]>>(() => {
     return {
-      U: ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'],
+      U: ['yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow'],
       F: ['green', 'green', 'green', 'green', 'green', 'green', 'green', 'green', 'green'],
       R: ['red', 'red', 'red', 'red', 'red', 'red', 'red', 'red', 'red'],
       B: ['blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'blue'],
       L: ['orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange'],
-      D: ['yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow'],
+      D: ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'],
     };
   });
 
@@ -1199,7 +1199,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
                 <div className="grid grid-cols-4 gap-1.5 sm:gap-2 items-center">
                   {/* Row 1: U is at column 2 (Yellow - Last Layer) */}
                   <div className="col-start-2">
-                    {renderNetFace('U', 'U - TRẮNG (ĐỈNH)')}
+                    {renderNetFace('U', 'U - VÀNG (ĐỈNH)')}
                   </div>
 
                   {/* Row 2: L, F, R, B across all 4 cols */}
@@ -1212,7 +1212,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
 
                   {/* Row 3: D is at column 2 (White - Cross) */}
                   <div className="col-start-2">
-                    {renderNetFace('D', 'D - VÀNG (ĐÁY)')}
+                    {renderNetFace('D', 'D - TRẮNG (CROSS)')}
                   </div>
                 </div>
               </div>

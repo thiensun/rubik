@@ -99,6 +99,11 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   // Diagnosis: Solid Green Glitch (YUV uninitialized driver lock)
   const [isCameraBlockedOrGreen, setIsCameraBlockedOrGreen] = useState<boolean>(false);
 
+  // AI Optical Stability & Lighting tracking
+  const [aiConfidenceScore, setAiConfidenceScore] = useState<number>(95);
+  const [isLightingGood, setIsLightingGood] = useState<boolean>(true);
+  const stabilityHistoryRef = useRef<string[]>([]);
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -307,16 +312,31 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
             if (sampled.length === 9) {
               setLiveDetected(sampled);
 
+              // Calculate overall AI Confidence & Lighting Metrics
+              const avgConf = Math.round(sampled.reduce((sum, s) => sum + s.confidence, 0) / 9);
+              setAiConfidenceScore(avgConf);
+
+              const avgV = sampled.reduce((sum, s) => sum + s.hsv[2], 0) / 9;
+              setIsLightingGood(avgV >= 0.28 && avgV <= 0.95);
+
               // Check if stream is returning uninitialized YUV (all pure green ~ #008700 with R<25, G>50, B<25)
               const allGreenGlitch = sampled.every(
                 (s) => s.rgb[0] < 30 && s.rgb[1] > 50 && s.rgb[2] < 30
               );
               setIsCameraBlockedOrGreen(allGreenGlitch);
 
+              // Track stability history: 9 colors serialized
+              const currentFingerprint = sampled.map((s) => s.color).join('-');
+              const history = stabilityHistoryRef.current;
+              history.push(currentFingerprint);
+              if (history.length > 6) history.shift();
+
+              const isStable = history.length >= 5 && history.every((fp) => fp === currentFingerprint);
+
               // Check if center tile matches current target face center
               const centerDetected = sampled[4].color;
               const matchesCenter = centerDetected === activeFaceMeta.centerColor;
-              setCenterAligned(matchesCenter);
+              setCenterAligned(matchesCenter && isStable);
             }
           }
         } else if (cameraStatus === 'virtual') {
@@ -880,8 +900,10 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
               </div>
 
               <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/15 text-white font-mono text-[10px] sm:text-[11px] shadow-sm">
-                <Sun className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
-                <span>EV: Balanced</span>
+                <Sun className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${isLightingGood ? 'text-amber-400' : 'text-red-400'}`} />
+                <span>{isLightingGood ? 'AI Light: Optimal' : 'AI Light: Sub-optimal'}</span>
+                <span className="text-slate-400">•</span>
+                <span className="text-cyan-400 font-bold">{aiConfidenceScore}% Acc</span>
               </div>
             </div>
 

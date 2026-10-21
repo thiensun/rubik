@@ -433,7 +433,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
           }
         }
       }}
-      className="w-full relative flex flex-col items-center justify-center pt-8 pb-14 sm:pb-20 px-3 sm:px-10 select-none bg-white rounded-3xl border border-mono-200/70 shadow-apple-float transition-all overflow-visible"
+      className="w-full relative flex flex-col items-center justify-center pt-4 sm:pt-8 pb-8 sm:pb-20 px-2.5 sm:px-10 select-none bg-white rounded-3xl border border-mono-200/70 shadow-apple-float transition-all overflow-visible"
     >
       {/* Subtle Zen backdrop aura effect */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-mono-100/40 via-transparent to-transparent pointer-events-none opacity-60 rounded-3xl" />
@@ -451,32 +451,32 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       />
 
       {/* Scramble Zone: Centered Directly Above Timer with Minimalist Tooltipped Icon Actions */}
-      <div className="relative z-20 w-full max-w-4xl flex flex-col items-center text-center gap-2.5 mb-6 sm:mb-8">
+      <div className="relative z-20 w-full max-w-4xl flex flex-col items-center text-center gap-1.5 sm:gap-2.5 mb-3 sm:mb-8">
         {/* Metadata chips */}
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-mono-100 text-mono-600 font-mono text-[11px] font-medium border border-mono-200/50">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-mono-100 text-mono-600 font-mono text-[10px] sm:text-[11px] font-medium border border-mono-200/50">
             <span className="w-1.5 h-1.5 rounded-full bg-mono-400" />
             WCA Rule 4b
           </span>
-          <span className="px-2 py-0.5 rounded-md bg-mono-100 text-mono-700 font-mono text-[11px] font-medium">
+          <span className="px-2 py-0.5 rounded-md bg-mono-100 text-mono-700 font-mono text-[10px] sm:text-[11px] font-medium">
             Round {roundNumber} · #{solveNumber}
           </span>
           <span className="text-mono-300 text-xs hidden sm:inline">|</span>
-          <span className="text-[11px] font-mono text-mono-500">{moveCount} Moves (HTM)</span>
+          <span className="text-[10px] sm:text-[11px] font-mono text-mono-500 hidden xs:inline">{moveCount} Moves (HTM)</span>
         </div>
 
         {/* Centered Scramble Formula */}
-        <div className="w-full px-2">
+        <div className="w-full px-1 sm:px-2">
           <p
             id="current-scramble"
-            className="font-mono text-base sm:text-xl md:text-2xl leading-relaxed tracking-wider text-mono-950 font-semibold break-words select-all text-center"
+            className="font-mono text-sm sm:text-xl md:text-2xl leading-snug sm:leading-relaxed tracking-normal sm:tracking-wider text-mono-950 font-semibold break-words select-all text-center max-h-20 sm:max-h-none overflow-y-auto"
           >
             {scramble}
           </p>
         </div>
 
         {/* Minimalist Centered Icon-Only Action Toolbar with Tooltips */}
-        <div className="flex items-center justify-center gap-2 pt-1 relative">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 pt-0.5 sm:pt-1 relative">
           {/* Next Scramble Icon Button */}
           <div className="relative group">
             <button
@@ -595,17 +595,17 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       </div>
 
       {/* Center Stage: Grand Digital Precision Timer Focal Point */}
-      <div className="relative z-10 flex flex-col items-center gap-3">
+      <div className="relative z-10 flex flex-col items-center gap-1.5 sm:gap-3">
         {/* State Pill & Arming Feedback */}
         {renderStatePill()}
 
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
+        <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5">
+          <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-mono bg-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
             Hold: Amber Glow
           </span>
           <span className="text-mono-300 text-xs">→</span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-sm">
+          <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Ready: Emerald Green
           </span>
@@ -615,7 +615,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       {/* Huge, Commanding Monospace Digital Timer */}
       <div
         id="click-trigger-area"
-        className="relative z-10 my-4 sm:my-8 cursor-pointer transform transition-transform active:scale-[0.99] group text-center max-w-full overflow-hidden"
+        className="relative z-10 my-2 sm:my-8 cursor-pointer transform transition-transform active:scale-[0.99] group text-center max-w-full overflow-hidden"
       >
         <div className="flex items-baseline justify-center max-w-full px-1">
           {(() => {
@@ -632,7 +632,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
             );
           })()}
         </div>
-        <p className="text-mono-400 text-xs font-sans tracking-wide mt-3 group-hover:text-mono-700 transition-colors">
+        <p className="text-mono-400 text-[11px] sm:text-xs font-sans tracking-wide mt-1.5 sm:mt-3 group-hover:text-mono-700 transition-colors">
           {timerState === 'inspection'
             ? 'Đang xem trước 15s · Nhấn giữ Spacebar hoặc click giữ để vào trạng thái Sẵn sàng'
             : inspectionEnabled
@@ -642,7 +642,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       </div>
 
       {/* Subtle keyboard hints underneath */}
-      <div className="relative z-10 flex items-center justify-center gap-4 text-xs font-mono text-mono-400 pt-2">
+      <div className="relative z-10 flex items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-mono text-mono-400 pt-1 sm:pt-2">
         <span className="flex items-center gap-1">
           <kbd className="px-1.5 py-0.5 rounded bg-mono-100 text-mono-600 border border-mono-200/50">
             Space

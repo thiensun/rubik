@@ -133,6 +133,62 @@ export const App: React.FC = () => {
     setCubeNetState(applyScramble(nextScramble));
   };
 
+  // Manual solve entry (from external Stackmat timer, hand timer, etc.)
+  const handleAddManualSolve = (timeMs: number, penalty: PenaltyType = 'none', customScramble?: string) => {
+    const isNewPB = sessionStats.bestTime === null || timeMs < sessionStats.bestTime;
+    const newId = solves.length > 0 ? Math.max(...solves.map((s) => s.id)) + 1 : 1;
+    const moves = Math.floor(Math.random() * 12) + 52;
+    const seconds = timeMs / 1000;
+    const tps = Number((moves / Math.max(0.1, seconds)).toFixed(2));
+    const targetScramble = customScramble || scramble;
+
+    const newSolve: SolveRecord = {
+      id: newId,
+      timeMs,
+      penalty,
+      scramble: targetScramble,
+      timestamp: Date.now(),
+      moves,
+      tps,
+      isPB: isNewPB,
+      comment: 'Manual Entry',
+    };
+
+    setSolves((prev) => [newSolve, ...prev]);
+
+    if (isNewPB && penalty !== 'dnf') {
+      sound.playPBChord();
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#059669', '#10B981', '#34D399', '#111111', '#F59E0B'],
+      });
+    }
+
+    // Refresh scramble for next solve
+    const nextScramble = generateWCAScramble(21);
+    setScramble(nextScramble);
+    setCubeNetState(applyScramble(nextScramble));
+  };
+
+  // Edit existing solve time
+  const handleEditSolveTime = (id: number, newTimeMs: number) => {
+    setSolves((prev) =>
+      prev.map((s) => {
+        if (s.id !== id) return s;
+        const seconds = newTimeMs / 1000;
+        const moves = s.moves || 56;
+        const tps = Number((moves / Math.max(0.1, seconds)).toFixed(2));
+        return {
+          ...s,
+          timeMs: newTimeMs,
+          tps,
+        };
+      })
+    );
+  };
+
   // Penalty modification
   const handleUpdatePenalty = (id: number, penalty: PenaltyType) => {
     setSolves((prev) =>
@@ -258,6 +314,8 @@ export const App: React.FC = () => {
               <div className="lg:col-span-5 w-full">
                 <SessionHistoryCard
                   solves={solves}
+                  onAddManualSolve={handleAddManualSolve}
+                  onEditSolveTime={handleEditSolveTime}
                   onUpdatePenalty={handleUpdatePenalty}
                   onDeleteSolve={handleDeleteSolve}
                   onClearSession={handleClearSession}

@@ -159,7 +159,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   }, []);
 
   // Start real webcam stream with robust constraints & device selection
-  const startCamera = useCallback(async (deviceIdOverride?: string) => {
+  const startCamera = useCallback(async (deviceIdOverride?: string, facingOverride?: 'user' | 'environment') => {
     setCameraStatus('requesting');
     setIsCameraBlockedOrGreen(false);
 
@@ -171,15 +171,16 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
 
     if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       try {
-        const targetDeviceId = deviceIdOverride || selectedDeviceId;
+        const targetDeviceId = deviceIdOverride !== undefined ? deviceIdOverride : selectedDeviceId;
+        const targetFacing = facingOverride !== undefined ? facingOverride : cameraFacing;
 
-        // Use ideal constraints for desktop laptop compatibility
+        // Use ideal constraints for desktop laptop and mobile compatibility
         const videoConstraints: MediaTrackConstraints = targetDeviceId
           ? { deviceId: { exact: targetDeviceId } }
           : {
               width: { ideal: 1280 },
               height: { ideal: 720 },
-              facingMode: { ideal: cameraFacing },
+              facingMode: { ideal: targetFacing },
             };
 
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -189,6 +190,34 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
 
         streamRef.current = stream;
         setActiveStream(stream);
+
+        // Detect actual facing mode from the active track if available, or infer from device label
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          const settings = videoTrack.getSettings ? videoTrack.getSettings() : null;
+          const trackFacing = settings?.facingMode as 'user' | 'environment' | undefined;
+          const trackLabel = (videoTrack.label || '').toLowerCase();
+
+          if (trackFacing === 'environment' || trackFacing === 'user') {
+            setCameraFacing(trackFacing);
+          } else if (
+            trackLabel.includes('back') ||
+            trackLabel.includes('rear') ||
+            trackLabel.includes('environment') ||
+            trackLabel.includes('sau')
+          ) {
+            setCameraFacing('environment');
+          } else if (
+            trackLabel.includes('front') ||
+            trackLabel.includes('user') ||
+            trackLabel.includes('trước') ||
+            trackLabel.includes('selfie')
+          ) {
+            setCameraFacing('user');
+          } else if (targetFacing) {
+            setCameraFacing(targetFacing);
+          }
+        }
 
         // Populate device labels now that permission is granted
         await refreshDevicesList();
@@ -263,20 +292,30 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
     };
   }, [startCamera]);
 
-  // Switch to next available video device
+  // Switch to next available video device or flip front/back
   const handleSwitchToNextDevice = useCallback(() => {
     if (videoDevices.length > 1) {
       const currentIndex = videoDevices.findIndex((d) => d.deviceId === selectedDeviceId);
       const nextIndex = (currentIndex + 1) % videoDevices.length;
       const nextDevice = videoDevices[nextIndex];
       setSelectedDeviceId(nextDevice.deviceId);
-      startCamera(nextDevice.deviceId);
+
+      // Infer facing from label if present
+      const label = (nextDevice.label || '').toLowerCase();
+      let nextFacing: 'user' | 'environment' | undefined = undefined;
+      if (label.includes('back') || label.includes('rear') || label.includes('environment') || label.includes('sau')) {
+        nextFacing = 'environment';
+      } else if (label.includes('front') || label.includes('user') || label.includes('trước') || label.includes('selfie')) {
+        nextFacing = 'user';
+      }
+
+      startCamera(nextDevice.deviceId, nextFacing);
       sound.playTick();
     } else {
       // Toggle facingMode between user and environment
       const nextFacing = cameraFacing === 'user' ? 'environment' : 'user';
       setCameraFacing(nextFacing);
-      startCamera();
+      startCamera(undefined, nextFacing);
       sound.playTick();
     }
   }, [videoDevices, selectedDeviceId, cameraFacing, startCamera]);
@@ -757,14 +796,19 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
                   }}
                   className="flex-1 min-w-0 bg-white border border-[#D0D5DD] rounded-lg px-2 py-1 text-[11px] sm:text-xs font-medium text-neutral-900 focus:outline-none focus:ring-1 focus:ring-black truncate"
                 >
-                  {videoDevices.map((dev, idx) => (
-                    <option key={dev.deviceId || idx} value={dev.deviceId}>
-                      {dev.label || `Camera ${idx + 1}`}
-                    </option>
-                  ))}
+                  {videoDevices.map((dev, idx) => {
+                    const label = dev.label || `Camera ${idx + 1}`;
+                    return (
+                      <option key={dev.deviceId || idx} value={dev.deviceId}>
+                        {label}
+                      </option>
+                    );
+                  })}
                 </select>
               ) : (
-                <span className="text-neutral-500 font-normal truncate text-[11px] sm:text-xs">Default Camera</span>
+                <span className="text-neutral-500 font-normal truncate text-[11px] sm:text-xs">
+                  {cameraFacing === 'environment' ? 'Camera Sau (Rear)' : 'Camera Trước (Front)'}
+                </span>
               )}
             </div>
 
@@ -772,11 +816,11 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
               <button
                 type="button"
                 onClick={handleSwitchToNextDevice}
-                className="px-2 py-1 rounded-lg bg-white border border-[#D0D5DD] hover:bg-neutral-100 text-neutral-800 text-[10.5px] sm:text-[11px] font-bold flex items-center gap-1 shadow-2xs"
-                title="Đổi camera khác hoặc đổi trước/sau"
+                className="px-2.5 py-1 rounded-lg bg-white border border-[#D0D5DD] hover:bg-neutral-100 text-neutral-800 text-[10.5px] sm:text-[11px] font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                title="Đổi camera trước / sau hoặc đổi ống kính"
               >
-                <FlipHorizontal className="w-3 h-3 text-neutral-500" />
-                <span>Đổi Cam</span>
+                <FlipHorizontal className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{cameraFacing === 'environment' ? 'Dùng Cam Sau' : 'Dùng Cam Trước'}</span>
               </button>
 
               <button

@@ -658,14 +658,14 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
         >
           {isManualInputActive ? (
             <div
-              className="flex flex-col items-center justify-center w-full max-w-sm px-2 animate-fadeIn"
+              className="flex items-baseline justify-center max-w-full px-1 w-full"
               onClick={(e) => e.stopPropagation()}
             >
               <input
                 ref={manualInputRef}
                 type="text"
                 value={manualInputVal}
-                placeholder="00.00"
+                placeholder={formatDigits(currentMs)}
                 onChange={(e) => setManualInputVal(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -688,11 +688,10 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
                     setManualInputVal('');
                   }
                 }}
-                className="w-full text-center bg-transparent border-b-2 border-mono-950 font-mono-dotted font-bold text-mono-950 focus:outline-none tracking-tight text-6xl xs:text-7xl sm:text-8xl md:text-9xl py-1"
+                className={`font-mono-dotted leading-none font-bold tabular-nums text-mono-950 bg-transparent border-none text-center focus:outline-none focus:ring-0 p-0 m-0 w-full max-w-full caret-mono-950 ${getTimerFontSizeClass(
+                  manualInputVal || formatDigits(currentMs)
+                )}`}
               />
-              <span className="text-xs sm:text-sm font-mono text-mono-500 mt-2 font-medium">
-                Gõ thời gian rồi nhấn <kbd className="px-1.5 py-0.5 rounded bg-mono-200 text-mono-800 font-bold">Enter</kbd> để lưu • <kbd className="px-1.5 py-0.5 rounded bg-mono-100 text-mono-500">Esc</kbd> để huỷ
-              </span>
             </div>
           ) : (
             <div className="flex items-baseline justify-center max-w-full px-1">

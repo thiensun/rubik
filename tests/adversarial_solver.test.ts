@@ -423,17 +423,17 @@ describe('Tier 5 Adversarial Cube Mechanics & Solver Hardening Suite', () => {
       it('rejects swapped 2 corners without swapped edges', () => {
         const badCube = cloneCube(SOLVED_CUBE);
         // Swap UFL and UFR corners preserving individual corner chirality
-        // std UFL: ['yellow', 'green', 'orange']
-        // std UFR: ['yellow', 'red', 'green']
-        // In UFL slot (U[6], F[0], L[2]): put UFR piece -> U[6]=yellow, F[0]=red, L[2]=green
-        // In UFR slot (U[8], R[0], F[2]): put UFL piece -> U[8]=yellow, R[0]=green, F[2]=orange
-        badCube.U[6] = 'yellow';
-        badCube.F[0] = 'red';
-        badCube.L[2] = 'green';
+        const uflU = badCube.U[6];
+        const uflF = badCube.F[0];
+        const uflL = badCube.L[2];
 
-        badCube.U[8] = 'yellow';
-        badCube.R[0] = 'green';
-        badCube.F[2] = 'orange';
+        badCube.U[6] = badCube.U[8];
+        badCube.F[0] = badCube.R[0];
+        badCube.L[2] = badCube.F[2];
+
+        badCube.U[8] = uflU;
+        badCube.R[0] = uflF;
+        badCube.F[2] = uflL;
 
         const val = validateCubeState(badCube);
         expect(val.isValid).toBe(false);
@@ -449,7 +449,7 @@ describe('Tier 5 Adversarial Cube Mechanics & Solver Hardening Suite', () => {
     describe('Color Count Violations & Non-WCA Colors', () => {
       it('rejects skewed color counts (10 white, 8 yellow)', () => {
         const badCube = cloneCube(SOLVED_CUBE);
-        badCube.U[0] = 'white';
+        badCube.D[0] = 'white';
         const val = validateCubeState(badCube);
         expect(val.isValid).toBe(false);
         expect(val.details.colorCountsValid).toBe(false);
@@ -482,7 +482,7 @@ describe('Tier 5 Adversarial Cube Mechanics & Solver Hardening Suite', () => {
     describe('Duplicate & Misplaced Fixed Centers', () => {
       it('rejects duplicate center colors (e.g. D center is yellow instead of white)', () => {
         const badCube = cloneCube(SOLVED_CUBE);
-        badCube.D[4] = 'yellow';
+        badCube.D[4] = 'white';
         const val = validateCubeState(badCube);
         expect(val.isValid).toBe(false);
         expect(val.details.centersValid).toBe(false);
@@ -512,8 +512,8 @@ describe('Tier 5 Adversarial Cube Mechanics & Solver Hardening Suite', () => {
 
       it('rejects duplicate edge piece (two DF pieces)', () => {
         const badCube = cloneCube(SOLVED_CUBE);
-        // Put another DF (white, green) in DB slot (D[7], B[7])
-        badCube.D[7] = 'white';
+        // Put another DF (yellow, green) in DB slot (D[7], B[7])
+        badCube.D[7] = 'yellow';
         badCube.B[7] = 'green';
         const val = validateCubeState(badCube);
         expect(val.isValid).toBe(false);
@@ -523,9 +523,9 @@ describe('Tier 5 Adversarial Cube Mechanics & Solver Hardening Suite', () => {
 
       it('rejects duplicate corner piece (two DFR pieces)', () => {
         const badCube = cloneCube(SOLVED_CUBE);
-        // std DFR: ['white', 'green', 'red']
+        // std DFR: ['yellow', 'green', 'red']
         // Put in DBR slot: D[8], R[8], B[6]
-        badCube.D[8] = 'white';
+        badCube.D[8] = 'yellow';
         badCube.R[8] = 'green';
         badCube.B[6] = 'red';
         const val = validateCubeState(badCube);

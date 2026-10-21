@@ -39,7 +39,7 @@ describe('Cube State Validator & Parity Tests', () => {
   describe('Rejection of physically invalid cube states', () => {
     it('rejects wrong color counts with Vietnamese diagnostic message', () => {
       const badCube = cloneCube(SOLVED_CUBE);
-      badCube.U[0] = 'white'; // Now 10 white, 8 yellow
+      badCube.U[0] = 'yellow'; // Now 10 yellow, 8 white
       const res = validateCubeState(badCube);
       expect(res.isValid).toBe(false);
       expect(res.details.colorCountsValid).toBe(false);

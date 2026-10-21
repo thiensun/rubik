@@ -75,17 +75,17 @@ export function applyMovesSequence(state: CubeNetState, moves: string[]): CubeNe
 // Helper: Check if White Cross on D is solved
 export function isCrossSolved(cube: CubeNetState): boolean {
   return (
-    cube.D[1] === 'white' && cube.F[7] === 'green' &&
-    cube.D[3] === 'white' && cube.L[7] === 'orange' &&
-    cube.D[5] === 'white' && cube.R[7] === 'red' &&
-    cube.D[7] === 'white' && cube.B[7] === 'blue'
+    cube.D[1] === 'yellow' && cube.F[7] === 'green' &&
+    cube.D[3] === 'yellow' && cube.L[7] === 'orange' &&
+    cube.D[5] === 'yellow' && cube.R[7] === 'red' &&
+    cube.D[7] === 'yellow' && cube.B[7] === 'blue'
   );
 }
 
 // Helper: Check if First Two Layers (F2L) are solved
 export function isF2LSolved(cube: CubeNetState): boolean {
   if (!isCrossSolved(cube)) return false;
-  if (!cube.D.every((c) => c === 'white')) return false;
+  if (!cube.D.every((c) => c === 'yellow')) return false;
 
   const sideFaces: FaceKey[] = ['F', 'B', 'L', 'R'];
   for (const f of sideFaces) {
@@ -106,13 +106,13 @@ export function isF2LSolved(cube: CubeNetState): boolean {
 
 // Helper: Check if OLL (Yellow face) is solved
 export function isOLLSolved(cube: CubeNetState): boolean {
-  return isF2LSolved(cube) && cube.U.every((c) => c === 'yellow');
+  return isF2LSolved(cube) && cube.U.every((c) => c === 'white');
 }
 
 // Helper: Check if First Layer (White face + side bottom row) is solved
 export function isFirstLayerSolved(cube: CubeNetState): boolean {
   if (!isCrossSolved(cube)) return false;
-  if (!cube.D.every((c) => c === 'white')) return false;
+  if (!cube.D.every((c) => c === 'yellow')) return false;
   const sideFaces: FaceKey[] = ['F', 'B', 'L', 'R'];
   for (const f of sideFaces) {
     const center = cube[f][4];
@@ -127,10 +127,10 @@ export function isFirstLayerSolved(cube: CubeNetState): boolean {
 export function isYellowCrossSolved(cube: CubeNetState): boolean {
   return (
     isF2LSolved(cube) &&
-    cube.U[1] === 'yellow' &&
-    cube.U[3] === 'yellow' &&
-    cube.U[5] === 'yellow' &&
-    cube.U[7] === 'yellow'
+    cube.U[1] === 'white' &&
+    cube.U[3] === 'white' &&
+    cube.U[5] === 'white' &&
+    cube.U[7] === 'white'
   );
 }
 
@@ -153,10 +153,10 @@ export function solveWhiteCross(startCube: CubeNetState): { moves: string[]; sta
 
   // Cross pieces in order: DF (white-green), DR (white-red), DB (white-blue), DL (white-orange)
   const crossPieces = [
-    { name: 'DF', check: (c: CubeNetState) => c.D[1] === 'white' && c.F[7] === 'green' },
-    { name: 'DR', check: (c: CubeNetState) => c.D[5] === 'white' && c.R[7] === 'red' },
-    { name: 'DB', check: (c: CubeNetState) => c.D[7] === 'white' && c.B[7] === 'blue' },
-    { name: 'DL', check: (c: CubeNetState) => c.D[3] === 'white' && c.L[7] === 'orange' },
+    { name: 'DF', check: (c: CubeNetState) => c.D[1] === 'yellow' && c.F[7] === 'green' },
+    { name: 'DR', check: (c: CubeNetState) => c.D[5] === 'yellow' && c.R[7] === 'red' },
+    { name: 'DB', check: (c: CubeNetState) => c.D[7] === 'yellow' && c.B[7] === 'blue' },
+    { name: 'DL', check: (c: CubeNetState) => c.D[3] === 'yellow' && c.L[7] === 'orange' },
   ];
 
   let cur = startCube;
@@ -225,11 +225,11 @@ interface CornerDef {
 const CORNER_DEFS: CornerDef[] = [
   {
     name: 'DFR',
-    colors: ['white', 'green', 'red'],
-    isSolved: (c) => c.D[2] === 'white' && c.F[8] === 'green' && c.R[6] === 'red',
+    colors: ['yellow', 'green', 'red'],
+    isSolved: (c) => c.D[2] === 'yellow' && c.F[8] === 'green' && c.R[6] === 'red',
     isInSlot: (c) => {
       const colors = [c.D[2], c.F[8], c.R[6]].sort().join(',');
-      return colors === ['green', 'red', 'white'].sort().join(',');
+      return colors === ['green', 'red', 'yellow'].sort().join(',');
     },
     popMoves: "R U R'",
     trigger: "R U R' U'",
@@ -237,11 +237,11 @@ const CORNER_DEFS: CornerDef[] = [
   },
   {
     name: 'DFL',
-    colors: ['white', 'green', 'orange'],
-    isSolved: (c) => c.D[0] === 'white' && c.F[6] === 'green' && c.L[8] === 'orange',
+    colors: ['yellow', 'green', 'orange'],
+    isSolved: (c) => c.D[0] === 'yellow' && c.F[6] === 'green' && c.L[8] === 'orange',
     isInSlot: (c) => {
       const colors = [c.D[0], c.F[6], c.L[8]].sort().join(',');
-      return colors === ['green', 'orange', 'white'].sort().join(',');
+      return colors === ['green', 'orange', 'yellow'].sort().join(',');
     },
     popMoves: "L' U' L",
     trigger: "L' U' L U",
@@ -249,11 +249,11 @@ const CORNER_DEFS: CornerDef[] = [
   },
   {
     name: 'DBR',
-    colors: ['white', 'blue', 'red'],
-    isSolved: (c) => c.D[8] === 'white' && c.B[6] === 'blue' && c.R[8] === 'red',
+    colors: ['yellow', 'blue', 'red'],
+    isSolved: (c) => c.D[8] === 'yellow' && c.B[6] === 'blue' && c.R[8] === 'red',
     isInSlot: (c) => {
       const colors = [c.D[8], c.B[6], c.R[8]].sort().join(',');
-      return colors === ['blue', 'red', 'white'].sort().join(',');
+      return colors === ['blue', 'red', 'yellow'].sort().join(',');
     },
     popMoves: "R' U' R",
     trigger: "R' U' R U",
@@ -261,11 +261,11 @@ const CORNER_DEFS: CornerDef[] = [
   },
   {
     name: 'DBL',
-    colors: ['white', 'blue', 'orange'],
-    isSolved: (c) => c.D[6] === 'white' && c.B[8] === 'blue' && c.L[6] === 'orange',
+    colors: ['yellow', 'blue', 'orange'],
+    isSolved: (c) => c.D[6] === 'yellow' && c.B[8] === 'blue' && c.L[6] === 'orange',
     isInSlot: (c) => {
       const colors = [c.D[6], c.B[8], c.L[6]].sort().join(',');
-      return colors === ['blue', 'orange', 'white'].sort().join(',');
+      return colors === ['blue', 'orange', 'yellow'].sort().join(',');
     },
     popMoves: "L U L'",
     trigger: "L U L' U'",
@@ -485,7 +485,7 @@ export function solveF2L(startCube: CubeNetState): { moves: string[]; state: Cub
 // ----------------------------------------------------
 export function solveYellowCross(startCube: CubeNetState): { moves: string[]; state: CubeNetState } {
   const isYellowCross = (c: CubeNetState) =>
-    c.U[1] === 'yellow' && c.U[3] === 'yellow' && c.U[5] === 'yellow' && c.U[7] === 'yellow';
+    c.U[1] === 'white' && c.U[3] === 'white' && c.U[5] === 'white' && c.U[7] === 'white';
 
   if (isYellowCross(startCube)) {
     return { moves: [], state: startCube };
@@ -847,7 +847,7 @@ export function solveCube(
           description: `Đường đi toán học giải hoàn tất khối Rubik trong ${allOptimizedMoves.length} bước.`,
           formula: allOptimizedMoves.join(' '),
           holdingNote: 'Giữ khối Rubik: Vàng ở đỉnh (U), Trắng ở đáy (D), Xanh lá ở mặt trước (F).',
-          topDownPattern: ['yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow'],
+          topDownPattern: ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'],
           patternNote: `Giải Toàn Bộ Khối (${allOptimizedMoves.length} Moves)`,
         },
       },
@@ -978,7 +978,7 @@ export function solveCube(
           holdingNote: 'Nhìn từ trên xuống mặt U vàng.',
           diagramTitle: 'MẶT ĐỈNH (U)',
           diagramType: 'oll',
-          topDownPattern: ['yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow'],
+          topDownPattern: ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'],
           patternNote: 'Hoàn Thành Mặt Vàng (OLL)',
         },
       },

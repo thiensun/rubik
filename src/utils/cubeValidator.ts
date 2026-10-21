@@ -18,8 +18,8 @@ export interface CubeValidationResult {
 
 // Standard WCA Face Centers
 const EXPECTED_CENTERS: Record<FaceKey, CubeColor> = {
-  U: 'yellow',
-  D: 'white',
+  U: 'white',
+  D: 'yellow',
   F: 'green',
   B: 'blue',
   L: 'orange',
@@ -43,18 +43,18 @@ interface EdgeDefinition {
 }
 
 export const STANDARD_EDGES: EdgeDefinition[] = [
-  { name: 'UB', colors: ['yellow', 'blue'] },    // 0
-  { name: 'UL', colors: ['yellow', 'orange'] },  // 1
-  { name: 'UR', colors: ['yellow', 'red'] },     // 2
-  { name: 'UF', colors: ['yellow', 'green'] },   // 3
+  { name: 'UB', colors: ['white', 'blue'] },    // 0
+  { name: 'UL', colors: ['white', 'orange'] },  // 1
+  { name: 'UR', colors: ['white', 'red'] },     // 2
+  { name: 'UF', colors: ['white', 'green'] },   // 3
   { name: 'FL', colors: ['green', 'orange'] },   // 4
   { name: 'FR', colors: ['green', 'red'] },      // 5
   { name: 'BL', colors: ['blue', 'orange'] },    // 6
   { name: 'BR', colors: ['blue', 'red'] },       // 7
-  { name: 'DF', colors: ['white', 'green'] },    // 8
-  { name: 'DL', colors: ['white', 'orange'] },   // 9
-  { name: 'DR', colors: ['white', 'red'] },      // 10
-  { name: 'DB', colors: ['white', 'blue'] },     // 11
+  { name: 'DF', colors: ['yellow', 'green'] },    // 8
+  { name: 'DL', colors: ['yellow', 'orange'] },   // 9
+  { name: 'DR', colors: ['yellow', 'red'] },      // 10
+  { name: 'DB', colors: ['yellow', 'blue'] },     // 11
 ];
 
 // Slot definitions: [face1, idx1, face2, idx2]
@@ -82,14 +82,14 @@ interface CornerDefinition {
 }
 
 export const STANDARD_CORNERS: CornerDefinition[] = [
-  { name: 'UFL', colors: ['yellow', 'green', 'orange'] }, // 0
-  { name: 'UFR', colors: ['yellow', 'red', 'green'] },     // 1
-  { name: 'UBL', colors: ['yellow', 'orange', 'blue'] },   // 2
-  { name: 'UBR', colors: ['yellow', 'blue', 'red'] },      // 3
-  { name: 'DFL', colors: ['white', 'orange', 'green'] },   // 4
-  { name: 'DFR', colors: ['white', 'green', 'red'] },      // 5
-  { name: 'DBL', colors: ['white', 'blue', 'orange'] },    // 6
-  { name: 'DBR', colors: ['white', 'red', 'blue'] },       // 7
+  { name: 'UFL', colors: ['white', 'green', 'orange'] }, // 0
+  { name: 'UFR', colors: ['white', 'red', 'green'] },     // 1
+  { name: 'UBL', colors: ['white', 'orange', 'blue'] },   // 2
+  { name: 'UBR', colors: ['white', 'blue', 'red'] },      // 3
+  { name: 'DFL', colors: ['yellow', 'orange', 'green'] },   // 4
+  { name: 'DFR', colors: ['yellow', 'green', 'red'] },      // 5
+  { name: 'DBL', colors: ['yellow', 'blue', 'orange'] },    // 6
+  { name: 'DBR', colors: ['yellow', 'red', 'blue'] },       // 7
 ];
 
 // Corner slot definitions: 3 facelets listed in clockwise order from outside

@@ -291,6 +291,7 @@ export const App: React.FC = () => {
               onNextScramble={handleNextScramble}
               cubeNetState={cubeNetState}
               onSolveComplete={handleSolveComplete}
+              onManualTimeEntry={handleAddManualSolve}
               onReset={() => {}}
               onTogglePenalty={handleToggleLatestPenalty}
               inspectionEnabled={inspectionEnabled}

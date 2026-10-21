@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { RotateCw, Copy, Check, Timer as TimerIcon, LayoutGrid, X } from 'lucide-react';
+import { RotateCw, Copy, Check, Timer as TimerIcon, LayoutGrid, X, Plus, Edit3 } from 'lucide-react';
 import { sound } from '../../utils/audio';
 import { CubeNet2D } from '../scramble/CubeNet2D';
 import { CubeNetState } from '../../utils/cubeState';
+import { parseTimeInput } from '../../utils/cubingStats';
 
 interface ZenTimerStageProps {
   scramble: string;
@@ -11,6 +12,7 @@ interface ZenTimerStageProps {
   onNextScramble: () => void;
   cubeNetState: CubeNetState;
   onSolveComplete: (timeMs: number, penalty?: 'none' | '+2' | 'dnf') => void;
+  onManualTimeEntry?: (timeMs: number) => void;
   onReset: () => void;
   onTogglePenalty: () => void;
   inspectionEnabled: boolean;
@@ -40,6 +42,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
   onNextScramble,
   cubeNetState,
   onSolveComplete,
+  onManualTimeEntry,
   onReset,
   onTogglePenalty,
   inspectionEnabled,
@@ -51,6 +54,11 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
   const [inspectionSeconds, setInspectionSeconds] = useState<number>(15);
   const [copied, setCopied] = useState(false);
   const [isNetOpen, setIsNetOpen] = useState(false);
+
+  // Manual In-Place Time Input State
+  const [isManualInputActive, setIsManualInputActive] = useState<boolean>(false);
+  const [manualInputVal, setManualInputVal] = useState<string>('');
+  const manualInputRef = useRef<HTMLInputElement | null>(null);
 
   const holdTimerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
@@ -539,6 +547,36 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
             </div>
           </div>
 
+          {/* Manual Input Toggle Icon Button */}
+          <div className="relative group">
+            <button
+              type="button"
+              id="manual-input-btn"
+              aria-label="Manual Time Entry"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsManualInputActive((prev) => {
+                  const next = !prev;
+                  if (next) {
+                    setManualInputVal('');
+                    setTimeout(() => manualInputRef.current?.focus(), 50);
+                  }
+                  return next;
+                });
+              }}
+              className={
+                isManualInputActive
+                  ? 'w-8 h-8 rounded-lg bg-mono-950 text-white flex items-center justify-center transition-all active:scale-95 border border-mono-950'
+                  : 'w-8 h-8 rounded-lg bg-mono-100 text-mono-600 hover:text-mono-950 hover:bg-mono-200 flex items-center justify-center transition-all active:scale-95 border border-mono-200/70'
+              }
+            >
+              <Plus className="w-[15px] h-[15px]" />
+            </button>
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex items-center px-2 py-1 rounded bg-mono-900 text-white text-[10px] font-mono whitespace-nowrap shadow-md pointer-events-none z-30 transition-opacity">
+              {isManualInputActive ? 'Đang nhập thủ công' : 'Nhập thời gian thủ công'}
+            </div>
+          </div>
+
           <div className="h-4 w-px bg-mono-200 mx-1" />
 
           {/* Collapsible / Toggleable 2D Cube Net Preview Popover Trigger */}
@@ -618,21 +656,61 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
           id="click-trigger-area"
           className="relative z-10 flex-1 flex flex-col items-center justify-center cursor-pointer transform transition-transform active:scale-[0.99] group text-center max-w-full overflow-hidden w-full my-auto"
         >
-          <div className="flex items-baseline justify-center max-w-full px-1">
-            {(() => {
-              const formattedTime = formatDigits(currentMs);
-              return (
-                <span
-                  id="timer-main"
-                  className={`font-mono-dotted leading-none font-bold tabular-nums transition-colors ${getTimerFontSizeClass(
-                    formattedTime
-                  )} ${getTimerColorClass()}`}
-                >
-                  {formattedTime}
-                </span>
-              );
-            })()}
-          </div>
+          {isManualInputActive ? (
+            <div
+              className="flex flex-col items-center justify-center w-full max-w-sm px-2 animate-fadeIn"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <input
+                ref={manualInputRef}
+                type="text"
+                value={manualInputVal}
+                placeholder="00.00"
+                onChange={(e) => setManualInputVal(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const parsed = parseTimeInput(manualInputVal);
+                    if (parsed !== null && parsed > 0) {
+                      if (onManualTimeEntry) {
+                        onManualTimeEntry(parsed);
+                      } else {
+                        onSolveComplete(parsed);
+                      }
+                      setCurrentMs(parsed);
+                      setIsManualInputActive(false);
+                      setManualInputVal('');
+                    } else {
+                      alert('Vui lòng nhập định dạng thời gian hợp lệ (ví dụ: 9.31, 1:04.25 hoặc 931)');
+                    }
+                  } else if (e.key === 'Escape') {
+                    setIsManualInputActive(false);
+                    setManualInputVal('');
+                  }
+                }}
+                className="w-full text-center bg-transparent border-b-2 border-mono-950 font-mono-dotted font-bold text-mono-950 focus:outline-none tracking-tight text-6xl xs:text-7xl sm:text-8xl md:text-9xl py-1"
+              />
+              <span className="text-xs sm:text-sm font-mono text-mono-500 mt-2 font-medium">
+                Gõ thời gian rồi nhấn <kbd className="px-1.5 py-0.5 rounded bg-mono-200 text-mono-800 font-bold">Enter</kbd> để lưu • <kbd className="px-1.5 py-0.5 rounded bg-mono-100 text-mono-500">Esc</kbd> để huỷ
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-baseline justify-center max-w-full px-1">
+              {(() => {
+                const formattedTime = formatDigits(currentMs);
+                return (
+                  <span
+                    id="timer-main"
+                    className={`font-mono-dotted leading-none font-bold tabular-nums transition-colors ${getTimerFontSizeClass(
+                      formattedTime
+                    )} ${getTimerColorClass()}`}
+                  >
+                    {formattedTime}
+                  </span>
+                );
+              })()}
+            </div>
+          )}
         </div>
 
         {/* Bottom Section inside Timer card: Inspection prompt & ao5/ao12 pushed to bottom */}

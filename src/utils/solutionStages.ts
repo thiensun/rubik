@@ -13,6 +13,16 @@ export interface SolutionMove {
   slice: string;
 }
 
+export interface SolutionSubStep {
+  id: string;
+  labelVi: string;
+  labelEn?: string;
+  formula: string;
+  movesCount: number;
+  startMoveNum: number;
+  endMoveNum: number;
+}
+
 export interface SolutionStage {
   id: string;
   stageNumber: number;
@@ -23,6 +33,27 @@ export interface SolutionStage {
   movesCount: number;
   formulaSummary?: string;
   moves: SolutionMove[];
+  subSteps?: SolutionSubStep[];
+  twoLookVariant?: {
+    titleVi: string;
+    subtitle: string;
+    formulaSummary: string;
+    moves: SolutionMove[];
+    subSteps?: SolutionSubStep[];
+    caseName: string;
+    description: string;
+    formula: string;
+  };
+  oneLookVariant?: {
+    titleVi: string;
+    subtitle: string;
+    formulaSummary: string;
+    moves: SolutionMove[];
+    subSteps?: SolutionSubStep[];
+    caseName: string;
+    description: string;
+    formula: string;
+  };
   caseDetails?: {
     caseName: string;
     probability: string;
@@ -347,16 +378,50 @@ const LEVEL_2_CFOP: SolutionStage[] = [
     stageNumber: 2,
     titleVi: 'Giai đoạn 02 · 2 Tầng Đầu (First Two Layers - F2L)',
     titleEn: 'Stage 02 · First Two Layers (F2L)',
-    subtitle: 'Ghép 4 cặp góc - cạnh hoàn thiện 2 tầng dưới',
+    subtitle: 'Ghép 4 cặp góc - cạnh hoàn thiện 2 tầng dưới (20 Moves)',
     status: 'pending',
     movesCount: 20,
-    formulaSummary: 'Ghép 4 Cặp F2L (20 Moves)',
+    formulaSummary: 'Pair 1 (FR) · Pair 2 (FL) · Pair 3 (BR) · Pair 4 (BL)',
     moves: createMoves("U' R U R' U2 R U' R' U' F' U F U R U' R' U2 F' U F", 7),
+    subSteps: [
+      {
+        id: 'cfop-2-pair-fr',
+        labelVi: 'Pair 1: FR (Xanh lá - Đỏ)',
+        formula: "U' (R U R')",
+        movesCount: 4,
+        startMoveNum: 7,
+        endMoveNum: 10,
+      },
+      {
+        id: 'cfop-2-pair-fl',
+        labelVi: 'Pair 2: FL (Xanh lá - Cam)',
+        formula: "U2 (R U' R')",
+        movesCount: 4,
+        startMoveNum: 11,
+        endMoveNum: 14,
+      },
+      {
+        id: 'cfop-2-pair-br',
+        labelVi: 'Pair 3: BR (Xanh dương - Đỏ)',
+        formula: "U' (F' U F) U (R U' R')",
+        movesCount: 8,
+        startMoveNum: 15,
+        endMoveNum: 22,
+      },
+      {
+        id: 'cfop-2-pair-bl',
+        labelVi: 'Pair 4: BL (Xanh dương - Cam)',
+        formula: "U2 (F' U F)",
+        movesCount: 4,
+        startMoveNum: 23,
+        endMoveNum: 26,
+      },
+    ],
     caseDetails: {
-      caseName: 'First Two Layers (F2L)',
+      caseName: 'First Two Layers (4 F2L Pairs)',
       probability: 'CFOP Core Phase',
-      description: 'Ghép 4 cặp góc - cạnh tương ứng và đưa vào đúng 4 khe tầng 1 & 2 hoàn thành 2 tầng dưới.',
-      formula: "U' R U R' U2 R U' R' U' F' U F U R U' R' U2 F' U F",
+      description: 'Ghép đồng thời 4 cặp góc - cạnh tương ứng đưa vào 4 khe tầng 1 & 2 trong 4–8 bước mỗi cặp.',
+      formula: "U' (R U R') U2 (R U' R') U' (F' U F) U (R U' R') U2 (F' U F)",
       holdingNote: 'Xoay mặt U tìm cặp góc - cạnh cùng màu, ghép đôi rồi chèn vào khe trống.',
       diagramTitle: '2 TẦNG ĐẦU (F2L)',
       diagramType: 'f2l',
@@ -604,6 +669,16 @@ const LEVEL_3_CFOP: SolutionStage[] = [
     movesCount: 6,
     formulaSummary: "D' R' F D2 R2 (6 Moves)",
     moves: createMoves("D' R' F D2 R' F2", 1),
+    caseDetails: {
+      caseName: 'White Cross on D (Rotationless)',
+      probability: '100% CFOP Foundation',
+      description: 'Giải 4 viên cạnh trắng về đúng tâm trắng ở mặt đáy D trong thời gian 15s quan sát WCA mà không cần xoay khối.',
+      formula: "D' R' F D2 R' F2",
+      holdingNote: 'Giữ tâm Trắng ở đáy (D), tâm Vàng ở đỉnh (U), tâm Xanh lá ở mặt trước (F).',
+      diagramTitle: 'MẶT ĐÁY (D)',
+      diagramType: 'cross',
+      patternNote: 'Chữ Thập Trắng Khớp 4 Tâm',
+    },
   },
   {
     id: 'cfop-2',
@@ -613,8 +688,52 @@ const LEVEL_3_CFOP: SolutionStage[] = [
     subtitle: 'Ghép cặp không quay khối (rotationless slotting)',
     status: 'pending',
     movesCount: 20,
-    formulaSummary: '20 Moves · 8.2 TPS Benchmark',
+    formulaSummary: 'Pair 1 (FR) · Pair 2 (FL) · Pair 3 (BR) · Pair 4 (BL)',
     moves: createMoves("U' R U R' U2 R U' R' U' F' U F U R U' R' F' U F", 7),
+    subSteps: [
+      {
+        id: 'cfop-2-pair-fr',
+        labelVi: 'Pair 1: FR (Xanh lá - Đỏ)',
+        formula: "U' (R U R')",
+        movesCount: 4,
+        startMoveNum: 7,
+        endMoveNum: 10,
+      },
+      {
+        id: 'cfop-2-pair-fl',
+        labelVi: 'Pair 2: FL (Xanh lá - Cam)',
+        formula: "U2 (R U' R')",
+        movesCount: 4,
+        startMoveNum: 11,
+        endMoveNum: 14,
+      },
+      {
+        id: 'cfop-2-pair-br',
+        labelVi: 'Pair 3: BR (Xanh dương - Đỏ)',
+        formula: "U' (F' U F) U (R U' R')",
+        movesCount: 8,
+        startMoveNum: 15,
+        endMoveNum: 22,
+      },
+      {
+        id: 'cfop-2-pair-bl',
+        labelVi: 'Pair 4: BL (Xanh dương - Cam)',
+        formula: "(F' U F)",
+        movesCount: 3,
+        startMoveNum: 23,
+        endMoveNum: 26,
+      },
+    ],
+    caseDetails: {
+      caseName: 'F2L Standard Slotting (41 Cases)',
+      probability: 'CFOP Core Phase',
+      description: 'Ghép 4 cặp góc - cạnh tương ứng vào 4 khe bằng các tổ hợp Sexy Move và Front Insert không xoay khối.',
+      formula: "U' (R U R') U2 R U' R' U' (F' U F) U R U' R' (F' U F)",
+      holdingNote: 'Tận dụng khe trống để ghép cặp góc - cạnh trên tầng U rồi đưa xuống 4 khe tầng 1 & 2.',
+      diagramTitle: '2 TẦNG ĐẦU (F2L)',
+      diagramType: 'f2l',
+      patternNote: 'Hoàn Thành 4 Khe Góc - Cạnh',
+    },
   },
   {
     id: 'cfop-3',
@@ -624,14 +743,16 @@ const LEVEL_3_CFOP: SolutionStage[] = [
     subtitle: 'Lật toàn bộ mặt vàng trong đúng 1 công thức',
     status: 'pending',
     movesCount: 7,
-    formulaSummary: "R U R' U R U2 R'",
+    formulaSummary: "R U R' U (R U2 R')",
     moves: createMoves("R U R' U R U2 R'", 27),
     caseDetails: {
       caseName: 'OLL #27 (Sune)',
       probability: '1/54 (4.6%)',
       description: 'Lật tất cả 4 góc trong 1 bước với tốc độ fingertrick dưới 0.9s.',
-      formula: "R U R' U R U2 R'",
-      holdingNote: 'Góc vàng hướng lên ở UBL. Ngón trỏ phải gạt R, đẩy U2 mượt mà.',
+      formula: "R U R' U (R U2 R')",
+      holdingNote: 'Góc vàng hướng lên ở UFL. Ngón trỏ phải gạt U, tiếp nối bằng Fast Flick (R U2 R\') mượt mà.',
+      diagramTitle: 'OLL · CON CÁ (SUNE)',
+      diagramType: 'oll',
       topDownPattern: [
         'neutral', 'yellow', 'neutral',
         'yellow', 'yellow', 'yellow',
@@ -648,8 +769,18 @@ const LEVEL_3_CFOP: SolutionStage[] = [
     subtitle: 'Hoán vị toàn bộ tầng cuối về trạng thái giải hoàn tất',
     status: 'pending',
     movesCount: 13,
-    formulaSummary: "R U R' F' R U R' U' R' F R2 U' R'",
+    formulaSummary: "R U R' F' (R U R' U') R' F R2 U' R'",
     moves: createMoves("R U R' F' R U R' U' R' F R2 U' R'", 34),
+    caseDetails: {
+      caseName: 'Jb-Perm (Đổi 2 Góc Phải & 2 Cạnh Kề)',
+      probability: '1/18 (5.5%)',
+      description: 'Khối 1x1x3 đã hoàn thành nằm bên mặt trái (L), cần hoán vị 2 góc bên phải (UFR - UBR) và 2 cạnh (UF - UR).',
+      formula: "R U R' F' (R U R' U') R' F R2 U' R'",
+      holdingNote: 'Đặt dải 3 viên đúng bên trái (L), bấm F\' bằng ngón trỏ trái rồi nối ngay vào Sexy Move (R U R\' U\') tốc độ cao.',
+      diagramTitle: 'PLL · JB-PERM',
+      diagramType: 'pll',
+      patternNote: 'Hoán Vị 2 Góc Phải & 2 Cạnh Kề',
+    },
   },
 ];
 
@@ -665,23 +796,35 @@ const LEVEL_4_ZBLL: SolutionStage[] = [
     movesCount: 26,
     formulaSummary: '26 Moves · Tất cả cạnh vàng hướng lên',
     moves: createMoves("D' R' F D2 R2 U' R U R' U2 R U' R' U' F' U F U R U' R'", 1),
+    caseDetails: {
+      caseName: 'F2L + VHLS Edge Orientation',
+      probability: '100% ZBLL Setup',
+      description: 'Hoàn tất Chữ thập trắng và 4 cặp F2L đồng thời định hướng sẵn 4 viên cạnh vàng trên mặt U để vào thẳng ZBLL.',
+      formula: "D' R' F D2 R2 U' (R U R') U2 R U' R' U' (F' U F) U R U' R'",
+      holdingNote: 'Sử dụng tổ hợp (F\' U F) ở cặp F2L cuối cùng (VHLS/ZBLS) để lật toàn bộ 4 cạnh vàng hướng lên.',
+      diagramTitle: 'F2L + EO SETUP',
+      diagramType: 'f2l',
+      patternNote: '2 Tầng Đầu + Chữ Thập Vàng Sẵn Sàng',
+    },
   },
   {
     id: 'zbll-2',
     stageNumber: 2,
-    titleVi: 'Stage 02 · ZBLL 1-Look Last Layer (493 Cases)',
+    titleVi: 'Stage 02 · ZBLL 1-Look Last Layer (504 Cases)',
     titleEn: 'Stage 02 · ZBLL T-Case #14',
     subtitle: 'Giải đồng thời OLL và PLL chỉ bằng 1 công thức duy nhất!',
     status: 'pending',
     movesCount: 12,
-    formulaSummary: "R U2 R' U' R U R' U' R U' R'",
+    formulaSummary: "(R U2 R') U' (R U R' U') R U' R'",
     moves: createMoves("R U2 R' U' R U R' U' R U' R'", 27),
     caseDetails: {
-      caseName: 'ZBLL Set T · Case 14',
+      caseName: 'ZBLL Set T · Case 14 (2GLL)',
       probability: '1/493',
-      description: 'Giải cả mặt vàng và vị trí các viên tầng cuối đồng thời chỉ trong 1 chuỗi động tác duy nhất.',
-      formula: "R U2 R' U' R U R' U' R U' R'",
-      holdingNote: 'Nhận diện headlight bên hông, thực hiện chuỗi ngón tay liên tục không dừng.',
+      description: 'Giải cả mặt vàng và vị trí các viên tầng cuối đồng thời chỉ trong 1 chuỗi động tác 2-gen <R, U> duy nhất.',
+      formula: "(R U2 R') U' (R U R' U') R U' R'",
+      holdingNote: 'Nhận diện góc COLL nhóm T kết hợp hoán vị cạnh, thực hiện chuỗi ngón tay 2-gen <R, U> liên tục không regrip.',
+      diagramTitle: 'ZBLL · 1-LOOK LL',
+      diagramType: 'pll',
       topDownPattern: [
         'active', 'yellow', 'active',
         'yellow', 'yellow', 'yellow',

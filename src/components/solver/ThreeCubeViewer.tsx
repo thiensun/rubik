@@ -17,6 +17,8 @@ interface ThreeCubeViewerProps {
   isSolved?: boolean;
   playbackSpeed?: '0.5x' | '1.0x' | '2.0x' | number;
   onAnimationComplete?: () => void;
+  heightClassName?: string;
+  compact?: boolean;
 }
 
 // Map playback speed to smooth 3D rotation duration
@@ -236,6 +238,8 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
   isSolved = false,
   playbackSpeed = '1.0x',
   onAnimationComplete,
+  heightClassName = 'h-[320px] sm:h-[360px]',
+  compact = false,
 }) => {
   const effectiveMoveIndex = currentMoveIndex !== undefined ? currentMoveIndex : moveIndex;
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -641,24 +645,28 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
   }, [cameraPreset]);
 
   return (
-    <div className="relative w-full h-[320px] sm:h-[360px] rounded-2xl bg-gradient-to-b from-[#FAFAFA] to-[#F1F3F5] border border-[#EAECEF] flex items-center justify-center overflow-hidden shadow-inner select-none">
+    <div
+      className={`relative w-full ${heightClassName} shrink-0 rounded-xl bg-gradient-to-b from-[#FAFAFA] to-[#F1F3F5] border border-[#EAECEF] flex items-center justify-center overflow-hidden shadow-inner select-none`}
+    >
       {/* Background Precision Spatial Grid */}
       <div className="absolute inset-0 opacity-[0.06] bg-[radial-gradient(#111111_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
 
       {/* UNIFIED TOP HUD BAR (Clean, non-overlapping, fully responsive) */}
-      <div className="absolute top-3 inset-x-3 z-10 flex items-center justify-between gap-2 pointer-events-none">
+      <div className="absolute top-2.5 inset-x-2.5 z-10 flex items-center justify-between gap-2 pointer-events-none">
         {/* Left: Move & Action */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <div className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full border border-[#EAECEF] shadow-2xs flex items-center gap-1.5 font-mono text-[11px]">
+        <div className="flex items-center gap-1.5 shrink-0 max-w-[58%]">
+          <div className="bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] shadow-2xs flex items-center gap-1.5 font-mono text-[10.5px] min-w-0">
             {isSolved ? (
               <span className="text-emerald-600 font-bold">SOLVED ✓</span>
             ) : (
               <>
-                <span className="font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[11px] border border-emerald-200">
+                <span className="font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded text-[10.5px] border border-emerald-200 shrink-0">
                   {currentMove || slice}
                 </span>
-                <span className="text-neutral-500 text-[10px] sm:text-[10.5px] hidden sm:inline font-sans font-medium">
-                  {(allMoves[effectiveMoveIndex] as any)?.holdTip || (allMoves[effectiveMoveIndex] as any)?.explanation || `Lát cắt ${slice}`}
+                <span className="text-neutral-500 text-[10px] hidden sm:inline font-sans font-medium truncate">
+                  {(allMoves[effectiveMoveIndex] as any)?.holdTip ||
+                    (allMoves[effectiveMoveIndex] as any)?.explanation ||
+                    `Lát cắt ${slice}`}
                 </span>
               </>
             )}
@@ -666,96 +674,76 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
         </div>
 
         {/* Center: Stage Hint Pill (properly constrained to avoid overlapping) */}
-        {activeStageHint && (
-          <div className="flex-1 max-w-[50%] min-w-0 flex justify-center">
-            <div className="w-auto max-w-full bg-neutral-900/90 text-white backdrop-blur-md px-3 py-1 rounded-full text-[10px] sm:text-[10.5px] font-medium shadow-md flex items-center gap-1.5 border border-white/10">
+        {activeStageHint && !compact && (
+          <div className="flex-1 max-w-[45%] min-w-0 flex justify-center">
+            <div className="w-auto max-w-full bg-neutral-900/90 text-white backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-medium shadow-md flex items-center gap-1.5 border border-white/10">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
               <span className="truncate">{activeStageHint}</span>
             </div>
           </div>
         )}
 
-        {/* Right: Sync Badge */}
-        <div className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full border border-[#EAECEF] text-[10px] sm:text-[10.5px] font-mono text-neutral-600 flex items-center gap-1.5 shadow-2xs shrink-0">
+        {/* Right: Sync Badge or Stage Hint in compact mode */}
+        <div className="bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] text-[9.5px] font-mono text-neutral-600 flex items-center gap-1 shadow-2xs shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="hidden sm:inline">SYNC: ACTIVE</span>
-          <span className="sm:hidden">SYNC</span>
+          <span className="truncate max-w-[110px]">
+            {compact && activeStageHint ? activeStageHint : 'SYNC'}
+          </span>
         </div>
       </div>
 
       {/* Face Orientation Legend (Tucked neatly below the HUD on the left) */}
-      <div className="absolute top-12 left-3 flex items-center gap-1.5 z-10 pointer-events-none">
-        <div className="bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] text-[9px] font-mono text-neutral-700 shadow-2xs flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-          <span>U: VÀNG</span>
+      {!compact && (
+        <div className="absolute top-11 left-2.5 flex items-center gap-1.5 z-10 pointer-events-none">
+          <div className="bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] text-[9px] font-mono text-neutral-700 shadow-2xs flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+            <span>U: VÀNG</span>
+          </div>
+          <div className="bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] text-[9px] font-mono text-neutral-700 shadow-2xs flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-white border border-neutral-400 shrink-0" />
+            <span>D: TRẮNG</span>
+          </div>
         </div>
-        <div className="bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] text-[9px] font-mono text-neutral-700 shadow-2xs flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-white border border-neutral-400 shrink-0" />
-          <span>D: TRẮNG</span>
-        </div>
-      </div>
+      )}
 
       {/* Three.js Canvas Container */}
       <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
       {/* Kinetic Emerald Rotation Arrow overlay OR Solved Success Badge */}
       {isSolved ? (
-        <div className="absolute right-4 sm:right-10 top-1/2 -translate-y-1/2 pointer-events-none z-10 flex flex-col items-center gap-2 animate-bounce">
-          <div className="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg ring-4 ring-emerald-200">
-            <svg className="w-6 h-6 stroke-[3]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <span className="bg-emerald-600 text-white font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md">
-            100% SOLVED ✓
+        <div className="absolute right-3 bottom-2.5 pointer-events-none z-10 flex items-center gap-1.5">
+          <span className="bg-emerald-600 text-white font-mono text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md flex items-center gap-1">
+            <span>100% SOLVED ✓</span>
           </span>
         </div>
       ) : (
-        <div className="absolute right-4 sm:right-10 top-1/2 -translate-y-1/2 pointer-events-none z-10 flex items-center gap-1.5">
-          <div className="flex flex-col items-center">
-            <svg className="w-14 sm:w-16 h-18 sm:h-20 overflow-visible" viewBox="0 0 70 90">
-              <defs>
-                <linearGradient id="emeraldArrowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#10B981" />
-                  <stop offset="100%" stopColor="#047857" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M 15,10 C 65,20 65,70 15,80"
-                fill="none"
-                stroke="url(#emeraldArrowGrad)"
-                strokeWidth="4.5"
-                strokeLinecap="round"
-              />
-              <polygon points="12,80 26,72 24,88" fill="#047857" />
-            </svg>
-            <div className="bg-[#111111]/95 backdrop-blur-md text-white px-2.5 py-1 rounded-xl shadow-lg border border-white/10 flex flex-col items-center mt-1 text-center">
-              <div className="flex items-center gap-1 font-mono">
-                <span className="text-xs font-black text-emerald-400">
-                  {currentMove || slice}
-                </span>
-                <span className="text-[9.5px] text-neutral-400">
-                  ({turnAngle === '180.0°' ? '180°' : '90°'})
-                </span>
-              </div>
-              <span className="text-[9px] font-sans text-neutral-300 font-medium whitespace-nowrap mt-0.5">
+        <div className="absolute right-2.5 bottom-2.5 pointer-events-none z-10 flex items-center gap-1">
+          <div className="bg-[#111111]/95 backdrop-blur-md text-white px-2.5 py-1 rounded-xl shadow-lg border border-white/10 flex items-center gap-1.5 text-center">
+            <span className="text-xs font-mono font-black text-emerald-400">
+              {currentMove || slice}
+            </span>
+            <span className="text-[9.5px] font-mono text-neutral-400">
+              ({turnAngle === '180.0°' || currentMove?.includes('2') ? '180°' : '90°'})
+            </span>
+            {!compact && (
+              <span className="text-[9px] font-sans text-neutral-300 font-medium whitespace-nowrap">
+                ·{' '}
                 {currentMove?.includes("'")
-                  ? 'Ngược chiều KĐH'
+                  ? 'Ngược KĐH'
                   : currentMove?.includes('2')
                   ? 'Xoay 180°'
-                  : 'Thuận chiều KĐH'}
+                  : 'Thuận KĐH'}
               </span>
-            </div>
+            )}
           </div>
         </div>
       )}
 
-
-      {/* Bottom Spatial Inspection Tip */}
-      <div className="absolute bottom-3 inset-x-0 flex items-center justify-center pointer-events-none z-10 px-3">
-        <div className="bg-white/85 backdrop-blur-md px-3 py-1 rounded-full border border-[#EAECEF] text-[10.5px] font-mono text-neutral-500 shadow-2xs flex items-center gap-1.5 text-center">
-          <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 shrink-0" />
-          <span className="truncate">Spatial Inspection: Kéo chuột xoay 360° · Cuộn chuột thu phóng</span>
+      {/* Bottom-Left Spatial Orientation Pill */}
+      <div className="absolute bottom-2.5 left-2.5 flex items-center pointer-events-none z-10">
+        <div className="bg-white/85 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] text-[9.5px] font-mono text-neutral-500 shadow-2xs flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+          <span className="truncate">U: Vàng · D: Trắng · Xoay 360°</span>
         </div>
       </div>
     </div>

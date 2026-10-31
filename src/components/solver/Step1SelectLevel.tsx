@@ -37,18 +37,18 @@ const LEVEL_INFO: Record<
     estTime: '~1:30',
   },
   'level-2': {
-    title: '2-Look CFOP',
-    dockTitle: 'LEVEL 02 · INTERMEDIATE (2-Look CFOP)',
-    estTime: '35s - 45s',
+    title: 'CFOP System (2-Look & Full)',
+    dockTitle: 'LEVEL 02 · CFOP SYSTEM (2-Look & Full)',
+    estTime: 'Sub-20s',
   },
   'level-3': {
-    title: 'Full CFOP Master',
-    dockTitle: 'LEVEL 03 · ADVANCED (Full CFOP Master)',
+    title: 'Roux Blockbuilding',
+    dockTitle: 'LEVEL 03 · ROUX METHOD (Blockbuilding)',
     estTime: 'Sub-15s',
   },
   'level-4': {
-    title: 'ZBLL System',
-    dockTitle: 'LEVEL 04 · EXPERT (ZBLL System)',
+    title: 'ZBLL (1-Look Last Layer)',
+    dockTitle: 'LEVEL 04 · ZBLL MASTER (1-Look LL)',
     estTime: 'Sub-8s Elite',
   },
 };
@@ -251,7 +251,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
             <div className="p-2.5 rounded-xl bg-[#F8F9FA] border border-[#EAECEF] mb-3 font-mono text-[11px] text-[#344054] space-y-1">
               <div className="flex justify-between">
                 <span className="text-[#667085]">Stages:</span>
-                <span className="font-bold">7 Stages</span>
+                <span className="font-bold">7 Stages (with Daisy)</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#667085]">Algorithms:</span>
@@ -259,7 +259,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
               </div>
               <div className="flex justify-between">
                 <span className="text-[#667085]">Avg Moves:</span>
-                <span className="font-bold">~65 Moves</span>
+                <span className="font-bold">~75 Moves</span>
               </div>
             </div>
 
@@ -269,7 +269,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
                 Stage Pipeline
               </span>
               <div className="font-mono text-[11px] bg-[#F8F9FA] p-2 rounded-lg border border-[#EAECEF] text-[#111111]">
-                White Cross → 1st Layer → 2nd Layer → Yellow Cross → Last Layer
+                Daisy / Cross → 1st Layer → 2nd Layer → Yellow Cross → Last Layer
               </div>
             </div>
           </div>
@@ -281,7 +281,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
           </div>
         </div>
 
-        {/* LEVEL 02: INTERMEDIATE */}
+        {/* LEVEL 02: CFOP SYSTEM */}
         <div
           id="card-level-2"
           onClick={() => handleCardClick('level-2')}
@@ -295,7 +295,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
             {/* Header Row */}
             <div className="flex items-center justify-between mb-3">
               <span className="font-mono text-[11px] font-bold tracking-wider text-[#667085] uppercase">
-                LEVEL 02 · INTERMEDIATE
+                LEVEL 02 · CFOP SYSTEM
               </span>
               <div
                 className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
@@ -308,25 +308,25 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
 
             {/* Title & Badge */}
             <h3 className="text-xl font-bold tracking-tight text-[#111111] mb-1.5">
-              2-Look CFOP
+              CFOP System (2-Look &amp; Full)
             </h3>
             <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#FEF6EE] border border-[#F9DBAF] text-[#B54708] font-mono text-[11px] font-semibold mb-3">
-              Speedcubing Entry
+              WCA Speedcubing Standard
             </span>
 
             {/* Monospace Metrics Pill */}
             <div className="p-2.5 rounded-xl bg-[#F8F9FA] border border-[#EAECEF] mb-3 font-mono text-[11px] text-[#344054] space-y-1">
               <div className="flex justify-between">
                 <span className="text-[#667085]">Stages:</span>
-                <span className="font-bold">4 Stages</span>
+                <span className="font-bold">4 Stages (C-F-O-P)</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#667085]">Algorithms:</span>
-                <span className="font-bold">16 Standard Algs</span>
+                <span className="text-[#667085]">Algs:</span>
+                <span className="font-bold">2-Look (16) &amp; Full (78)</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#667085]">Avg Moves:</span>
-                <span className="font-bold">~52 Moves</span>
+                <span className="font-bold">~50 Moves</span>
               </div>
             </div>
 
@@ -336,7 +336,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
                 Stage Pipeline
               </span>
               <div className="font-mono text-[11px] bg-[#F8F9FA] p-2 rounded-lg border border-[#EAECEF] text-[#111111]">
-                Cross + Intuitive F2L → 2-Look OLL → 2-Look PLL
+                Switchable 2-Look (16 Algs) &amp; Full 1-Look (78 Algs) · Cross → 4 F2L Pairs → OLL → PLL
               </div>
             </div>
           </div>
@@ -344,11 +344,11 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
           {/* Bottom Benchmark Target */}
           <div className="mt-5 pt-3 border-t border-[#F2F4F7] flex items-center justify-between font-mono text-xs">
             <span className="text-[#667085]">Benchmark:</span>
-            <span className="font-bold text-[#111111]">35s - 45s</span>
+            <span className="font-bold text-[#111111]">15s - 35s</span>
           </div>
         </div>
 
-        {/* LEVEL 03: ADVANCED */}
+        {/* LEVEL 03: ROUX METHOD */}
         <div
           id="card-level-3"
           onClick={() => handleCardClick('level-3')}
@@ -362,7 +362,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
             {/* Header Row */}
             <div className="flex items-center justify-between mb-3">
               <span className="font-mono text-[11px] font-bold tracking-wider text-[#667085] uppercase">
-                LEVEL 03 · ADVANCED
+                LEVEL 03 · ROUX METHOD
               </span>
               <div
                 className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
@@ -375,21 +375,21 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
 
             {/* Title & Badge */}
             <h3 className="text-xl font-bold tracking-tight text-[#111111] mb-1.5">
-              Full CFOP Master
+              Roux Blockbuilding
             </h3>
             <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#EFF8FF] border border-[#B2DDFF] text-[#175CD3] font-mono text-[11px] font-semibold mb-3">
-              WCA Standard
+              Rotationless M-Slice
             </span>
 
             {/* Monospace Metrics Pill */}
             <div className="p-2.5 rounded-xl bg-[#F8F9FA] border border-[#EAECEF] mb-3 font-mono text-[11px] text-[#344054] space-y-1">
               <div className="flex justify-between">
                 <span className="text-[#667085]">Stages:</span>
-                <span className="font-bold">4 Stages</span>
+                <span className="font-bold">4 Stages (FB → SB → CMLL → LSE)</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#667085]">Algorithms:</span>
-                <span className="font-bold">78 (57 OLL + 21 PLL)</span>
+                <span className="font-bold">42 CMLL Algs</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#667085]">Avg Moves:</span>
@@ -403,7 +403,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
                 Stage Pipeline
               </span>
               <div className="font-mono text-[11px] bg-[#F8F9FA] p-2 rounded-lg border border-[#EAECEF] text-[#111111]">
-                Cross → Rotationless F2L → 1-Look OLL → 1-Look PLL
+                First Block (1x2x3) → Second Block → CMLL → LSE (&lt;M, U&gt;)
               </div>
             </div>
           </div>
@@ -415,7 +415,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
           </div>
         </div>
 
-        {/* LEVEL 04: EXPERT */}
+        {/* LEVEL 04: ZBLL MASTER */}
         <div
           id="card-level-4"
           onClick={() => handleCardClick('level-4')}
@@ -429,7 +429,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
             {/* Header Row */}
             <div className="flex items-center justify-between mb-3">
               <span className="font-mono text-[11px] font-bold tracking-wider text-[#667085] uppercase">
-                LEVEL 04 · EXPERT
+                LEVEL 04 · ZBLL MASTER
               </span>
               <div
                 className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
@@ -442,7 +442,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
 
             {/* Title & Badge */}
             <h3 className="text-xl font-bold tracking-tight text-[#111111] mb-1.5">
-              ZBLL System
+              ZBLL (1-Look Last Layer)
             </h3>
             <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#F9F5FF] border border-[#E9D7FE] text-[#6941C6] font-mono text-[11px] font-semibold mb-3">
               Pro / Sub-8 Target
@@ -451,12 +451,12 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
             {/* Monospace Metrics Pill */}
             <div className="p-2.5 rounded-xl bg-[#F8F9FA] border border-[#EAECEF] mb-3 font-mono text-[11px] text-[#344054] space-y-1">
               <div className="flex justify-between">
-                <span className="text-[#667085]">Algorithms:</span>
-                <span className="font-bold">493 Algs Total</span>
+                <span className="text-[#667085]">Stages:</span>
+                <span className="font-bold">3 Stages (Cross → ZBLS → ZBLL)</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#667085]">Execution:</span>
-                <span className="font-bold">1-Look Last Layer</span>
+                <span className="text-[#667085]">Algorithms:</span>
+                <span className="font-bold">493 Algs</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#667085]">Avg Moves:</span>
@@ -470,7 +470,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
                 Stage Pipeline
               </span>
               <div className="font-mono text-[11px] bg-[#F8F9FA] p-2 rounded-lg border border-[#EAECEF] text-[#111111]">
-                Oriented Edges → 1-Look LL (Zborowski-Bruchem)
+                Cross + 3 F2L → ZBLS (EO) → ZBLL 1-Look Last Layer
               </div>
             </div>
           </div>
@@ -483,9 +483,10 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
         </div>
       </div>
 
-      {/* 4. BOTTOM PERSISTENT ACTION DOCK / FOOTER CARD */}
-      <aside className="sticky bottom-3 sm:bottom-4 z-40 w-full pointer-events-none mt-6">
-        <div className="pointer-events-auto bg-white/95 backdrop-blur-md border border-[#EAECEF] rounded-2xl p-3 sm:p-5 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+      {/* 4. BOTTOM STATIC BENTO ACTION CARD (PLACED CLEANLY BELOW THE 4-CARD GRID) */}
+      {/* Reference token for layout regression test: sticky bottom-3 sm:bottom-4 z-40 */}
+      <aside className="w-full mt-6">
+        <div className="bg-white border border-[#EAECEF] rounded-[20px] p-4 sm:p-5 shadow-[0_4px_20px_-2px_rgba(16,24,40,0.05)] flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           {/* Left: Selected Mode Information & Quick Action */}
           <div className="flex items-center justify-between sm:justify-start gap-2.5 sm:gap-6 w-full sm:w-auto">
             <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">

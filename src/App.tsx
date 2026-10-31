@@ -9,14 +9,14 @@ import { SessionHistoryCard } from './components/history/SessionHistoryCard';
 import { SolveAndLearnView } from './components/views/SolveAndLearnView';
 import { AlgorithmsView } from './components/views/AlgorithmsView';
 import { AuditLogModal } from './components/history/AuditLogModal';
-import { SettingsModal } from './components/SettingsModal';
+import { SettingsModal, ColorSchemePresetKey } from './components/SettingsModal';
 import { SolveRecord, PenaltyType } from './types/cubing';
 import { SEED_SOLVES, computeSessionStats } from './utils/cubingStats';
-import { applyScramble, applyScrambleForNet, generateWCAScramble, CubeNetState } from './utils/cubeState';
+import { applyScrambleForNet, generateWCAScramble, CubeNetState } from './utils/cubeState';
 import { sound } from './utils/audio';
 import confetti from 'canvas-confetti';
 import { CustomAlgorithmData } from './components/solver/Step3SolveInteractive';
-import { AlgorithmCase } from './utils/algorithmsData';
+import { DEFAULT_COLOR_SCHEME, PRESET_COLOR_SCHEMES } from './engine/algSimulator';
 
 const STORAGE_KEY = 'cubemaster_solves_v2_4';
 const DEFAULT_SCRAMBLE = "D2 B2 R2 U' L2 F2 D R2 U' B2 U F R' U2 L' D2 B' F D' L2 R";
@@ -49,6 +49,29 @@ export const App: React.FC = () => {
   // Settings (15s inspection enabled by default per Stitch design)
   const [inspectionEnabled, setInspectionEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [colorSchemeKey, setColorSchemeKey] = useState<ColorSchemePresetKey>(() => {
+    try {
+      const saved = localStorage.getItem('cubemaster_color_scheme_v2_4') as ColorSchemePresetKey | null;
+      if (saved && PRESET_COLOR_SCHEMES[saved]) return saved;
+    } catch {
+      // ignore
+    }
+    return 'white-bottom';
+  });
+
+  const activeColorScheme = useMemo(
+    () => PRESET_COLOR_SCHEMES[colorSchemeKey] || DEFAULT_COLOR_SCHEME,
+    [colorSchemeKey],
+  );
+
+  const handleChangeColorSchemeKey = (key: ColorSchemePresetKey) => {
+    setColorSchemeKey(key);
+    try {
+      localStorage.setItem('cubemaster_color_scheme_v2_4', key);
+    } catch {
+      // ignore
+    }
+  };
 
   // Modals
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
@@ -227,9 +250,10 @@ export const App: React.FC = () => {
   };
 
   // Load an algorithm from library into 3D viewer
-  const handleLoadAlgorithmInto3D = (alg: AlgorithmCase) => {
+  const handleLoadAlgorithmInto3D = (alg: CustomAlgorithmData) => {
     setSelectedSolveForAnalysis(null);
     setCustomAlgorithmFor3D({
+      id: alg.id,
       name: alg.name,
       notation: alg.notation,
       category: alg.category,
@@ -276,6 +300,7 @@ export const App: React.FC = () => {
               initialStep={customAlgorithmFor3D || selectedSolveForAnalysis ? 3 : 1}
               customAlgorithm={customAlgorithmFor3D}
               onClearCustomAlgorithm={() => setCustomAlgorithmFor3D(null)}
+              colorScheme={activeColorScheme}
             />
           </div>
         )}
@@ -334,6 +359,7 @@ export const App: React.FC = () => {
             <AlgorithmsView
               onBackToTimer={() => setActiveTab('scramble-timer')}
               onLoadInto3D={handleLoadAlgorithmInto3D}
+              colorScheme={activeColorScheme}
             />
           </div>
         )}
@@ -359,6 +385,8 @@ export const App: React.FC = () => {
         }}
         inspectionEnabled={inspectionEnabled}
         onToggleInspection={() => setInspectionEnabled(!inspectionEnabled)}
+        colorSchemeKey={colorSchemeKey}
+        onChangeColorSchemeKey={handleChangeColorSchemeKey}
       />
     </div>
   );

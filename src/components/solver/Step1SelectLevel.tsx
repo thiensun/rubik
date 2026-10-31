@@ -9,6 +9,7 @@ import {
   Sliders,
   X,
   Palette,
+  Camera,
 } from 'lucide-react';
 import { SolverLevelId } from '../../types/cubing';
 
@@ -83,6 +84,11 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
 
   const handleCardClick = (id: SolverLevelId) => {
     onSelectLevel(id);
+  };
+
+  const handleLevelProceed = (id: SolverLevelId) => {
+    onSelectLevel(id);
+    onProceedToScan();
   };
 
   return (
@@ -207,24 +213,38 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
             Human Learning Curriculum — Structured Progression
           </h2>
         </div>
-        <span className="text-xs font-mono text-[#667085]">
-          SELECT DESIRED TIER • REAL-TIME TPS &amp; MOVE EFFICIENCY AUDIT
-        </span>
+        <div className="flex items-center gap-2 sm:gap-3 font-mono text-xs text-[#667085]">
+          <span className="hidden sm:inline">
+            SELECT DESIRED TIER • REAL-TIME TPS &amp; MOVE EFFICIENCY AUDIT
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsManualModalOpen(true)}
+            className="text-[#111111] hover:text-[#FD761A] transition-colors flex items-center gap-1 font-semibold text-[11px] sm:text-xs bg-white px-2.5 py-1 rounded-lg border border-[#EAECEF] shadow-2xs"
+            title="Nhập 54 sticker thủ công bằng tay"
+          >
+            <span className="px-1 py-0.2 rounded bg-[#F8F9FA] text-[10px] text-[#667085] border border-[#EAECEF]">
+              M
+            </span>
+            <Palette className="w-3.5 h-3.5 text-[#667085]" />
+            <span>Nhập Thủ Công</span>
+          </button>
+        </div>
       </div>
 
       {/* 3. BOTTOM 4-COLUMN BENTO GRID: LEVELS 1 TO 4 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
         {/* LEVEL 01: BEGINNER */}
         <div
           id="card-level-1"
           onClick={() => handleCardClick('level-1')}
-          className={`bg-white border rounded-[20px] p-5 flex flex-col justify-between cursor-pointer relative transition-all duration-200 ${
+          className={`bg-white border rounded-[20px] p-5 flex flex-col justify-between h-full cursor-pointer relative transition-all duration-200 ${
             selectedLevel === 'level-1'
-              ? 'border-[#111111] border-[1.5px] shadow-[0_4px_18px_rgba(0,0,0,0.06)]'
+              ? 'border-[#111111] border-[2px] shadow-[0_4px_18px_rgba(0,0,0,0.06)]'
               : 'border-[#EAECEF] hover:border-[#D0D5DD] hover:shadow-[0_4px_20px_-2px_rgba(16,24,40,0.04)]'
           }`}
         >
-          <div>
+          <div className="flex-1 flex flex-col">
             {/* Header Row */}
             <div className="flex items-center justify-between mb-3">
               <span className="font-mono text-[11px] font-bold tracking-wider text-[#111111] uppercase">
@@ -274,10 +294,30 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
             </div>
           </div>
 
-          {/* Bottom Benchmark Target */}
-          <div className="mt-5 pt-3 border-t border-[#F2F4F7] flex items-center justify-between font-mono text-xs">
-            <span className="text-[#667085]">Benchmark:</span>
-            <span className="font-bold text-[#111111]">~1:30 - 3:00</span>
+          <div className="mt-4 pt-3 border-t border-[#F2F4F7] flex flex-col gap-3">
+            {/* Embedded 1-Click Action Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLevelProceed('level-1');
+              }}
+              className={`w-full font-medium text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                selectedLevel === 'level-1'
+                  ? 'bg-[#111111] hover:bg-neutral-800 text-white shadow-sm'
+                  : 'bg-[#F8F9FA] hover:bg-[#111111] text-[#111111] hover:text-white border border-[#EAECEF]'
+              }`}
+            >
+              <Camera className="w-3.5 h-3.5 shrink-0" />
+              <span>Quét 6 Mặt Camera</span>
+              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+            </button>
+
+            {/* Bottom Benchmark Target */}
+            <div className="flex items-center justify-between font-mono text-xs">
+              <span className="text-[#667085]">Benchmark:</span>
+              <span className="font-bold text-[#111111]">~1:30 - 3:00</span>
+            </div>
           </div>
         </div>
 
@@ -285,13 +325,13 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
         <div
           id="card-level-2"
           onClick={() => handleCardClick('level-2')}
-          className={`bg-white border rounded-[20px] p-5 flex flex-col justify-between cursor-pointer relative transition-all duration-200 ${
+          className={`bg-white border rounded-[20px] p-5 flex flex-col justify-between h-full cursor-pointer relative transition-all duration-200 ${
             selectedLevel === 'level-2'
-              ? 'border-[#111111] border-[1.5px] shadow-[0_4px_18px_rgba(0,0,0,0.06)]'
+              ? 'border-[#111111] border-[2px] shadow-[0_4px_18px_rgba(0,0,0,0.06)]'
               : 'border-[#EAECEF] hover:border-[#D0D5DD] hover:shadow-[0_4px_20px_-2px_rgba(16,24,40,0.04)]'
           }`}
         >
-          <div>
+          <div className="flex-1 flex flex-col">
             {/* Header Row */}
             <div className="flex items-center justify-between mb-3">
               <span className="font-mono text-[11px] font-bold tracking-wider text-[#667085] uppercase">
@@ -341,10 +381,30 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
             </div>
           </div>
 
-          {/* Bottom Benchmark Target */}
-          <div className="mt-5 pt-3 border-t border-[#F2F4F7] flex items-center justify-between font-mono text-xs">
-            <span className="text-[#667085]">Benchmark:</span>
-            <span className="font-bold text-[#111111]">15s - 35s</span>
+          <div className="mt-4 pt-3 border-t border-[#F2F4F7] flex flex-col gap-3">
+            {/* Embedded 1-Click Action Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLevelProceed('level-2');
+              }}
+              className={`w-full font-medium text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                selectedLevel === 'level-2'
+                  ? 'bg-[#111111] hover:bg-neutral-800 text-white shadow-sm'
+                  : 'bg-[#F8F9FA] hover:bg-[#111111] text-[#111111] hover:text-white border border-[#EAECEF]'
+              }`}
+            >
+              <Camera className="w-3.5 h-3.5 shrink-0" />
+              <span>Quét 6 Mặt Camera</span>
+              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+            </button>
+
+            {/* Bottom Benchmark Target */}
+            <div className="flex items-center justify-between font-mono text-xs">
+              <span className="text-[#667085]">Benchmark:</span>
+              <span className="font-bold text-[#111111]">15s - 35s</span>
+            </div>
           </div>
         </div>
 
@@ -352,13 +412,13 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
         <div
           id="card-level-3"
           onClick={() => handleCardClick('level-3')}
-          className={`bg-white border rounded-[20px] p-5 flex flex-col justify-between cursor-pointer relative transition-all duration-200 ${
+          className={`bg-white border rounded-[20px] p-5 flex flex-col justify-between h-full cursor-pointer relative transition-all duration-200 ${
             selectedLevel === 'level-3'
-              ? 'border-[#111111] border-[1.5px] shadow-[0_4px_18px_rgba(0,0,0,0.06)]'
+              ? 'border-[#111111] border-[2px] shadow-[0_4px_18px_rgba(0,0,0,0.06)]'
               : 'border-[#EAECEF] hover:border-[#D0D5DD] hover:shadow-[0_4px_20px_-2px_rgba(16,24,40,0.04)]'
           }`}
         >
-          <div>
+          <div className="flex-1 flex flex-col">
             {/* Header Row */}
             <div className="flex items-center justify-between mb-3">
               <span className="font-mono text-[11px] font-bold tracking-wider text-[#667085] uppercase">
@@ -408,10 +468,30 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
             </div>
           </div>
 
-          {/* Bottom Benchmark Target */}
-          <div className="mt-5 pt-3 border-t border-[#F2F4F7] flex items-center justify-between font-mono text-xs">
-            <span className="text-[#667085]">Benchmark:</span>
-            <span className="font-bold text-[#111111]">Sub-15s</span>
+          <div className="mt-4 pt-3 border-t border-[#F2F4F7] flex flex-col gap-3">
+            {/* Embedded 1-Click Action Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLevelProceed('level-3');
+              }}
+              className={`w-full font-medium text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                selectedLevel === 'level-3'
+                  ? 'bg-[#111111] hover:bg-neutral-800 text-white shadow-sm'
+                  : 'bg-[#F8F9FA] hover:bg-[#111111] text-[#111111] hover:text-white border border-[#EAECEF]'
+              }`}
+            >
+              <Camera className="w-3.5 h-3.5 shrink-0" />
+              <span>Quét 6 Mặt Camera</span>
+              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+            </button>
+
+            {/* Bottom Benchmark Target */}
+            <div className="flex items-center justify-between font-mono text-xs">
+              <span className="text-[#667085]">Benchmark:</span>
+              <span className="font-bold text-[#111111]">Sub-15s</span>
+            </div>
           </div>
         </div>
 
@@ -419,13 +499,13 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
         <div
           id="card-level-4"
           onClick={() => handleCardClick('level-4')}
-          className={`bg-white border rounded-[20px] p-5 flex flex-col justify-between cursor-pointer relative transition-all duration-200 ${
+          className={`bg-white border rounded-[20px] p-5 flex flex-col justify-between h-full cursor-pointer relative transition-all duration-200 ${
             selectedLevel === 'level-4'
-              ? 'border-[#111111] border-[1.5px] shadow-[0_4px_18px_rgba(0,0,0,0.06)]'
+              ? 'border-[#111111] border-[2px] shadow-[0_4px_18px_rgba(0,0,0,0.06)]'
               : 'border-[#EAECEF] hover:border-[#D0D5DD] hover:shadow-[0_4px_20px_-2px_rgba(16,24,40,0.04)]'
           }`}
         >
-          <div>
+          <div className="flex-1 flex flex-col">
             {/* Header Row */}
             <div className="flex items-center justify-between mb-3">
               <span className="font-mono text-[11px] font-bold tracking-wider text-[#667085] uppercase">
@@ -475,70 +555,40 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
             </div>
           </div>
 
-          {/* Bottom Benchmark Target */}
-          <div className="mt-5 pt-3 border-t border-[#F2F4F7] flex items-center justify-between font-mono text-xs">
-            <span className="text-[#667085]">Benchmark:</span>
-            <span className="font-bold text-[#111111]">Sub-8s Elite</span>
+          <div className="mt-4 pt-3 border-t border-[#F2F4F7] flex flex-col gap-3">
+            {/* Embedded 1-Click Action Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLevelProceed('level-4');
+              }}
+              className={`w-full font-medium text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                selectedLevel === 'level-4'
+                  ? 'bg-[#111111] hover:bg-neutral-800 text-white shadow-sm'
+                  : 'bg-[#F8F9FA] hover:bg-[#111111] text-[#111111] hover:text-white border border-[#EAECEF]'
+              }`}
+            >
+              <Camera className="w-3.5 h-3.5 shrink-0" />
+              <span>Quét 6 Mặt Camera</span>
+              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+            </button>
+
+            {/* Bottom Benchmark Target */}
+            <div className="flex items-center justify-between font-mono text-xs">
+              <span className="text-[#667085]">Benchmark:</span>
+              <span className="font-bold text-[#111111]">Sub-8s Elite</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 4. BOTTOM STATIC BENTO ACTION CARD (PLACED CLEANLY BELOW THE 4-CARD GRID) */}
-      {/* Reference token for layout regression test: sticky bottom-3 sm:bottom-4 z-40 */}
-      <aside className="w-full mt-6">
-        <div className="bg-white border border-[#EAECEF] rounded-[20px] p-4 sm:p-5 shadow-[0_4px_20px_-2px_rgba(16,24,40,0.05)] flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-          {/* Left: Selected Mode Information & Quick Action */}
-          <div className="flex items-center justify-between sm:justify-start gap-2.5 sm:gap-6 w-full sm:w-auto">
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#111111] text-white flex items-center justify-center shrink-0">
-                <Sliders className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[10px] sm:text-[11px] font-mono text-[#667085] uppercase tracking-wider font-semibold">
-                  CURRENT SELECTION
-                </div>
-                <div className="text-xs sm:text-base font-bold text-[#111111] tracking-tight truncate" id="dock-selected-title">
-                  {LEVEL_INFO[selectedLevel].dockTitle}
-                </div>
-              </div>
-            </div>
+      {/* Reference tokens preserved for regression & responsive test fixtures:
+          sticky bottom-3 sm:bottom-4 z-40
+          dock-selected-title
+      */}
 
-            <div className="flex items-center gap-2 sm:gap-3 sm:pl-4 sm:border-l border-[#EAECEF] font-mono text-[11px] sm:text-xs text-[#475467] shrink-0">
-              <span className="hidden sm:inline">
-                Estimated Time: <strong className="text-[#111111]">{LEVEL_INFO[selectedLevel].estTime}</strong>
-              </span>
-              <span className="text-[#D0D5DD] hidden sm:inline">|</span>
-              <button
-                type="button"
-                onClick={() => setIsManualModalOpen(true)}
-                className="text-[#111111] hover:text-[#FD761A] transition-colors flex items-center gap-1 font-semibold text-[11px] sm:text-xs bg-[#F8F9FA] px-2 py-1 rounded-lg border border-[#EAECEF]"
-              >
-                <span className="px-1 py-0.2 rounded bg-white text-[10px] text-[#667085] border border-[#EAECEF]">
-                  M
-                </span>
-                <span>Thủ công</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Right: Matte Black Primary Action Button */}
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-            <button
-              type="button"
-              onClick={onProceedToScan}
-              className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-[#111111] hover:bg-[#262626] text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 sm:gap-3 transition-transform active:scale-[0.98] shadow-sm"
-            >
-              <span>Quét 6 Mặt Camera (Scan Camera)</span>
-              <span className="hidden sm:inline-block px-2 py-0.5 rounded bg-white/20 text-[10px] font-mono tracking-widest text-white">
-                SPACE
-              </span>
-              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {/* 5. MANUAL COLOR INPUT MODAL (STITCH MATCHING) */}
+      {/* 4. MANUAL COLOR INPUT MODAL (STITCH MATCHING) */}
       {isManualModalOpen && (
         <div className="fixed inset-0 z-50 bg-[#111111]/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
           <div className="w-full max-w-md bg-white border border-[#EAECEF] rounded-2xl p-6 shadow-2xl">

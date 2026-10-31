@@ -18,6 +18,7 @@ import {
   Clock,
   ExternalLink,
   Layers,
+  X,
 } from 'lucide-react';
 import {
   AlgorithmEntry,
@@ -243,6 +244,7 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
   const [trainerMoveIdx, setTrainerMoveIdx] = useState<number>(0);
   const [isTrainerPlaying, setIsTrainerPlaying] = useState<boolean>(false);
   const [trainerSpeed, setTrainerSpeed] = useState<'0.5x' | '1.0x' | '2.0x'>('1.0x');
+  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState<boolean>(false);
 
   // Auto-sync right 3D Trainer to the FIRST algorithm whenever switching level tabs or sub-filters
   useEffect(() => {
@@ -537,7 +539,7 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
   }, [drillCase, drillHistory]);
 
   return (
-    <div className="w-full space-y-5 animate-fade-in pb-14">
+    <div className="w-full space-y-5 animate-fade-in pb-24 lg:pb-8">
       {/* 1. TOP FILTER BENTO BAR */}
       <section className="bg-white border border-[#EAECEF] rounded-[24px] p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.02)] space-y-4">
         {/* Title & Back Button Row */}
@@ -829,7 +831,7 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
       {/* 2. ASYMMETRIC MAIN WORKSPACE: LEFT 65% BENTO CARDS / RIGHT 35% STICKY 3D ALG TRAINER & DRILL MODE */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* LEFT COLUMN (65% -> 8 Cols on lg): Algorithm Bento Cards */}
-        <div className="lg:col-span-8 space-y-4">
+        <div className="lg:col-span-8 space-y-4 pb-20 lg:pb-0">
           {filteredAlgs.length === 0 ? (
             <div className="bg-white border border-[#EAECEF] rounded-[24px] p-12 text-center text-neutral-400 font-mono text-xs">
               Không tìm thấy công thức nào khớp với bộ lọc hiện tại.
@@ -967,15 +969,20 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onLoadInto3D({
-                              id: alg.id,
-                              name: alg.name,
-                              notation: alg.mainAlg,
-                              category: alg.category,
-                              prob: alg.probability,
-                              descriptionVi: alg.recognitionVN,
-                              holdingNoteVi: alg.fingertrickVN,
-                            });
+                            if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                              handleSelectAlgForTrainer(alg);
+                              setIsMobileSheetOpen(true);
+                            } else {
+                              onLoadInto3D({
+                                id: alg.id,
+                                name: alg.name,
+                                notation: alg.mainAlg,
+                                category: alg.category,
+                                prob: alg.probability,
+                                descriptionVi: alg.recognitionVN,
+                                holdingNoteVi: alg.fingertrickVN,
+                              });
+                            }
                           }}
                           className="px-3.5 py-2 rounded-xl bg-[#111111] hover:bg-neutral-800 text-white font-mono text-[11px] font-bold transition-all flex items-center gap-1.5 shadow-2xs"
                         >
@@ -991,8 +998,62 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
           )}
         </div>
 
-        {/* RIGHT STICKY BENTO CARD (35% -> 4 Cols on lg): 3D ALG TRAINER & DRILL MODE */}
-        <div className="lg:col-span-4 sticky top-4 h-[calc(100vh-2rem)] max-h-[760px] flex flex-col justify-between overflow-hidden rounded-[24px] bg-white border border-[#EAECEF] p-4 shadow-sm gap-2">
+        {/* MOBILE BACKDROP (< 1024px) when Slide-Up 3D Sheet is Open */}
+        {isMobileSheetOpen && (
+          <div
+            onClick={() => setIsMobileSheetOpen(false)}
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs lg:hidden animate-fade-in"
+          />
+        )}
+
+        {/* MOBILE FLOATING MINI-BAR (< 1024px) when Slide-Up 3D Sheet is Closed */}
+        {!isMobileSheetOpen && (
+          <div className="fixed bottom-4 left-4 right-4 z-40 bg-white/95 backdrop-blur-md border border-[#EAECEF] rounded-2xl p-3 shadow-[0_8px_30px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3 lg:hidden">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                <span className="text-[10px] font-mono tracking-wider text-neutral-500 uppercase truncate">
+                  3D ALG TRAINER · {selectedTrainerAlg.category}
+                </span>
+              </div>
+              <span className="text-xs font-bold text-[#111111] truncate block max-w-[200px] sm:max-w-[260px]">
+                {selectedTrainerAlg.name}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                sound.playTick();
+                setIsMobileSheetOpen(true);
+              }}
+              className="bg-[#111111] hover:bg-neutral-800 text-white text-xs font-medium px-3.5 py-2 rounded-xl flex items-center gap-1.5 shrink-0 shadow-sm transition-all active:scale-95"
+            >
+              <span>▶ Mở Khối 3D</span>
+            </button>
+          </div>
+        )}
+
+        {/* RIGHT STICKY BENTO CARD (Desktop lg:col-span-4 sticky top-4) / MOBILE SLIDE-UP BOTTOM SHEET DRAWER (< 1024px) */}
+        <div
+          className={`fixed inset-x-0 bottom-0 z-50 rounded-t-[24px] bg-white shadow-2xl border-t border-[#EAECEF] max-h-[85vh] overflow-y-auto p-4 transition-transform duration-300 flex flex-col justify-between gap-2 lg:static lg:z-auto lg:col-span-4 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:max-h-[760px] lg:overflow-hidden lg:rounded-[24px] lg:border lg:border-[#EAECEF] lg:shadow-sm lg:translate-y-0 ${
+            isMobileSheetOpen ? 'translate-y-0' : 'translate-y-full pointer-events-none lg:pointer-events-auto'
+          }`}
+        >
+          {/* Mobile Drag Handle & Close Bar (< 1024px) */}
+          <div className="flex items-center justify-between pb-1.5 border-b border-neutral-100 lg:hidden shrink-0">
+            <div className="w-10 h-1.5 rounded-full bg-neutral-300 mx-auto" />
+            <button
+              type="button"
+              onClick={() => {
+                setIsTrainerPlaying(false);
+                setIsMobileSheetOpen(false);
+              }}
+              className="px-2.5 py-1 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-mono text-[11px] font-bold flex items-center gap-1 shrink-0 transition-colors"
+            >
+              <span>✕ Đóng Khối 3D</span>
+            </button>
+          </div>
+
           {/* Row 1 (Compact Header - Fixed Height): Title on left + Drill Mode button on right */}
           <div className="flex items-center justify-between gap-2 py-1 border-b border-[#EAECEF] shrink-0">
             <div className="min-w-0">
@@ -1124,14 +1185,22 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
                       }
                       sound.playTick();
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-[#111111] hover:bg-neutral-800 text-white font-mono text-xs font-bold flex items-center gap-1 shadow-xs"
+                    className="px-3 py-1.5 rounded-lg bg-[#111111] hover:bg-neutral-800 text-white font-mono text-xs font-bold flex items-center gap-1 shadow-xs whitespace-nowrap"
                   >
                     {isTrainerPlaying ? (
-                      <Pause className="w-3.5 h-3.5 fill-current" />
+                      <Pause className="w-3.5 h-3.5 fill-current shrink-0" />
                     ) : (
-                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <Play className="w-3.5 h-3.5 fill-current shrink-0" />
                     )}
-                    <span>{isTrainerPlaying ? 'Pause' : 'Play [Space]'}</span>
+                    <span>
+                      {isTrainerPlaying ? (
+                        'Pause'
+                      ) : (
+                        <>
+                          Play<span className="hidden sm:inline"> [Space]</span>
+                        </>
+                      )}
+                    </span>
                   </button>
                   <button
                     type="button"

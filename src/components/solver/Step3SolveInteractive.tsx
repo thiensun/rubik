@@ -865,7 +865,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
       {/* MAIN ASYMMETRIC SPLIT (55% LEFT / 45% RIGHT) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT BENTO ARENA (55% -> 7 Cols) */}
-        <div className="lg:col-span-7 sticky top-4 max-h-[calc(100vh-2rem)] overflow-hidden bg-white border border-[#EAECEF] rounded-[24px] p-4 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5">
+        <div className="lg:col-span-7 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-hidden bg-white border border-[#EAECEF] rounded-[24px] p-4 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5">
             {/* Viewport Top Header */}
             <div className="flex flex-wrap items-center justify-between pb-2 border-b border-[#EAECEF] gap-2 shrink-0">
               <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
@@ -1016,111 +1016,114 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
               </div>
             </div>
 
-            {/* REAL THREE.JS INTERACTIVE 3D RUBIK'S CUBE VIEWPORT (Constrained Height) */}
-            <ThreeCubeViewer
-              currentMove={currentMove.move}
-              moveIndex={currentMoveGlobalIdx}
-              allMoves={allMoves}
-              cameraPreset={cameraAngle}
-              turnAngle={currentMove.angle}
-              slice={currentMove.slice}
-              initialCubeState={baseCubeState}
-              activeStageHint={activeStageHint}
-              isSolved={isActuallySolved}
-              playbackSpeed={playbackSpeed}
-              onAnimationComplete={handleAnimationComplete}
-              heightClassName="h-[240px] sm:h-[260px]"
-            />
+            {/* COMPACT TOP DOCK ON MOBILE: 3D CUBE + PINNED PLAYBACK CONTROLS */}
+            <div className="sticky top-14 lg:static z-30 bg-white/95 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none pb-2 lg:pb-0 border-b lg:border-b-0 border-[#EAECEF] flex flex-col gap-2 shrink-0">
+              {/* REAL THREE.JS INTERACTIVE 3D RUBIK'S CUBE VIEWPORT (Constrained Height) */}
+              <ThreeCubeViewer
+                currentMove={currentMove.move}
+                moveIndex={currentMoveGlobalIdx}
+                allMoves={allMoves}
+                cameraPreset={cameraAngle}
+                turnAngle={currentMove.angle}
+                slice={currentMove.slice}
+                initialCubeState={baseCubeState}
+                activeStageHint={activeStageHint}
+                isSolved={isActuallySolved}
+                playbackSpeed={playbackSpeed}
+                onAnimationComplete={handleAnimationComplete}
+                heightClassName="h-[190px] sm:h-[220px] lg:h-[250px]"
+              />
 
-            {/* PINNED PLAYBACK CONTROLS (ALWAYS IMMEDIATELY BELOW 3D CUBE) */}
-            <div className="flex flex-wrap items-center justify-between gap-2 py-1.5 px-1 border-y border-[#F1F3F5] shrink-0">
-              {/* Precision Playback Buttons */}
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={handleResetToBeginning}
-                  className="px-2.5 py-1.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 font-mono text-xs font-bold transition-all shadow-2xs"
-                  title="Về Đầu [Home]"
-                >
-                  |&lt;
-                </button>
+              {/* PINNED PLAYBACK CONTROLS (ALWAYS IMMEDIATELY BELOW 3D CUBE) */}
+              <div className="flex flex-wrap items-center justify-between gap-2 py-1.5 px-1 bg-white z-30 lg:border-y border-[#F1F3F5] shrink-0">
+                {/* Precision Playback Buttons */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={handleResetToBeginning}
+                    className="px-2.5 py-1.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 font-mono text-xs font-bold transition-all shadow-2xs whitespace-nowrap"
+                    title="Về Đầu [Home]"
+                  >
+                    |&lt;
+                  </button>
 
-                <button
-                  disabled={currentMoveGlobalIdx === 0}
-                  onClick={handlePrevMove}
-                  className="px-3 py-1.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 text-xs font-semibold transition-all shadow-2xs flex items-center gap-1 disabled:opacity-30"
-                  title="Lùi 1 Nước [Mũi tên trái]"
-                >
-                  <SkipBack className="w-3.5 h-3.5" />
-                  <span>Lùi</span>
-                </button>
+                  <button
+                    disabled={currentMoveGlobalIdx === 0}
+                    onClick={handlePrevMove}
+                    className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 text-xs font-semibold transition-all shadow-2xs flex items-center gap-1 disabled:opacity-30 whitespace-nowrap"
+                    title="Lùi 1 Nước [Mũi tên trái]"
+                  >
+                    <SkipBack className="w-3.5 h-3.5 shrink-0" />
+                    <span>Lùi</span>
+                  </button>
 
-                <button
-                  onClick={() => {
-                    if (currentMoveGlobalIdx >= allMoves.length) {
-                      setCurrentMoveGlobalIdx(0);
-                      setIsAllCompleted(false);
-                      setIsPlaying(true);
-                      sound.playTick();
-                    } else {
-                      setIsPlaying(!isPlaying);
-                    }
-                  }}
-                  className="px-3 sm:px-4 py-1.5 rounded-xl bg-[#111111] hover:bg-neutral-800 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
-                >
-                  {isPlaying ? (
-                    <Pause className="w-3.5 h-3.5 fill-current" />
-                  ) : (
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                  )}
-                  <span>
-                    {isPlaying
-                      ? 'Tạm Dừng'
-                      : currentMoveGlobalIdx >= allMoves.length && allMoves.length > 0
-                      ? 'Phát Lại'
-                      : 'Tự Động'}
-                  </span>
-                  <span className="hidden sm:inline-block keycap-dark ml-0.5">Space</span>
-                </button>
+                  <button
+                    onClick={() => {
+                      if (currentMoveGlobalIdx >= allMoves.length) {
+                        setCurrentMoveGlobalIdx(0);
+                        setIsAllCompleted(false);
+                        setIsPlaying(true);
+                        sound.playTick();
+                      } else {
+                        setIsPlaying(!isPlaying);
+                      }
+                    }}
+                    className="px-3 sm:px-4 py-1.5 rounded-xl bg-[#111111] hover:bg-neutral-800 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 whitespace-nowrap"
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-3.5 h-3.5 fill-current shrink-0" />
+                    ) : (
+                      <Play className="w-3.5 h-3.5 fill-current shrink-0" />
+                    )}
+                    <span className="whitespace-nowrap">
+                      {isPlaying
+                        ? 'Tạm Dừng'
+                        : currentMoveGlobalIdx >= allMoves.length && allMoves.length > 0
+                        ? 'Phát Lại'
+                        : 'Tự Động'}
+                    </span>
+                    <span className="hidden sm:inline-block keycap-dark ml-0.5">Space</span>
+                  </button>
 
-                <button
-                  disabled={currentMoveGlobalIdx >= allMoves.length}
-                  onClick={handleNextMove}
-                  className="px-3 py-1.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 text-xs font-semibold transition-all shadow-2xs flex items-center gap-1 disabled:opacity-30"
-                  title="Tiến 1 Nước [Mũi tên phải]"
-                >
-                  <span>{currentMoveGlobalIdx >= allMoves.length ? 'Đã Xong' : 'Tiến'}</span>
-                  <SkipForward className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* Speed Selector & Smart Cube Sync */}
-              <div className="flex items-center gap-2.5">
-                <div className="flex items-center bg-[#F3F4F6] p-0.5 rounded-xl border border-[#EAECEF] text-[11px] font-mono">
-                  {(['0.5x', '1.0x', '2.0x'] as const).map((spd) => (
-                    <button
-                      key={spd}
-                      onClick={() => setPlaybackSpeed(spd)}
-                      className={`px-2 py-0.5 rounded-lg transition-all ${
-                        playbackSpeed === spd
-                          ? 'bg-white text-neutral-900 font-bold shadow-2xs'
-                          : 'text-neutral-500'
-                      }`}
-                    >
-                      {spd}
-                    </button>
-                  ))}
+                  <button
+                    disabled={currentMoveGlobalIdx >= allMoves.length}
+                    onClick={handleNextMove}
+                    className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 text-xs font-semibold transition-all shadow-2xs flex items-center gap-1 disabled:opacity-30 whitespace-nowrap"
+                    title="Tiến 1 Nước [Mũi tên phải]"
+                  >
+                    <span>{currentMoveGlobalIdx >= allMoves.length ? 'Đã Xong' : 'Tiến'}</span>
+                    <SkipForward className="w-3.5 h-3.5 shrink-0" />
+                  </button>
                 </div>
 
-                <label className="hidden xl:flex items-center gap-1.5 cursor-pointer select-none text-[11px] text-neutral-500 hover:text-neutral-900">
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="rounded border-[#D1D5DB] text-neutral-900 focus:ring-0 cursor-pointer accent-black w-3.5 h-3.5"
-                  />
-                  <span>
-                    Sync <span className="text-emerald-600 font-bold font-mono">(OK)</span>
-                  </span>
-                </label>
+                {/* Speed Selector & Smart Cube Sync */}
+                <div className="flex items-center gap-2.5">
+                  <div className="flex items-center bg-[#F3F4F6] p-0.5 rounded-xl border border-[#EAECEF] text-[11px] font-mono">
+                    {(['0.5x', '1.0x', '2.0x'] as const).map((spd) => (
+                      <button
+                        key={spd}
+                        onClick={() => setPlaybackSpeed(spd)}
+                        className={`px-2 py-0.5 rounded-lg transition-all ${
+                          playbackSpeed === spd
+                            ? 'bg-white text-neutral-900 font-bold shadow-2xs'
+                            : 'text-neutral-500'
+                        }`}
+                      >
+                        {spd}
+                      </button>
+                    ))}
+                  </div>
+
+                  <label className="hidden xl:flex items-center gap-1.5 cursor-pointer select-none text-[11px] text-neutral-500 hover:text-neutral-900">
+                    <input
+                      type="checkbox"
+                      defaultChecked
+                      className="rounded border-[#D1D5DB] text-neutral-900 focus:ring-0 cursor-pointer accent-black w-3.5 h-3.5"
+                    />
+                    <span>
+                      Sync <span className="text-emerald-600 font-bold font-mono">(OK)</span>
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
 

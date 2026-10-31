@@ -10,6 +10,7 @@ import { SolveAndLearnView } from './components/views/SolveAndLearnView';
 import { AlgorithmsView } from './components/views/AlgorithmsView';
 import { AuditLogModal } from './components/history/AuditLogModal';
 import { SettingsModal, ColorSchemePresetKey } from './components/SettingsModal';
+import { ScrollToTopButton } from './components/ScrollToTopButton';
 import { SolveRecord, PenaltyType } from './types/cubing';
 import { SEED_SOLVES, computeSessionStats } from './utils/cubingStats';
 import { applyScrambleForNet, generateWCAScramble, CubeNetState } from './utils/cubeState';
@@ -367,6 +368,11 @@ export const App: React.FC = () => {
 
       {/* 2. Global Footer */}
       <Footer />
+
+      {/* 3. Global Scroll to Top Button (Shifted up on mobile when on algorithms tab to avoid floating dock) */}
+      <ScrollToTopButton
+        className={activeTab === 'algorithms' ? 'bottom-20 lg:bottom-6' : 'bottom-6'}
+      />
 
       {/* Modals */}
       <AuditLogModal

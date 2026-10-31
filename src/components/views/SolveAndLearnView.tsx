@@ -5,6 +5,7 @@ import { Step2CameraScan } from '../solver/Step2CameraScan';
 import { Step3SolveInteractive, CustomAlgorithmData } from '../solver/Step3SolveInteractive';
 import { SolveRecord, SolverLevelId } from '../../types/cubing';
 import { CubeNetState, applyScramble } from '../../utils/cubeState';
+import { ColorScheme } from '../../engine/algSimulator';
 
 interface SolveAndLearnViewProps {
   analyzedSolve?: SolveRecord | null;
@@ -13,6 +14,7 @@ interface SolveAndLearnViewProps {
   initialStep?: 1 | 2 | 3;
   customAlgorithm?: CustomAlgorithmData | null;
   onClearCustomAlgorithm?: () => void;
+  colorScheme?: ColorScheme;
 }
 
 export const SolveAndLearnView: React.FC<SolveAndLearnViewProps> = ({
@@ -22,6 +24,7 @@ export const SolveAndLearnView: React.FC<SolveAndLearnViewProps> = ({
   initialStep = 1,
   customAlgorithm,
   onClearCustomAlgorithm,
+  colorScheme,
 }) => {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(initialStep);
   const [selectedLevel, setSelectedLevel] = useState<SolverLevelId>('level-2');
@@ -154,6 +157,7 @@ export const SolveAndLearnView: React.FC<SolveAndLearnViewProps> = ({
           onSetDemoScramble={handleSetDemoScramble}
           analyzedSolve={analyzedSolve}
           onClearAnalyzedSolve={onClearAnalyzedSolve}
+          colorScheme={colorScheme}
         />
       )}
     </div>

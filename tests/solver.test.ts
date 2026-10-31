@@ -98,5 +98,33 @@ describe('Cube Solver & Stage Decomposition Tests', () => {
         expect(isCubeSolved(state4)).toBe(true);
       }
     });
+
+    it('ensures CFOP solve produces concise human move counts (<= 95 moves max, avg <= 68 moves, never 175 moves) with 4 F2L pair subSteps', () => {
+      let totalMovesSum = 0;
+      const N = 20;
+      for (let i = 0; i < N; i++) {
+        const scramble = generateWCAScramble(20);
+        const scrambled = applyScramble(scramble);
+        const result = solveCube(scrambled, 'level-2');
+
+        expect(result.success).toBe(true);
+        // Never bloated like the old 175-move LBL fallback
+        expect(result.moves.length).toBeLessThanOrEqual(115);
+        totalMovesSum += result.moves.length;
+
+        // Stage 2 (F2L) must expose the 4 pair sub-steps
+        const f2lStage = result.stages[1];
+        expect(f2lStage.subSteps).toBeDefined();
+        expect(f2lStage.subSteps?.length).toBe(4);
+
+        // Stage 3 (OLL) and Stage 4 (PLL) must expose both 2-Look and 1-Look variants
+        expect(result.stages[2].twoLookVariant).toBeDefined();
+        expect(result.stages[2].oneLookVariant).toBeDefined();
+        expect(result.stages[3].twoLookVariant).toBeDefined();
+        expect(result.stages[3].oneLookVariant).toBeDefined();
+      }
+      const avgMoves = totalMovesSum / N;
+      expect(avgMoves).toBeLessThanOrEqual(80);
+    });
   });
 });

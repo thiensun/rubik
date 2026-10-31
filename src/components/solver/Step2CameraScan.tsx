@@ -956,27 +956,29 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
               </div>
             </div>
 
-            {/* Center Status Banner (Alignment Guidance) - Positioned safely above reticle */}
-            <div className="z-20 pointer-events-none shrink-0 my-1">
-              <div
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-white shadow-lg backdrop-blur-md transition-all duration-300 ${
-                  centerAligned && !isCameraBlockedOrGreen
-                    ? 'bg-emerald-950/85 border-emerald-400 text-emerald-200'
-                    : 'bg-slate-900/90 border-amber-500/50 text-white'
-                }`}
-              >
-                <span
-                  className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
-                    centerAligned && !isCameraBlockedOrGreen ? 'bg-emerald-400 animate-ping' : 'bg-amber-400 animate-pulse'
+            {/* Center Status Banner (Alignment Guidance) - Hidden when camera warning banner is active so they never overlap */}
+            {!(isCameraBlockedOrGreen && cameraStatus === 'active') && (
+              <div className="z-20 pointer-events-none shrink-0 my-1">
+                <div
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-white shadow-lg backdrop-blur-md transition-all duration-300 ${
+                    centerAligned && !isCameraBlockedOrGreen
+                      ? 'bg-emerald-950/85 border-emerald-400 text-emerald-200'
+                      : 'bg-slate-900/90 border-amber-500/50 text-white'
                   }`}
-                />
-                <span className="font-mono text-[10px] sm:text-xs font-semibold tracking-wide">
-                  {centerAligned && !isCameraBlockedOrGreen
-                    ? `✓ Center Aligned: ${activeFaceMeta.centerColor.toUpperCase()} (${autoHoldProgress > 0 ? `${autoHoldProgress}%` : 'Hold still'})`
-                    : `Hold Still 0.8s... Align ${activeFaceMeta.centerColor.toUpperCase()} CENTER`}
-                </span>
+                >
+                  <span
+                    className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
+                      centerAligned && !isCameraBlockedOrGreen ? 'bg-emerald-400 animate-ping' : 'bg-amber-400 animate-pulse'
+                    }`}
+                  />
+                  <span className="font-mono text-[10px] sm:text-xs font-semibold tracking-wide">
+                    {centerAligned && !isCameraBlockedOrGreen
+                      ? `✓ Center Aligned: ${activeFaceMeta.centerColor.toUpperCase()} (${autoHoldProgress > 0 ? `${autoHoldProgress}%` : 'Hold still'})`
+                      : `Hold Still 0.8s... Align ${activeFaceMeta.centerColor.toUpperCase()} CENTER`}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* 3x3 PRECISION ALIGNMENT RETICLE - Centered vertically with zero collisions */}
             <div className="relative z-20 w-[205px] h-[205px] sm:w-[260px] sm:h-[260px] aspect-square border border-white/30 rounded-2xl p-1.5 sm:p-2 bg-black/15 backdrop-blur-[1px] shadow-2xl my-auto shrink-0">

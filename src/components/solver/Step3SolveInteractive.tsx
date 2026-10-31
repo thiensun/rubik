@@ -31,7 +31,11 @@ import {
   AUTO_SOLVE_DEMO_SCRAMBLE,
 } from '../../utils/solutionStages';
 import { ThreeCubeViewer } from './ThreeCubeViewer';
-import { SpeedcubeCaseDiagram } from './SpeedcubeCaseDiagram';
+import { SpeedcubeCaseDiagram, F2L_SLOTS_META } from './SpeedcubeCaseDiagram';
+import { DynamicCaseDiagram } from '../DynamicCaseDiagram';
+import { ColorScheme, DEFAULT_COLOR_SCHEME, getCaseState } from '../../engine/algSimulator';
+import { parseFormulaTriggers, extractUniqueTriggers } from '../../engine/triggerParser';
+import { matchAlgorithmDatabaseForStage } from '../../data/algorithms';
 import { sound } from '../../utils/audio';
 import confetti from 'canvas-confetti';
 import {
@@ -50,6 +54,7 @@ import { getCrossAdvisor } from '../../utils/crossAnalysis';
 
 
 export interface CustomAlgorithmData {
+  id?: string;
   name: string;
   notation: string;
   category: string;
@@ -70,14 +75,15 @@ interface Step3SolveInteractiveProps {
   onSetDemoScramble?: (scramble: string | null) => void;
   analyzedSolve?: SolveRecord | null;
   onClearAnalyzedSolve?: () => void;
+  colorScheme?: ColorScheme;
 }
 
 const LEVEL_LABELS: Record<SolverLevelId, string> = {
-  'auto-solve': 'OPTIMAL AUTO-SOLVE (Fastest Path)',
-  'level-1': 'LEVEL 01 · BEGINNER (Layer-by-Layer)',
-  'level-2': 'LEVEL 02 · 2-LOOK CFOP',
-  'level-3': 'LEVEL 03 · FULL CFOP MASTER',
-  'level-4': 'LEVEL 04 · EXPERT (ZBLL SYSTEM)',
+  'auto-solve': 'Optimal Auto-Solve (<= 20 bước)',
+  'level-1': 'Lv.1 Beginner (Layer-by-Layer)',
+  'level-2': 'Lv.2 CFOP System (2-Look & Full)',
+  'level-3': 'Lv.3 Roux Method (Blockbuilding)',
+  'level-4': 'Lv.4 ZBLL Master (1-Look LL)',
 };
 
 export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
@@ -92,13 +98,16 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
   onSetDemoScramble,
   analyzedSolve,
   onClearAnalyzedSolve,
+  colorScheme = DEFAULT_COLOR_SCHEME,
 }) => {
   const [activeLevel, setActiveLevel] = useState<SolverLevelId>(initialLevel);
+  const [cfopLookMode, setCfopLookMode] = useState<'2-look' | '1-look'>('1-look');
   const DEMO_SCRAMBLE = DEMO_SCRAMBLES[activeLevel] || CFOP_DEMO_SCRAMBLE;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [cameraAngle, setCameraAngle] = useState<'Iso' | 'Bottom' | 'Top' | 'Front'>('Iso');
   const [isAlertDismissed, setIsAlertDismissed] = useState(false);
   const [copiedDemoScramble, setCopiedDemoScramble] = useState(false);
+  const [activeSubStepIndex, setActiveSubStepIndex] = useState<number>(0);
 
   const isMissingScannedCube = !scannedCubeState && !customAlgorithm && !isAlertDismissed;
 
@@ -167,8 +176,57 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
       };
     }
 
-    return getSolutionForLevel(activeLevel, demoScramble || undefined, scannedCubeState || undefined);
-  }, [activeLevel, customAlgorithm, demoScramble, scannedCubeState]);
+    const rawSolution = getSolutionForLevel(activeLevel, demoScramble || undefined, scannedCubeState || undefined);
+
+    // If in Level 2 CFOP System and user selected 2-Look CFOP mode, swap OLL & PLL stages to their 2-Look breakdown!
+    if (activeLevel === 'level-2' && cfopLookMode === '2-look') {
+      let runningMoveNum = 1;
+      const stagesWithLook = rawSolution.stages.map((st) => {
+        const variant = st.twoLookVariant;
+        if (!variant) {
+          const renumbered = createMoves(st.moves.map((m) => m.move).join(' '), runningMoveNum);
+          runningMoveNum += renumbered.length;
+          return {
+            ...st,
+            moves: renumbered,
+            movesCount: renumbered.length,
+          };
+        }
+        const renumbered = createMoves(variant.formula, runningMoveNum);
+        const startNum = runningMoveNum;
+        runningMoveNum += renumbered.length;
+        return {
+          ...st,
+          titleVi: variant.titleVi,
+          subtitle: variant.subtitle,
+          formulaSummary: variant.formulaSummary,
+          moves: renumbered,
+          movesCount: renumbered.length,
+          subSteps: variant.subSteps?.map((ss, idx) => ({
+            ...ss,
+            startMoveNum: idx === 0 ? startNum : startNum + (variant.subSteps?.[0]?.movesCount || 0),
+          })),
+          caseDetails: st.caseDetails
+            ? {
+                ...st.caseDetails,
+                caseName: variant.caseName,
+                description: variant.description,
+                formula: variant.formula,
+              }
+            : undefined,
+        };
+      });
+      const total2LookMoves = stagesWithLook.reduce((acc, s) => acc + s.movesCount, 0);
+      return {
+        ...rawSolution,
+        totalMoves: total2LookMoves,
+        stages: stagesWithLook,
+        estTime: `~${Math.max(1, total2LookMoves * 0.45).toFixed(1)}s`,
+      };
+    }
+
+    return rawSolution;
+  }, [activeLevel, cfopLookMode, customAlgorithm, demoScramble, scannedCubeState]);
 
 
   // Flattened all moves across all stages
@@ -187,8 +245,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
   const baseCubeState = useMemo(() => {
     let raw: CubeNetState;
     if (customAlgorithm) {
-      const sanitizedNotation = expandAlgorithmNotation(customAlgorithm.notation);
-      raw = applyScramble(invertMoves(sanitizedNotation));
+      return getCaseState(customAlgorithm.notation, colorScheme).cubeState;
     } else if (scannedCubeState) {
       raw = scannedCubeState;
     } else {
@@ -197,10 +254,33 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
     }
     // Rubik 3D: "Còn về rubik 3d sẽ làm cross trắng dựa theo scramble đã scan, thì lúc đó rubik 3d sẽ xoay mặt tâm trắng xuống dưới để làm."
     if (raw.U?.[4] === 'white') {
-      return rotateWhiteToBottom(raw);
+      raw = rotateWhiteToBottom(raw);
+    }
+    // Remap sticker colors if user selected a custom Color Neutral scheme in Settings
+    const isCustomColorScheme =
+      colorScheme.D !== DEFAULT_COLOR_SCHEME.D ||
+      colorScheme.U !== DEFAULT_COLOR_SCHEME.U ||
+      colorScheme.F !== DEFAULT_COLOR_SCHEME.F;
+    if (isCustomColorScheme) {
+      const colorMap: Record<string, typeof colorScheme.U> = {
+        white: colorScheme.D,
+        yellow: colorScheme.U,
+        green: colorScheme.F,
+        blue: colorScheme.B,
+        orange: colorScheme.L,
+        red: colorScheme.R,
+      };
+      return {
+        U: raw.U.map((c) => colorMap[c] || c) as CubeNetState['U'],
+        D: raw.D.map((c) => colorMap[c] || c) as CubeNetState['D'],
+        F: raw.F.map((c) => colorMap[c] || c) as CubeNetState['F'],
+        B: raw.B.map((c) => colorMap[c] || c) as CubeNetState['B'],
+        L: raw.L.map((c) => colorMap[c] || c) as CubeNetState['L'],
+        R: raw.R.map((c) => colorMap[c] || c) as CubeNetState['R'],
+      };
     }
     return raw;
-  }, [customAlgorithm, scannedCubeState, demoScramble, activeLevel]);
+  }, [customAlgorithm, scannedCubeState, demoScramble, activeLevel, colorScheme]);
 
   const currentCubeState = useMemo(() => {
     let state = cloneCube(baseCubeState);
@@ -506,6 +586,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
   const handleSelectStage = (stage: SolutionStage) => {
     sound.playTick();
     setIsAllCompleted(false);
+    setActiveSubStepIndex(0);
     const startIdx = allMoves.findIndex((m) => m.num === (stage.moves[0]?.num || 1));
     if (startIdx !== -1) {
       setCurrentMoveGlobalIdx(startIdx);
@@ -534,6 +615,33 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
     setCopiedFormula(true);
     setTimeout(() => setCopiedFormula(false), 1800);
   };
+
+  // Sync activeSubStepIndex whenever currentMoveGlobalIdx advances into a non-empty sub-step
+  useEffect(() => {
+    const subs = currentStage?.subSteps;
+    if (!subs || subs.length === 0) {
+      setActiveSubStepIndex(0);
+      return;
+    }
+    const idxByMove = subs.findIndex(
+      (s) => s.movesCount > 0 && currentMove.num >= s.startMoveNum && currentMove.num <= s.endMoveNum,
+    );
+    if (idxByMove !== -1) {
+      setActiveSubStepIndex((prev) => {
+        const prevSub = subs[prev];
+        // If user clicked a 0-move (Already Solved / Skip) sub-step, keep it selected until currentMove changes
+        if (prevSub && prevSub.movesCount === 0) return prev;
+        return idxByMove;
+      });
+    }
+  }, [currentStage?.id, currentMove.num]);
+
+  const activeSubStep = useMemo(() => {
+    const subs = currentStage?.subSteps;
+    if (!subs || subs.length === 0) return null;
+    const safeIdx = Math.max(0, Math.min(subs.length - 1, activeSubStepIndex));
+    return subs[safeIdx] || subs[0];
+  }, [currentStage, activeSubStepIndex]);
 
   // Show all moves of the current stage in the algorithmic execution tape
   const tapeMoves = useMemo(() => {
@@ -757,10 +865,9 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
       {/* MAIN ASYMMETRIC SPLIT (55% LEFT / 45% RIGHT) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT BENTO ARENA (55% -> 7 Cols) */}
-        <div className="lg:col-span-7 flex flex-col gap-4">
-          <div className="bg-white border border-[#EAECEF] rounded-[24px] p-5 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4">
+        <div className="lg:col-span-7 sticky top-4 max-h-[calc(100vh-2rem)] overflow-hidden bg-white border border-[#EAECEF] rounded-[24px] p-4 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5">
             {/* Viewport Top Header */}
-            <div className="flex flex-wrap items-center justify-between pb-3 border-b border-[#EAECEF] gap-2">
+            <div className="flex flex-wrap items-center justify-between pb-2 border-b border-[#EAECEF] gap-2 shrink-0">
               <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                 <div className="px-3 py-1 rounded-full bg-[#111111] text-white font-mono text-xs font-bold tracking-tight flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
@@ -797,7 +904,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
                   <RotateCcw className="w-2.5 h-2.5 text-neutral-400 hover:text-neutral-700" />
                 </button>
 
-                <span className="font-semibold text-xs text-neutral-600 tracking-tight hidden md:inline">
+                <span className="font-semibold text-xs text-neutral-600 tracking-tight hidden md:inline truncate max-w-[200px]">
                   {currentStage.titleVi}
                 </span>
               </div>
@@ -895,10 +1002,10 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
                     <button
                       key={item.key}
                       onClick={() => setCameraAngle(item.key as any)}
-                      className={`px-2 sm:px-2.5 py-1 rounded-full text-[10.5px] font-mono font-bold transition-all ${
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold transition-all ${
                         cameraAngle === item.key
-                          ? 'bg-white text-neutral-900 shadow-sm'
-                          : 'text-neutral-500 hover:text-neutral-900'
+                           ? 'bg-white text-neutral-900 shadow-sm'
+                           : 'text-neutral-500 hover:text-neutral-900'
                       }`}
                       title={`Chuyển góc camera sang ${item.label}`}
                     >
@@ -909,7 +1016,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
               </div>
             </div>
 
-            {/* REAL THREE.JS INTERACTIVE 3D RUBIK'S CUBE VIEWPORT */}
+            {/* REAL THREE.JS INTERACTIVE 3D RUBIK'S CUBE VIEWPORT (Constrained Height) */}
             <ThreeCubeViewer
               currentMove={currentMove.move}
               moveIndex={currentMoveGlobalIdx}
@@ -922,94 +1029,16 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
               isSolved={isActuallySolved}
               playbackSpeed={playbackSpeed}
               onAnimationComplete={handleAnimationComplete}
+              heightClassName="h-[240px] sm:h-[260px]"
             />
 
-
-            {/* ALGORITHMIC EXECUTION TAPE / FORMULA BOX */}
-            <div className="bg-[#F8F9FA] rounded-2xl border border-[#EAECEF] p-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between pb-1 border-b border-[#EAECEF]/60 text-[11px] font-mono text-neutral-400 font-semibold uppercase tracking-wider">
-                <span>ALGORITHMIC EXECUTION TAPE</span>
-                <span className="text-neutral-600 font-bold">
-                  {currentStage.caseDetails?.caseName || currentStage.subtitle}
-                </span>
-              </div>
-
-              {/* Tape Reel (All moves of current stage wrapped cleanly) */}
-              <div className="flex flex-wrap items-center gap-2 px-1 py-1.5 max-h-36 sm:max-h-48 overflow-y-auto">
-                {tapeMoves.length === 0 ? (
-                  <div className="py-3 px-4 text-xs font-mono font-bold text-emerald-800 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
-                    <span>Khối Rubik của bạn đã ở trạng thái hoàn thành 100%! (0 Moves)</span>
-                  </div>
-                ) : (
-                  tapeMoves.map((m) => {
-                    const isCurrentTarget = m.num === currentMove.num && currentMoveGlobalIdx < allMoves.length;
-                    const isAllDone = isActuallySolved || (currentMoveGlobalIdx >= allMoves.length && allMoves.length > 0);
-
-                    return (
-                      <div
-                        key={m.num}
-                        onClick={() => {
-                          const targetIdx = allMoves.findIndex((mv) => mv.num === m.num);
-                          if (targetIdx !== -1) {
-                            setCurrentMoveGlobalIdx(targetIdx);
-                          }
-                          setIsAllCompleted(false);
-                          sound.playTick();
-                        }}
-                        className={`font-mono px-3.5 py-2.5 rounded-xl flex flex-col items-center justify-center min-w-[58px] cursor-pointer transition-all ${
-                          isCurrentTarget
-                            ? 'bg-[#111111] text-white shadow-md scale-105 ring-2 ring-emerald-500'
-                            : isAllDone
-                            ? 'bg-emerald-50 text-emerald-800 border-2 border-emerald-400 font-bold'
-                            : 'bg-white text-neutral-800 border border-[#EAECEF] hover:border-neutral-400'
-                        }`}
-                      >
-                        <span className="font-bold text-xl leading-none">{m.move}</span>
-                        <span
-                          className={`text-[9px] mt-1 ${
-                            isCurrentTarget
-                              ? 'text-emerald-400 font-bold'
-                              : isAllDone
-                              ? 'text-emerald-600 font-bold'
-                              : 'text-neutral-400'
-                          }`}
-                        >
-                          {isAllDone ? 'ĐÃ GIẢI ✓' : isCurrentTarget ? 'ACTIVE' : `#${m.num}`}
-                        </span>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-
-              {/* Clear Vietnamese Explanation & Sub-metrics */}
-              <div className="pt-2 border-t border-[#EAECEF] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                  <span className="text-xs font-semibold text-neutral-900">
-                    {currentMove.textVi}{' '}
-                    <span className="text-neutral-400 font-normal">
-                      ({currentMove.holdTip})
-                    </span>
-                  </span>
-                </div>
-
-                <div className="font-mono text-[11px] text-neutral-500 shrink-0">
-                  Góc xoay: <span className="font-bold text-neutral-900">{currentMove.angle}</span> ·
-                  Lát cắt: <span className="font-bold text-neutral-900">{currentMove.slice}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* BOTTOM CONTROL ROW */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+            {/* PINNED PLAYBACK CONTROLS (ALWAYS IMMEDIATELY BELOW 3D CUBE) */}
+            <div className="flex flex-wrap items-center justify-between gap-2 py-1.5 px-1 border-y border-[#F1F3F5] shrink-0">
               {/* Precision Playback Buttons */}
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={handleResetToBeginning}
-                  className="px-2.5 py-2 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 font-mono text-xs font-bold transition-all shadow-sm"
+                  className="px-2.5 py-1.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 font-mono text-xs font-bold transition-all shadow-2xs"
                   title="Về Đầu [Home]"
                 >
                   |&lt;
@@ -1018,7 +1047,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
                 <button
                   disabled={currentMoveGlobalIdx === 0}
                   onClick={handlePrevMove}
-                  className="px-3.5 py-2 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 text-xs font-semibold transition-all shadow-sm flex items-center gap-1 disabled:opacity-30"
+                  className="px-3 py-1.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 text-xs font-semibold transition-all shadow-2xs flex items-center gap-1 disabled:opacity-30"
                   title="Lùi 1 Nước [Mũi tên trái]"
                 >
                   <SkipBack className="w-3.5 h-3.5" />
@@ -1036,7 +1065,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
                       setIsPlaying(!isPlaying);
                     }
                   }}
-                  className="px-3 sm:px-5 py-2 rounded-xl bg-[#111111] hover:bg-neutral-800 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 sm:gap-2 active:scale-95"
+                  className="px-3 sm:px-4 py-1.5 rounded-xl bg-[#111111] hover:bg-neutral-800 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
                 >
                   {isPlaying ? (
                     <Pause className="w-3.5 h-3.5 fill-current" />
@@ -1056,7 +1085,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
                 <button
                   disabled={currentMoveGlobalIdx >= allMoves.length}
                   onClick={handleNextMove}
-                  className="px-3.5 py-2 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 text-xs font-semibold transition-all shadow-sm flex items-center gap-1 disabled:opacity-30"
+                  className="px-3 py-1.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 text-xs font-semibold transition-all shadow-2xs flex items-center gap-1 disabled:opacity-30"
                   title="Tiến 1 Nước [Mũi tên phải]"
                 >
                   <span>{currentMoveGlobalIdx >= allMoves.length ? 'Đã Xong' : 'Tiến'}</span>
@@ -1064,17 +1093,16 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
                 </button>
               </div>
 
-
               {/* Speed Selector & Smart Cube Sync */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-center bg-[#F3F4F6] p-1 rounded-xl border border-[#EAECEF] text-xs font-mono">
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center bg-[#F3F4F6] p-0.5 rounded-xl border border-[#EAECEF] text-[11px] font-mono">
                   {(['0.5x', '1.0x', '2.0x'] as const).map((spd) => (
                     <button
                       key={spd}
                       onClick={() => setPlaybackSpeed(spd)}
-                      className={`px-2 py-1 rounded-lg transition-all ${
+                      className={`px-2 py-0.5 rounded-lg transition-all ${
                         playbackSpeed === spd
-                          ? 'bg-white text-neutral-900 font-bold shadow-sm'
+                          ? 'bg-white text-neutral-900 font-bold shadow-2xs'
                           : 'text-neutral-500'
                       }`}
                     >
@@ -1083,22 +1111,490 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
                   ))}
                 </div>
 
-                <label className="hidden sm:flex items-center gap-2 cursor-pointer select-none text-xs text-neutral-500 hover:text-neutral-900">
+                <label className="hidden xl:flex items-center gap-1.5 cursor-pointer select-none text-[11px] text-neutral-500 hover:text-neutral-900">
                   <input
                     type="checkbox"
                     defaultChecked
                     className="rounded border-[#D1D5DB] text-neutral-900 focus:ring-0 cursor-pointer accent-black w-3.5 h-3.5"
                   />
                   <span>
-                    Smart Cube Sync{' '}
-                    <span className="text-emerald-600 font-bold font-mono">(Synced)</span>
+                    Sync <span className="text-emerald-600 font-bold font-mono">(OK)</span>
                   </span>
                 </label>
               </div>
             </div>
+
+            {/* SCROLLABLE ALGORITHMIC EXECUTION TAPE / FORMULA BOX (Below Pinned Controls) */}
+            <div className="bg-[#F8F9FA] rounded-2xl border border-[#EAECEF] p-3 flex-1 min-h-0 flex flex-col justify-between gap-2 overflow-hidden">
+              <div className="flex items-center justify-between pb-1 border-b border-[#EAECEF]/60 text-[10.5px] font-mono text-neutral-400 font-semibold uppercase tracking-wider shrink-0">
+                <span>ALGORITHMIC EXECUTION TAPE</span>
+                <span className="text-neutral-600 font-bold truncate max-w-[55%]">
+                  {activeSubStep ? activeSubStep.labelVi : currentStage.caseDetails?.caseName || currentStage.subtitle}
+                </span>
+              </div>
+
+              {/* Tape Reel (Scrollable if long) */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-2 pb-1 px-1 max-h-36 sm:max-h-48 overflow-y-auto max-h-[160px]">
+                {tapeMoves.length === 0 ? (
+                  <div className="py-2 px-3 text-xs font-mono font-bold text-emerald-800 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center gap-2">
+                    <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                    <span>Khối Rubik của bạn đã ở trạng thái hoàn thành 100%! (0 Moves)</span>
+                  </div>
+                ) : (
+                  tapeMoves.map((m) => {
+                    const isCurrentTarget = m.num === currentMove.num && currentMoveGlobalIdx < allMoves.length;
+                    const isAllDone = isActuallySolved || (currentMoveGlobalIdx >= allMoves.length && allMoves.length > 0);
+                    const isInActiveSubStep =
+                      activeSubStep &&
+                      activeSubStep.movesCount > 0 &&
+                      m.num >= activeSubStep.startMoveNum &&
+                      m.num <= activeSubStep.endMoveNum;
+
+                    return (
+                      <div
+                        key={m.num}
+                        onClick={() => {
+                          const targetIdx = allMoves.findIndex((mv) => mv.num === m.num);
+                          if (targetIdx !== -1) {
+                            setCurrentMoveGlobalIdx(targetIdx);
+                          }
+                          setIsAllCompleted(false);
+                          sound.playTick();
+                        }}
+                        className={`font-mono px-2.5 py-1.5 rounded-xl flex flex-col items-center justify-center min-w-[48px] cursor-pointer transition-all ${
+                          isCurrentTarget
+                            ? 'bg-[#111111] text-white shadow-sm scale-105 ring-2 ring-emerald-500'
+                            : isAllDone
+                            ? 'bg-emerald-50 text-emerald-800 border-2 border-emerald-400 font-bold'
+                            : isInActiveSubStep
+                            ? 'bg-white text-neutral-900 border-2 border-emerald-500 shadow-2xs'
+                            : activeSubStep && activeSubStep.movesCount > 0
+                            ? 'bg-white/60 text-neutral-400 border border-[#EAECEF] opacity-60 hover:opacity-100 hover:border-neutral-400'
+                            : 'bg-white text-neutral-800 border border-[#EAECEF] hover:border-neutral-400'
+                        }`}
+                      >
+                        <span className="font-bold text-base leading-none">{m.move}</span>
+                        <span
+                          className={`text-[8.5px] mt-0.5 ${
+                            isCurrentTarget
+                              ? 'text-emerald-400 font-bold'
+                              : isAllDone
+                              ? 'text-emerald-600 font-bold'
+                              : isInActiveSubStep
+                              ? 'text-emerald-600 font-bold'
+                              : 'text-neutral-400'
+                          }`}
+                        >
+                          {isAllDone ? 'ĐÃ GIẢI ✓' : isCurrentTarget ? 'ACTIVE' : `#${m.num}`}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Clear Vietnamese Explanation & Sub-metrics */}
+              <div className="pt-1.5 border-t border-[#EAECEF] flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span className="text-[11px] font-semibold text-neutral-900 truncate">
+                    {currentMove.textVi}{' '}
+                    <span className="text-neutral-400 font-normal">
+                      ({currentMove.holdTip})
+                    </span>
+                  </span>
+                </div>
+
+                <div className="font-mono text-[10.5px] text-neutral-500 shrink-0">
+                  Góc xoay: <span className="font-bold text-neutral-900">{currentMove.angle}</span> ·
+                  Lát cắt: <span className="font-bold text-neutral-900">{currentMove.slice}</span>
+                </div>
+              </div>
+            </div>
+        </div>
+
+
+        {/* RIGHT BENTO CARD: SOLUTION ROADMAP & FORMULAS (45% -> 5 Cols) */}
+        <div className="lg:col-span-5 flex flex-col gap-4">
+          <div className="bg-white border border-[#EAECEF] rounded-[24px] p-5 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4">
+            <div className="flex flex-col gap-3 pb-3 border-b border-[#EAECEF]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-base text-neutral-900">Solution Roadmap</span>
+                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-[#F3F4F6] text-neutral-500 font-medium">
+                    {solutionData.stages.length} Stages
+                  </span>
+                </div>
+                <span className="font-mono text-xs text-neutral-400 font-medium">
+                  Step {currentMove.num} / {solutionData.totalMoves}
+                </span>
+              </div>
+
+              {/* CFOP 2-Look vs Full 1-Look Segmented Toggle */}
+              {activeLevel === 'level-2' && !customAlgorithm && (
+                <div className="grid grid-cols-2 p-1 rounded-xl bg-[#F3F4F6] border border-[#EAECEF] gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCfopLookMode('2-look');
+                      setCurrentMoveGlobalIdx(0);
+                      setIsPlaying(false);
+                      sound.playTick();
+                    }}
+                    className={`py-1.5 px-2.5 rounded-lg font-mono text-[11px] font-bold transition-all text-center cursor-pointer ${
+                      cfopLookMode === '2-look'
+                        ? 'bg-[#111111] text-white shadow-xs'
+                        : 'text-neutral-600 hover:text-neutral-900'
+                    }`}
+                  >
+                    ★ 2-Look CFOP (Rút gọn 16 Algs)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCfopLookMode('1-look');
+                      setCurrentMoveGlobalIdx(0);
+                      setIsPlaying(false);
+                      sound.playTick();
+                    }}
+                    className={`py-1.5 px-2.5 rounded-lg font-mono text-[11px] font-bold transition-all text-center cursor-pointer ${
+                      cfopLookMode === '1-look'
+                        ? 'bg-[#111111] text-white shadow-xs'
+                        : 'text-neutral-600 hover:text-neutral-900'
+                    }`}
+                  >
+                    Full CFOP (1-Look 78 Algs)
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Clickable Bento Stage Cards Stack */}
+            <div className="flex flex-col gap-3">
+              {solutionData.stages.length === 0 ? (
+                <div className="p-6 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-center flex flex-col items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md">
+                    <Check className="w-6 h-6 stroke-[3]" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-emerald-950">
+                      Khối Rubik của bạn đã ở trạng thái hoàn thành 100%! (0 Moves)
+                    </h4>
+                    <p className="text-xs text-emerald-700 mt-1">
+                      Tất cả 6 mặt đều đồng màu chuẩn WCA hoàn chỉnh. Không cần thực hiện thêm bước giải nào.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                solutionData.stages.map((stage) => {
+                const isActive = stage.id === currentStage.id && !isAllCompleted;
+                const isDone = isAllCompleted || stage.stageNumber < currentStage.stageNumber;
+
+                if (isActive) {
+                  return (
+                    <div
+                      key={stage.id}
+                      className="p-4 rounded-xl bg-white border-2 border-neutral-900 shadow-sm flex flex-col gap-3 relative transition-all"
+                    >
+                      {/* Active Stage Header */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-[#111111] text-white font-mono flex items-center justify-center text-xs font-bold">
+                            {stage.stageNumber.toString().padStart(2, '0')}
+                          </div>
+                          <span className="text-xs font-extrabold text-neutral-900">
+                            {stage.titleVi}
+                          </span>
+                        </div>
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#111111] text-white font-mono text-[10px] font-bold tracking-tight">
+                          ACTIVE STEP · Move {currentMove.num}/{solutionData.totalMoves}
+                        </span>
+                      </div>
+
+                      {/* 2D Top-Down / Isometric Mini Diagram + Details */}
+                      {stage.caseDetails && (() => {
+                        const matchedDbAlg = !customAlgorithm
+                          ? matchAlgorithmDatabaseForStage(
+                              stage.id,
+                              stage.caseDetails.formula || stage.subtitle,
+                            )
+                          : undefined;
+
+                        // Bind activeSubStepIndex (0 = FR, 1 = FL, 2 = BR, 3 = BL) to all elements in Stage 02
+                        const safeSubIdx = Math.max(0, Math.min(3, activeSubStepIndex));
+                        const currentSlot = F2L_SLOTS_META[safeSubIdx] || F2L_SLOTS_META[0];
+
+                        const rawFormulaToDisplay =
+                          stage.caseDetails.diagramType === 'f2l' && activeSubStep && activeSubStep.movesCount > 0
+                            ? activeSubStep.formula
+                            : stage.caseDetails.formula;
+
+                        const displayFormula =
+                          matchedDbAlg &&
+                          rawFormulaToDisplay.replace(/[()[\]]/g, '').trim() ===
+                            matchedDbAlg.mainAlg.replace(/[()[\]]/g, '').trim()
+                            ? matchedDbAlg.mainAlg
+                            : rawFormulaToDisplay;
+                        const triggerBadges = extractUniqueTriggers(displayFormula);
+
+                        return (
+                          <div className="flex flex-col gap-3 pt-1">
+                            {/* Full-Width Stage Case Header & Description */}
+                            <div className="w-full bg-[#F8F9FA] border border-[#EAECEF] rounded-xl p-3">
+                              <div className="flex items-center justify-between text-xs font-semibold gap-2">
+                                <span className="text-neutral-900 font-bold">
+                                  {stage.caseDetails.caseName}
+                                </span>
+                                <span className="font-mono text-[10.5px] text-neutral-500 bg-white px-2 py-0.5 rounded-md border border-[#EAECEF] shrink-0">
+                                  {stage.caseDetails.probability}
+                                </span>
+                              </div>
+                              <p className="text-[11.5px] text-neutral-600 mt-1 leading-relaxed">
+                                {stage.caseDetails.description}
+                              </p>
+                            </div>
+
+                            {/* Compact Side-by-Side Visualizer + Active Formula Box */}
+                            <div className="grid grid-cols-12 gap-3 items-stretch">
+                              {/* Rich Speedcubing Case Diagram / F2L Slot Visualizer (5 Cols) */}
+                              <div className="col-span-12 sm:col-span-5 flex flex-col items-center justify-center gap-1">
+                                {customAlgorithm ? (
+                                  <DynamicCaseDiagram
+                                    id={customAlgorithm.id || 'step3-custom-alg'}
+                                    mainAlg={customAlgorithm.notation}
+                                    category={customAlgorithm.category}
+                                    colorScheme={colorScheme}
+                                    size={96}
+                                  />
+                                ) : matchedDbAlg ? (
+                                  <DynamicCaseDiagram
+                                    id={matchedDbAlg.id}
+                                    mainAlg={matchedDbAlg.mainAlg}
+                                    category={matchedDbAlg.category}
+                                    subGroup={matchedDbAlg.subGroup}
+                                    colorScheme={colorScheme}
+                                    size={96}
+                                    customArrows={matchedDbAlg.arrows}
+                                  />
+                                ) : (
+                                  <SpeedcubeCaseDiagram
+                                    caseName={stage.caseDetails.caseName}
+                                    diagramTitle={stage.caseDetails.diagramTitle}
+                                    diagramType={stage.caseDetails.diagramType}
+                                    patternNote={stage.caseDetails.patternNote}
+                                    topDownPattern={stage.caseDetails.topDownPattern}
+                                    activeSubStepIndex={safeSubIdx}
+                                  />
+                                )}
+                                {matchedDbAlg && (
+                                  <span className="font-mono text-[9.5px] font-bold text-neutral-500 uppercase tracking-wider text-center">
+                                    {matchedDbAlg.category} · {matchedDbAlg.id.toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Active Formula Box with Trigger Highlights & Copy (7 Cols) */}
+                              <div className="col-span-12 sm:col-span-7 flex flex-col justify-between bg-[#F8F9FA] border border-[#EAECEF] rounded-xl p-3 font-mono text-xs font-bold text-neutral-900 gap-2">
+                                <div className="flex flex-col gap-1.5">
+                                  <div className="flex items-center justify-between text-[10px] text-neutral-400 uppercase tracking-wider border-b border-[#EAECEF] pb-1">
+                                    <span>
+                                      {stage.caseDetails.diagramType === 'f2l' && stage.subSteps
+                                        ? `CÔNG THỨC PAIR ${safeSubIdx + 1} (${currentSlot.slotCode})`
+                                        : 'CÔNG THỨC GIAI ĐOẠN (FORMULA)'}
+                                    </span>
+                                    <button
+                                      onClick={() => handleCopyFormula(displayFormula)}
+                                      className="p-0.5 rounded text-neutral-400 hover:text-neutral-900 shrink-0 flex items-center gap-1"
+                                      title="Copy Formula"
+                                    >
+                                      {copiedFormula ? (
+                                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                      ) : (
+                                        <Copy className="w-3.5 h-3.5" />
+                                      )}
+                                    </button>
+                                  </div>
+
+                                  <div className="flex flex-wrap items-center gap-1 leading-relaxed py-0.5">
+                                    {parseFormulaTriggers(displayFormula, true).map((seg, idx) =>
+                                      seg.type === 'trigger' && seg.trigger ? (
+                                        <span
+                                          key={idx}
+                                          style={{
+                                            color: seg.trigger.color,
+                                            backgroundColor: seg.trigger.bgColor,
+                                            borderColor: seg.trigger.borderColor,
+                                          }}
+                                          title={`${seg.trigger.tag}: ${seg.trigger.pattern}`}
+                                          className="px-1.5 py-0.5 rounded border text-[11px] font-extrabold cursor-help"
+                                        >
+                                          {seg.rawText}
+                                        </span>
+                                      ) : (
+                                        <span key={idx} className="select-all">
+                                          {seg.rawText}
+                                        </span>
+                                      ),
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Trigger Legend Badges */}
+                                {triggerBadges.length > 0 && (
+                                  <div className="flex flex-wrap items-center gap-1 pt-1.5 border-t border-[#EAECEF]/80">
+                                    {triggerBadges.map((tr) => (
+                                      <span
+                                        key={tr.tag}
+                                        style={{
+                                          color: tr.color,
+                                          backgroundColor: tr.bgColor,
+                                          borderColor: tr.borderColor,
+                                        }}
+                                        title={`${tr.tag}: ${tr.pattern} — ${tr.descriptionVN}`}
+                                        className="px-1.5 py-0.2 rounded-full border font-sans text-[9.5px] font-bold tracking-tight cursor-help"
+                                      >
+                                        ★ {tr.tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Sub-Steps Breakdown (4 F2L Pairs or 2-Look OLL/PLL Steps) */}
+                      {stage.subSteps && stage.subSteps.length > 0 && (
+                        <div className="flex flex-col gap-1.5 pt-1">
+                          <span className="font-mono text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+                            CHI TIẾT TỪNG CẶP / BƯỚC NHỎ ({stage.subSteps.length} SUB-STEPS):
+                          </span>
+                          <div className="grid grid-cols-1 gap-1.5">
+                            {stage.subSteps.map((sub, subIdx) => {
+                              const isSubActive = activeSubStepIndex === subIdx;
+                              return (
+                                <button
+                                  type="button"
+                                  key={sub.id}
+                                  onClick={() => {
+                                    setActiveSubStepIndex(subIdx);
+                                    if (sub.movesCount > 0) {
+                                      const targetIdx = allMoves.findIndex((mv) => mv.num === sub.startMoveNum);
+                                      if (targetIdx !== -1) {
+                                        setCurrentMoveGlobalIdx(targetIdx);
+                                        setIsAllCompleted(false);
+                                        setIsPlaying(false);
+                                      }
+                                    }
+                                    sound.playTick();
+                                  }}
+                                  className={`w-full p-2.5 rounded-lg border flex items-center justify-between gap-2 text-xs font-mono transition-all text-left cursor-pointer active:scale-[0.99] ${
+                                    isSubActive
+                                      ? 'bg-[#111111] text-white border-[#111111] shadow-xs ring-1 ring-[#111111]'
+                                      : 'bg-[#F8F9FA] text-neutral-800 border-[#EAECEF] hover:border-neutral-400 hover:bg-[#F3F4F6]'
+                                  }`}
+                                  title={`Nhấn để chọn và nhảy 3D Cube đến ${sub.labelVi}`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span
+                                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                        isSubActive ? 'bg-emerald-400' : 'bg-neutral-300'
+                                      }`}
+                                    />
+                                    <span className="font-bold text-[11px] truncate">{sub.labelVi}</span>
+                                  </div>
+                                  <span
+                                    className={`text-[11px] font-bold px-2 py-0.5 rounded shrink-0 ${
+                                      isSubActive
+                                        ? 'bg-white/15 text-emerald-300'
+                                        : 'bg-white border border-[#EAECEF] text-neutral-900 shadow-2xs'
+                                    }`}
+                                  >
+                                    {sub.formula} ({sub.movesCount}b)
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Holding Note */}
+                      {stage.caseDetails?.holdingNote && (
+                        <div className="p-2.5 rounded-lg bg-[#F8F9FA] border border-[#EAECEF] text-[11px] font-mono text-neutral-600 flex items-start gap-2">
+                          <span className="font-bold text-neutral-900 shrink-0">Holding Note:</span>
+                          <span>{stage.caseDetails.holdingNote}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Completed or Pending Stage
+                return (
+                  <div
+                    key={stage.id}
+                    onClick={() => handleSelectStage(stage)}
+                    className={`p-3.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                      isDone
+                        ? 'bg-[#F8F9FA] border-[#EAECEF] hover:bg-neutral-100'
+                        : 'bg-white border-[#EAECEF] opacity-60 hover:opacity-80'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                          isDone ? 'bg-[#111111] text-white' : 'border border-neutral-300 text-neutral-400 font-mono'
+                        }`}
+                      >
+                        {isDone ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : stage.stageNumber}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-neutral-900">
+                          {stage.titleVi}
+                        </div>
+                        <div className="font-mono text-[11px] text-neutral-400 whitespace-normal break-words leading-relaxed">
+                          {stage.formulaSummary || stage.subtitle}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {isDone ? (
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono text-[10px] font-bold">
+                          DONE
+                        </span>
+                      ) : (
+                        <Lock className="w-3.5 h-3.5 text-neutral-400" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            </div>
+
+            {/* Bottom CTA Button */}
+            <button
+              disabled={solutionData.stages.length === 0}
+              onClick={handleMarkStageComplete}
+              className="w-full py-3.5 px-4 rounded-xl bg-[#111111] hover:bg-neutral-800 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] mt-2"
+            >
+              <span>
+                {isAllCompleted || isActuallySolved
+                  ? 'Khối Rubik Đã Giải Hoàn Tất!'
+                  : currentStage.stageNumber < solutionData.stages.length
+                  ? `Hoàn Thành Bước ${currentStage.stageNumber} (Next Stage)`
+                  : 'Hoàn Thành Toàn Bộ Lời Giải!'}
+              </span>
+              {solutionData.stages.length > 0 && <span className="hidden sm:inline-block keycap-dark">Enter</span>}
+              <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+            </button>
           </div>
 
-          {/* INSPECTION & CROSS SELECTION ADVISOR CARD */}
+          {/* INSPECTION & CROSS SELECTION ADVISOR CARD (Placed in Right Column below Solution Roadmap) */}
           <section className="bg-white rounded-[24px] border border-[#EAECEF] p-4 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-3.5 animate-fade-in">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 border-b border-[#F2F4F7] gap-2">
@@ -1194,7 +1690,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
                 <span className="text-[10px] sm:text-[10.5px] font-mono font-bold text-neutral-400 uppercase tracking-wider">
                   SO SÁNH 6 MẶT CROSS (COLOR EVALUATION):
                 </span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {crossAdvisor.options.map((opt) => (
                     <div
                       key={opt.faceKey}
@@ -1230,188 +1726,6 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
               </div>
             )}
           </section>
-        </div>
-
-
-        {/* RIGHT BENTO CARD: SOLUTION ROADMAP & FORMULAS (45% -> 5 Cols) */}
-        <div className="lg:col-span-5 flex flex-col gap-4">
-          <div className="bg-white border border-[#EAECEF] rounded-[24px] p-5 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#EAECEF]">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-base text-neutral-900">Solution Roadmap</span>
-                <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-[#F3F4F6] text-neutral-500 font-medium">
-                  {solutionData.stages.length} Stages
-                </span>
-              </div>
-              <span className="font-mono text-xs text-neutral-400 font-medium">
-                Step {currentMove.num} / {solutionData.totalMoves}
-              </span>
-            </div>
-
-            {/* Clickable Bento Stage Cards Stack */}
-            <div className="flex flex-col gap-3">
-              {solutionData.stages.length === 0 ? (
-                <div className="p-6 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-center flex flex-col items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md">
-                    <Check className="w-6 h-6 stroke-[3]" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-emerald-950">
-                      Khối Rubik của bạn đã ở trạng thái hoàn thành 100%! (0 Moves)
-                    </h4>
-                    <p className="text-xs text-emerald-700 mt-1">
-                      Tất cả 6 mặt đều đồng màu chuẩn WCA hoàn chỉnh. Không cần thực hiện thêm bước giải nào.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                solutionData.stages.map((stage) => {
-                const isActive = stage.id === currentStage.id && !isAllCompleted;
-                const isDone = isAllCompleted || stage.stageNumber < currentStage.stageNumber;
-
-                if (isActive) {
-                  return (
-                    <div
-                      key={stage.id}
-                      className="p-4 rounded-xl bg-white border-2 border-neutral-900 shadow-sm flex flex-col gap-3 relative transition-all"
-                    >
-                      {/* Active Stage Header */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-[#111111] text-white font-mono flex items-center justify-center text-xs font-bold">
-                            {stage.stageNumber.toString().padStart(2, '0')}
-                          </div>
-                          <span className="text-xs font-extrabold text-neutral-900">
-                            {stage.titleVi}
-                          </span>
-                        </div>
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#111111] text-white font-mono text-[10px] font-bold tracking-tight">
-                          ACTIVE STEP · Move {currentMove.num}/{solutionData.totalMoves}
-                        </span>
-                      </div>
-
-                      {/* 2D Top-Down Mini Diagram + Details */}
-                      {stage.caseDetails && (
-                        <div className="grid grid-cols-12 gap-3 pt-1">
-                          {/* Rich Speedcubing Case Diagram (5 Cols) */}
-                          <div className="col-span-12 sm:col-span-5 flex flex-col justify-center">
-                            <SpeedcubeCaseDiagram
-                              caseName={stage.caseDetails.caseName}
-                              diagramTitle={stage.caseDetails.diagramTitle}
-                              diagramType={stage.caseDetails.diagramType}
-                              patternNote={stage.caseDetails.patternNote}
-                              topDownPattern={stage.caseDetails.topDownPattern}
-                            />
-                          </div>
-
-                          {/* Details & Formula Box (7 Cols) */}
-                          <div className="col-span-12 sm:col-span-7 flex flex-col justify-between">
-                            <div>
-                              <div className="flex items-center justify-between text-xs font-semibold">
-                                <span className="text-neutral-900 font-bold">
-                                  {stage.caseDetails.caseName}
-                                </span>
-                                <span className="font-mono text-[10.5px] text-neutral-400">
-                                  {stage.caseDetails.probability}
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-neutral-500 mt-1 leading-snug">
-                                {stage.caseDetails.description}
-                              </p>
-                            </div>
-
-                            {/* Standard Speedcubing Formula with Copy */}
-                            <div className="bg-[#F8F9FA] border border-[#EAECEF] rounded-lg p-2 font-mono text-xs font-bold text-neutral-900 mt-2 flex items-start justify-between gap-2">
-                              <span className="select-all whitespace-normal break-words leading-relaxed flex-1">{stage.caseDetails.formula}</span>
-                              <button
-                                onClick={() => handleCopyFormula(stage.caseDetails!.formula)}
-                                className="p-1 rounded text-neutral-400 hover:text-neutral-900 shrink-0"
-                                title="Copy Formula"
-                              >
-                                {copiedFormula ? (
-                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                ) : (
-                                  <Copy className="w-3.5 h-3.5" />
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Holding Note */}
-                      {stage.caseDetails?.holdingNote && (
-                        <div className="p-2.5 rounded-lg bg-[#F8F9FA] border border-[#EAECEF] text-[11px] font-mono text-neutral-600 flex items-start gap-2">
-                          <span className="font-bold text-neutral-900 shrink-0">Holding Note:</span>
-                          <span>{stage.caseDetails.holdingNote}</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                // Completed or Pending Stage
-                return (
-                  <div
-                    key={stage.id}
-                    onClick={() => handleSelectStage(stage)}
-                    className={`p-3.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                      isDone
-                        ? 'bg-[#F8F9FA] border-[#EAECEF] hover:bg-neutral-100'
-                        : 'bg-white border-[#EAECEF] opacity-60 hover:opacity-80'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                          isDone ? 'bg-[#111111] text-white' : 'border border-neutral-300 text-neutral-400 font-mono'
-                        }`}
-                      >
-                        {isDone ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : stage.stageNumber}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs font-bold text-neutral-900">
-                          {stage.titleVi}
-                        </div>
-                        <div className="font-mono text-[11px] text-neutral-400 whitespace-normal break-words leading-relaxed">
-                          {stage.formulaSummary || stage.subtitle}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      {isDone ? (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono text-[10px] font-bold">
-                          DONE
-                        </span>
-                      ) : (
-                        <Lock className="w-3.5 h-3.5 text-neutral-400" />
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-            </div>
-
-            {/* Bottom CTA Button */}
-            <button
-              disabled={solutionData.stages.length === 0}
-              onClick={handleMarkStageComplete}
-              className="w-full py-3.5 px-4 rounded-xl bg-[#111111] hover:bg-neutral-800 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] mt-2"
-            >
-              <span>
-                {isAllCompleted || isActuallySolved
-                  ? 'Khối Rubik Đã Giải Hoàn Tất!'
-                  : currentStage.stageNumber < solutionData.stages.length
-                  ? `Hoàn Thành Bước ${currentStage.stageNumber} (Next Stage)`
-                  : 'Hoàn Thành Toàn Bộ Lời Giải!'}
-              </span>
-              {solutionData.stages.length > 0 && <span className="hidden sm:inline-block keycap-dark">Enter</span>}
-              <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
-            </button>
-          </div>
         </div>
       </div>
     </div>

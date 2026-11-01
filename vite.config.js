@@ -1,11 +1,48 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import basicSsl from '@vitejs/plugin-basic-ssl';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   plugins: [
     react(),
-    basicSsl()
+    basicSsl(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icons/*.png', 'icons/*.svg'],
+      manifest: {
+        name: 'CubeMaster AI — Speedcubing Trainer & Solver',
+        short_name: 'CubeMaster',
+        description: "100% Client-Side Rubik's Cube Camera Solver, CFOP Trainer & WCA Speedcubing Timer.",
+        theme_color: '#F8F9FA',
+        background_color: '#F8F9FA',
+        display: 'standalone',
+        orientation: 'portrait',
+        icons: [
+          {
+            src: '/icons/icon-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/icons/icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/icons/icon-maskable-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
+      }
+    })
   ],
   server: {
     host: true, // Listen on all network addresses (0.0.0.0) so phones on the same Wi-Fi can connect

@@ -839,6 +839,14 @@ export const CFOP_DEMO_SCRAMBLE = getScrambleForStages(LEVEL_2_CFOP);
 export const AUTO_SOLVE_DEMO_SCRAMBLE = getScrambleForStages(OPTIMAL_AUTO_SOLVE);
 export const LBL_DEMO_SCRAMBLE = "B R2 B2 D U2 B' F' R D' B' F2 L'";
 
+export const LEVEL_LABELS: Record<SolverLevelId, string> = {
+  'auto-solve': 'OPTIMAL AUTO-SOLVE (Fastest Path)',
+  'level-1': 'LEVEL 01 · BEGINNER (Layer-by-Layer)',
+  'level-2': 'LEVEL 02 · 2-LOOK CFOP',
+  'level-3': 'LEVEL 03 · FULL CFOP MASTER',
+  'level-4': 'LEVEL 04 · EXPERT (ZBLL SYSTEM)',
+};
+
 export const DEMO_SCRAMBLES: Record<SolverLevelId, string> = {
   'auto-solve': AUTO_SOLVE_DEMO_SCRAMBLE,
   'level-1': LBL_DEMO_SCRAMBLE,

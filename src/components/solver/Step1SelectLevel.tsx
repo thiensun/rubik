@@ -93,99 +93,27 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
 
   return (
     <div className="space-y-5 animate-fade-in pb-32 sm:pb-36">
-      {/* 1. TOP FEATURED BENTO CARD: OPTIMAL AUTO-SOLVE (FASTEST PATH) */}
+      {/* 1. TOP FEATURED BENTO CARD: OPTIMAL AUTO-SOLVE */}
       <section
         id="card-auto-solve"
         onClick={() => handleCardClick('auto-solve')}
-        className={`w-full bg-white border rounded-[20px] p-4 sm:p-6 relative overflow-hidden cursor-pointer transition-all duration-200 ${
+        className={`w-full bg-white border rounded-[20px] p-4 sm:p-5 relative overflow-hidden cursor-pointer transition-all duration-200 ${
           selectedLevel === 'auto-solve'
             ? 'border-[#111111] border-[1.5px] shadow-[0_4px_18px_rgba(0,0,0,0.06)]'
             : 'border-[#EAECEF] hover:border-[#D0D5DD] hover:shadow-[0_4px_20px_-2px_rgba(16,24,40,0.04)]'
         }`}
       >
-        {/* Technical HUD Header Bar in Monospace */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 sm:pb-4 sm:mb-4 border-b border-[#F2F4F7]">
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 font-mono text-[10px] sm:text-[12px] font-semibold text-[#475467] tracking-tight">
-            <span className="inline-flex w-2 h-2 rounded-full bg-[#FD761A] animate-ping" />
-            <span className="font-bold text-[#111111]">• ENGINE: KOCIEMBA TWO-PHASE</span>
-            <span className="text-[#D0D5DD] hidden sm:inline">|</span>
-            <span className="hidden sm:inline">TARGET: &lt;= 20 MOVES (HTM)</span>
-            <span className="text-[#D0D5DD]">|</span>
-            <span className="text-[#067647] font-bold">INSTANT READY</span>
-          </div>
-
-          <span className="px-2 py-0.5 rounded-full bg-[#FFF4ED] border border-[#FFD6AE] text-[#B54708] font-mono text-[10px] sm:text-[11px] font-bold tracking-tight">
-            GOD&apos;S NUMBER OPTIMIZED
-          </span>
-        </div>
-
-        {/* Card Body Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-center">
-          <div className="lg:col-span-8 space-y-2.5 sm:space-y-3">
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              <h2 className="text-xl sm:text-[26px] font-extrabold tracking-tight text-[#111111]">
-                Optimal Auto-Solve (Fastest Path)
-              </h2>
-              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-[#F2F4F7] text-[#344054] text-xs font-mono font-semibold">
-                Kociemba v2
-              </span>
-            </div>
-
-            <p className="text-xs sm:text-[15px] text-[#667085] leading-relaxed max-w-3xl">
-              Mixed-up cube on your desk? CubeMaster AI runs a two-phase mathematical exploration to calculate the absolute shortest turn sequence. No algorithms or patterns to memorize — simply follow the interactive 3D step-by-step turns to restore the cube in under half a minute.
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#111111]">
+              Tự Động Giải Tối Ưu (Auto-Solve)
+            </h2>
+            <p className="text-xs sm:text-sm text-[#667085] leading-relaxed">
+              Tự động tính toán đường giải ngắn nhất theo số bước tối ưu để phục hồi khối Rubik trong thời gian nhanh nhất.
             </p>
-
-            {/* Metric Pills Row - 2x2 grid on mobile, flex on desktop */}
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 pt-1 sm:pt-2">
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#F8F9FA] border border-[#EAECEF] text-[11px] sm:text-xs font-mono font-semibold text-[#111111]">
-                <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FD761A] fill-[#FD761A] shrink-0" />
-                <span>Avg: 18.4 Moves</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#F8F9FA] border border-[#EAECEF] text-[11px] sm:text-xs font-mono font-semibold text-[#111111]">
-                <Timer className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#12B76A] shrink-0" />
-                <span>Execution: ~15s</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#F8F9FA] border border-[#EAECEF] text-[11px] sm:text-xs font-mono font-semibold text-[#475467]">
-                <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#2E90FA] shrink-0" />
-                <span>Zero Memorization</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#F8F9FA] border border-[#EAECEF] text-[11px] sm:text-xs font-mono font-semibold text-[#475467]">
-                <RotateCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#7A5AF8] shrink-0" />
-                <span>Step Playback</span>
-              </div>
-            </div>
           </div>
 
-          {/* Right Action & 2D Unfolded Cube Preview Box */}
-          <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col items-center lg:items-end justify-between gap-4">
-            {/* 2D Mini Preview Unfolded Cube Icon Visual */}
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F9FA] border border-[#EAECEF] w-full sm:w-auto lg:w-full justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="grid grid-cols-3 gap-0.5 p-1 bg-white rounded border border-[#EAECEF]">
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#2563EB]" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-white border border-[#D0D5DD]" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#FD761A]" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#12B76A]" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#D92D20]" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#FDB022]" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-white border border-[#D0D5DD]" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#2563EB]" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#12B76A]" />
-                </div>
-                <div className="flex flex-col text-left">
-                  <span className="font-mono text-[11px] font-bold text-[#111111]">STATE SCANNER</span>
-                  <span className="text-[11px] text-[#667085]">Ready for camera feed</span>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-[#067647] bg-[#ECFDF3] px-2 py-0.5 rounded">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#12B76A]" /> 2-PHASE
-                </span>
-              </div>
-            </div>
-
-            {/* Matte Black Primary Button */}
+          <div className="shrink-0 sm:w-64">
             <button
               type="button"
               onClick={(e) => {
@@ -193,11 +121,11 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
                 onSelectLevel('auto-solve');
                 onProceedToScan();
               }}
-              className="w-full h-12 py-3 px-5 rounded-xl bg-[#111111] hover:bg-[#222222] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-transform active:scale-[0.99] shadow-sm"
+              className="w-full h-11 px-5 rounded-xl bg-[#111111] hover:bg-neutral-800 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-transform active:scale-[0.98] shadow-sm cursor-pointer"
             >
-              <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
-              <span className="font-bold">Select Optimal Auto-Solve</span>
-              <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-mono tracking-widest text-white/90">
+              <Zap className="w-4 h-4 text-emerald-400 fill-emerald-400" />
+              <span>Bắt Đầu Giải Tối Ưu</span>
+              <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-mono text-white/90">
                 ENTER
               </span>
             </button>
@@ -206,30 +134,11 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
       </section>
 
       {/* 2. SECTION TITLE FOR LEARNING PIPELINE */}
-      <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full bg-[#111111]" />
-          <h2 className="text-base sm:text-[17px] font-bold text-[#111111] tracking-tight">
-            Human Learning Curriculum — Structured Progression
-          </h2>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3 font-mono text-xs text-[#667085]">
-          <span className="hidden sm:inline">
-            SELECT DESIRED TIER • REAL-TIME TPS &amp; MOVE EFFICIENCY AUDIT
-          </span>
-          <button
-            type="button"
-            onClick={() => setIsManualModalOpen(true)}
-            className="text-[#111111] hover:text-[#FD761A] transition-colors flex items-center gap-1 font-semibold text-[11px] sm:text-xs bg-white px-2.5 py-1 rounded-lg border border-[#EAECEF] shadow-2xs"
-            title="Nhập 54 sticker thủ công bằng tay"
-          >
-            <span className="px-1 py-0.2 rounded bg-[#F8F9FA] text-[10px] text-[#667085] border border-[#EAECEF]">
-              M
-            </span>
-            <Palette className="w-3.5 h-3.5 text-[#667085]" />
-            <span>Nhập Thủ Công</span>
-          </button>
-        </div>
+      <div className="pt-2 flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-[#111111]" />
+        <h2 className="text-base sm:text-[17px] font-bold text-[#111111] tracking-tight">
+          Lộ Trình Cấp Độ
+        </h2>
       </div>
 
       {/* 3. RESPONSIVE CSS GRID: 1 col on mobile, 2 cols on tablet, 4 cols on desktop */}

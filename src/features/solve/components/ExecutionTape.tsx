@@ -109,7 +109,7 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
                 ? 'Tạm Dừng'
                 : currentMoveGlobalIdx >= allMovesLength && allMovesLength > 0
                 ? 'Phát Lại'
-                : 'Tự Động'}
+                : 'Chạy'}
             </span>
             <span className="hidden sm:inline-block keycap-dark ml-0.5 text-[10px]">Space</span>
           </button>

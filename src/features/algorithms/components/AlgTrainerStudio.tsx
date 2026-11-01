@@ -229,8 +229,8 @@ export const AlgTrainerStudio: React.FC<AlgTrainerStudioProps> = ({
 
             {/* Recognition & Fingertrick HUD */}
             <div className="flex-1 min-h-0 overflow-y-auto text-xs p-2.5 rounded-xl bg-neutral-50 border border-[#EAECEF] space-y-1">
-              <div className="font-mono text-[9.5px] font-bold uppercase tracking-wider text-neutral-400">
-                RECOGNITION &amp; FINGERTRICK HUD
+              <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+                Fingertrick
               </div>
               <p className="text-neutral-700 leading-snug">
                 <strong className="text-neutral-900">Nhận diện:</strong>{' '}

@@ -153,10 +153,7 @@ export const AlgCardGrid: React.FC<AlgCardGridProps> = ({
                   {renderFormulaWithTriggerBadges(alg.mainAlg)}
                 </div>
 
-                <div className="flex items-center justify-between pt-1">
-                  <span className="font-mono text-[10px] text-neutral-400">
-                    Prob: {alg.probability}
-                  </span>
+                <div className="flex items-center justify-end pt-1">
                   <button
                     type="button"
                     onClick={(e) => {
@@ -166,7 +163,7 @@ export const AlgCardGrid: React.FC<AlgCardGridProps> = ({
                     }}
                     className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#111111] hover:bg-neutral-800 text-white font-mono text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
                   >
-                    <Play className="w-3.5 h-3.5 fill-current text-emerald-400" />
+                    <Play className="w-3.5 h-3.5 fill-current text-white" />
                     <span>▶ Xem 3D</span>
                   </button>
                 </div>
@@ -195,13 +192,10 @@ export const AlgCardGrid: React.FC<AlgCardGridProps> = ({
                         {alg.category}
                       </span>
                       {alg.isTwoLook && (
-                        <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 font-mono text-[10px] font-extrabold">
-                          ★ 2-LOOK
+                        <span className="px-2 py-0.5 rounded-md bg-[#111111] text-white font-mono text-[10px] font-extrabold">
+                          2-LOOK
                         </span>
                       )}
-                      <span className="font-mono text-[10.5px] text-neutral-400 font-semibold">
-                        Prob: {alg.probability}
-                      </span>
                     </div>
 
                     <button
@@ -212,10 +206,10 @@ export const AlgCardGrid: React.FC<AlgCardGridProps> = ({
                       }}
                       className={`px-2.5 py-1 rounded-full font-mono text-[10px] font-bold border transition-all cursor-pointer ${
                         status === 'mastered'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                          ? 'bg-[#111111] text-white border-[#111111]'
                           : status === 'learning'
-                          ? 'bg-amber-50 text-amber-800 border-amber-300'
-                          : 'bg-[#F8F9FA] text-neutral-500 border-[#EAECEF] hover:text-neutral-800'
+                          ? 'bg-[#F1F5F9] text-neutral-800 border-[#D0D5DD]'
+                          : 'bg-white text-neutral-500 border-[#EAECEF] hover:text-neutral-800'
                       }`}
                       title="Nhấn để chuyển trạng thái: Chưa học -> Đang tập -> Đã thuộc"
                     >
@@ -238,11 +232,7 @@ export const AlgCardGrid: React.FC<AlgCardGridProps> = ({
 
               {/* Formula Box with Color-Coded Trigger Badges */}
               <div className="bg-[#F8F9FA] border border-[#EAECEF] rounded-2xl p-3 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 font-semibold">
-                    MAIN FORMULA (WCA)
-                  </span>
-                  <div className="flex items-center gap-1">
+                <div className="flex items-center justify-end gap-1">
                     {uniqueTriggers.map((t) => (
                       <span
                         key={t.tag}
@@ -273,7 +263,6 @@ export const AlgCardGrid: React.FC<AlgCardGridProps> = ({
                       )}
                     </button>
                   </div>
-                </div>
 
                 {renderFormulaWithTriggerBadges(alg.mainAlg)}
               </div>

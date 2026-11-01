@@ -71,10 +71,10 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#EAECEF]">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="w-2 h-2 rounded-full bg-[#111111]" />
             <BookOpen className="w-4 h-4 text-neutral-500" />
-            <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 font-semibold">
-              GOLD-STANDARD ALGORITHM DATABASE &amp; 3D SIMULATOR
+            <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-500 font-semibold">
+              Thư Viện Công Thức
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-extrabold text-neutral-900 tracking-tight">
@@ -173,8 +173,8 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
                   : 'bg-[#F8F9FA] text-neutral-700 border-[#EAECEF] hover:bg-neutral-100'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>[ ★ 2-Look Rút Gọn (16 Algs) ]</span>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>2-Look Rút Gọn (16 Algs)</span>
             </button>
 
             <button
@@ -188,8 +188,8 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
                   : 'bg-[#F8F9FA] text-neutral-700 border-[#EAECEF] hover:bg-neutral-100'
               }`}
             >
-              <Layers className="w-3.5 h-3.5 text-emerald-400" />
-              <span>[ Full CFOP (41 F2L · 57 OLL · 21 PLL) ]</span>
+              <Layers className="w-3.5 h-3.5" />
+              <span>Full CFOP (119 Algs)</span>
             </button>
           </div>
 

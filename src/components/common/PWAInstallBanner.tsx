@@ -85,8 +85,8 @@ export const PWAInstallBanner: React.FC = () => {
     >
       <div className="bg-white/95 backdrop-blur-md border border-[#EAECEF] rounded-2xl p-3 sm:p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.08)] flex items-start gap-3">
         {/* App Logo */}
-        <div className="w-10 h-10 rounded-xl bg-[#111111] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
-          <Smartphone className="w-5 h-5 text-emerald-400 stroke-[2.2]" />
+        <div className="w-10 h-10 rounded-xl bg-[#111111] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5 overflow-hidden border border-[#EAECEF]">
+          <img src="/icons/icon-192x192.png" alt="CubeMaster AI" className="w-full h-full object-cover rounded-xl" />
         </div>
 
         {/* Content */}

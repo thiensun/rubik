@@ -19,6 +19,7 @@ interface ThreeCubeViewerProps {
   onAnimationComplete?: () => void;
   heightClassName?: string;
   compact?: boolean;
+  isOrbitLocked?: boolean;
 }
 
 // Map playback speed to smooth 3D rotation duration
@@ -240,9 +241,11 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
   onAnimationComplete,
   heightClassName = 'h-[320px] sm:h-[360px]',
   compact = false,
+  isOrbitLocked = false,
 }) => {
   const effectiveMoveIndex = currentMoveIndex !== undefined ? currentMoveIndex : moveIndex;
   const mountRef = useRef<HTMLDivElement | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const cubeGroupRef = useRef<THREE.Group | null>(null);
@@ -280,6 +283,7 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    rendererRef.current = renderer;
     container.appendChild(renderer.domElement);
 
     // Orbit Controls
@@ -457,8 +461,19 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
+      rendererRef.current = null;
     };
   }, []);
+
+  // Update OrbitControls lock status & touch-action
+  useEffect(() => {
+    if (controlsRef.current) {
+      controlsRef.current.enabled = !isOrbitLocked;
+    }
+    if (rendererRef.current?.domElement) {
+      rendererRef.current.domElement.style.touchAction = isOrbitLocked ? 'pan-y' : 'none';
+    }
+  }, [isOrbitLocked]);
 
   // Helper: Immediately complete active animation and snap cubelets to exact integer coordinates
   const finishAnimation = (anim: ActiveAnimation) => {

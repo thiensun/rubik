@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { RotateCw, Copy, Check, Timer as TimerIcon, LayoutGrid, X, Plus, Edit3 } from 'lucide-react';
 import { sound } from '../../utils/audio';
+import { haptic } from '../../utils/haptics';
 import { CubeNet2D } from '../scramble/CubeNet2D';
 import { CubeNetState } from '../../utils/cubeState';
 import { parseTimeInput } from '../../utils/cubingStats';
@@ -69,6 +70,12 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
   const netPopoverRef = useRef<HTMLDivElement | null>(null);
   const toggleNetBtnRef = useRef<HTMLButtonElement | null>(null);
 
+  // Stackmat Dual-Thumb State for Mobile Ergonomics
+  const [isLeftThumbActive, setIsLeftThumbActive] = useState(false);
+  const [isRightThumbActive, setIsRightThumbActive] = useState(false);
+  const leftThumbRef = useRef(false);
+  const rightThumbRef = useRef(false);
+
   // Sync display time if external prop changes while idle/stopped
   useEffect(() => {
     if (timerState === 'idle' || timerState === 'stopped') {
@@ -130,6 +137,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
 
       if (elapsedSec === 8 || elapsedSec === 12) {
         sound.playInspectionWarning();
+        haptic.warning();
       }
 
       if (remaining > 0) {
@@ -176,6 +184,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
     }
 
     setTimerState('running');
+    haptic.start();
     startTimeRef.current = performance.now();
 
     const loop = () => {
@@ -200,6 +209,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
     setCurrentMs(finalElapsed);
     setTimerState('stopped');
     sound.playTimerStop();
+    haptic.stop();
 
     const penalty = pendingPenaltyRef.current;
     pendingPenaltyRef.current = 'none';
@@ -223,12 +233,14 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       holdTimerRef.current = window.setTimeout(() => {
         setTimerState('ready');
         sound.playTimerReady();
+        haptic.ready();
       }, 350);
     } else if (timerState === 'inspection') {
       setTimerState('holding');
       holdTimerRef.current = window.setTimeout(() => {
         setTimerState('ready');
         sound.playTimerReady();
+        haptic.ready();
       }, 350);
     }
   }, [timerState, inspectionEnabled, stopTimer, startInspection]);
@@ -246,6 +258,46 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       }
     }
   }, [timerState, startTimer, inspectionEnabled]);
+
+  const handleLeftThumbDown = useCallback(() => {
+    leftThumbRef.current = true;
+    setIsLeftThumbActive(true);
+    if (timerState === 'running') {
+      stopTimer();
+      return;
+    }
+    if (rightThumbRef.current) {
+      handleHoldStart();
+    }
+  }, [handleHoldStart, stopTimer, timerState]);
+
+  const handleLeftThumbUp = useCallback(() => {
+    leftThumbRef.current = false;
+    setIsLeftThumbActive(false);
+    if (timerState === 'ready' || timerState === 'holding') {
+      handleHoldRelease();
+    }
+  }, [timerState, handleHoldRelease]);
+
+  const handleRightThumbDown = useCallback(() => {
+    rightThumbRef.current = true;
+    setIsRightThumbActive(true);
+    if (timerState === 'running') {
+      stopTimer();
+      return;
+    }
+    if (leftThumbRef.current) {
+      handleHoldStart();
+    }
+  }, [handleHoldStart, stopTimer, timerState]);
+
+  const handleRightThumbUp = useCallback(() => {
+    rightThumbRef.current = false;
+    setIsRightThumbActive(false);
+    if (timerState === 'ready' || timerState === 'holding') {
+      handleHoldRelease();
+    }
+  }, [timerState, handleHoldRelease]);
 
   // Keyboard controls: Space, Esc, +2
   useEffect(() => {
@@ -459,7 +511,9 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       />
 
       {/* Scramble Zone: Centered Directly Above Timer with Minimalist Tooltipped Icon Actions */}
-      <div className="relative z-20 w-full max-w-4xl flex flex-col items-center text-center gap-1 sm:gap-2.5 mb-1.5 sm:mb-4 shrink-0">
+      <div className={`relative z-20 w-full max-w-4xl flex flex-col items-center text-center gap-1 sm:gap-2.5 mb-1.5 sm:mb-4 shrink-0 transition-opacity duration-300 ${
+        timerState === 'running' ? 'opacity-0 pointer-events-none' : 'opacity-100'
+      }`}>
         {/* Metadata chips */}
         <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-mono-100 text-mono-600 font-mono text-[10px] sm:text-[11px] font-medium border border-mono-200/50">
@@ -695,8 +749,92 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
           )}
         </div>
 
+        {/* Mobile Stackmat Dual-Thumb Touch Sensor Pads */}
+        <div
+          className={`w-full max-w-sm flex items-center justify-between px-4 pt-2 pb-1 sm:hidden transition-all duration-300 ${
+            timerState === 'running' ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100'
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Left Hand Pad */}
+          <div
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+              handleLeftThumbDown();
+            }}
+            onPointerUp={(e) => {
+              e.stopPropagation();
+              handleLeftThumbUp();
+            }}
+            onPointerCancel={(e) => {
+              e.stopPropagation();
+              handleLeftThumbUp();
+            }}
+            className={`w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all select-none touch-none cursor-pointer ${
+              isLeftThumbActive
+                ? timerState === 'ready'
+                  ? 'bg-emerald-500/20 border-emerald-500 scale-95 shadow-md'
+                  : 'bg-amber-500/20 border-amber-500 scale-95 shadow-md'
+                : 'bg-neutral-50/90 border-neutral-300/80 active:scale-95 shadow-2xs'
+            }`}
+          >
+            <span className="text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-tight">Tay Trái</span>
+            <span className="text-xl select-none">🖐️</span>
+          </div>
+
+          {/* Center Stackmat Status Badge */}
+          <div className="flex flex-col items-center gap-1">
+            <div
+              className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border transition-all ${
+                timerState === 'ready'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-300 animate-pulse'
+                  : timerState === 'holding'
+                  ? 'bg-amber-50 text-amber-700 border-amber-300'
+                  : 'bg-white text-neutral-600 border-[#EAECEF]'
+              }`}
+            >
+              {timerState === 'ready'
+                ? 'READY · THẢ RA'
+                : timerState === 'holding'
+                ? 'GIỮ 2 TAY...'
+                : 'STACKMAT PAD'}
+            </div>
+            <span className="text-[9px] text-neutral-400 font-mono">Chạm 2 ngón để canh</span>
+          </div>
+
+          {/* Right Hand Pad */}
+          <div
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+              handleRightThumbDown();
+            }}
+            onPointerUp={(e) => {
+              e.stopPropagation();
+              handleRightThumbUp();
+            }}
+            onPointerCancel={(e) => {
+              e.stopPropagation();
+              handleRightThumbUp();
+            }}
+            className={`w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all select-none touch-none cursor-pointer ${
+              isRightThumbActive
+                ? timerState === 'ready'
+                  ? 'bg-emerald-500/20 border-emerald-500 scale-95 shadow-md'
+                  : 'bg-amber-500/20 border-amber-500 scale-95 shadow-md'
+                : 'bg-neutral-50/90 border-neutral-300/80 active:scale-95 shadow-2xs'
+            }`}
+          >
+            <span className="text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-tight">Tay Phải</span>
+            <span className="text-xl select-none">✋</span>
+          </div>
+        </div>
+
         {/* Bottom Section inside Timer card: Inspection prompt & ao5/ao12 pushed to bottom */}
-        <div className="w-full flex flex-col items-center justify-center gap-2 pt-2 sm:pt-4 shrink-0">
+        <div className={`w-full flex flex-col items-center justify-center gap-2 pt-2 sm:pt-4 shrink-0 transition-opacity duration-300 ${
+          timerState === 'running' ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}>
           <p className="text-mono-400 text-xs sm:text-sm font-sans tracking-wide text-center">
             {timerState === 'inspection'
               ? 'Đang xem trước 15s · Nhấn giữ Spacebar hoặc click giữ để vào trạng thái Sẵn sàng'

@@ -94,8 +94,8 @@ export function applyScrambleForNet(scrambleStr: string): CubeNetState {
 
 // Expand repetition groups like (R U R' U')3, strip brackets, and collapse extra spaces
 export function expandAlgorithmNotation(notation: string): string {
-  if (!notation) return '';
-  let str = notation;
+  if (!notation || typeof notation !== 'string') return '';
+  let str = String(notation);
   // Expand repeated parenthesized groups, e.g. (R U R' U')3 or [R U R' U']2
   str = str.replace(/[([]([^()[\]]+)[)\]]\s*\*?(\d+)/g, (_, inner, count) => {
     const times = parseInt(count, 10);
@@ -264,7 +264,13 @@ export function applyMove(cube: CubeNetState, move: string): CubeNetState {
   return c;
 }
 
-export function applyScramble(scrambleStr: string): CubeNetState {
+export function applyScramble(scrambleStr: string | any): CubeNetState {
+  if (typeof scrambleStr === 'object' && scrambleStr !== null && scrambleStr.U) {
+    return cloneCube(scrambleStr);
+  }
+  if (!scrambleStr || typeof scrambleStr !== 'string') {
+    return cloneCube(SOLVED_CUBE);
+  }
   const expanded = expandAlgorithmNotation(scrambleStr);
   const moves = expanded.split(/\s+/).filter(Boolean);
   let state = cloneCube(SOLVED_CUBE);

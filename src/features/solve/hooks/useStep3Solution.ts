@@ -86,12 +86,12 @@ export function useStep3Solution({
 
     if (scannedCubeState) {
       const currentLevelToSolve = activeLevel === 'auto-solve' ? 'level-2' : activeLevel;
-      return getSolutionForLevel(currentLevelToSolve, scannedCubeState, cfopLookMode);
+      return getSolutionForLevel(currentLevelToSolve, demoScramble || undefined, scannedCubeState, cfopLookMode);
     }
 
     const fallbackScramble = demoScramble || DEMO_SCRAMBLES[activeLevel] || CFOP_DEMO_SCRAMBLE;
     const initialCube = applyScramble(fallbackScramble);
-    return getSolutionForLevel(activeLevel, initialCube, cfopLookMode);
+    return getSolutionForLevel(activeLevel, fallbackScramble, initialCube, cfopLookMode);
   }, [activeLevel, scannedCubeState, demoScramble, customAlgorithm, cfopLookMode]);
 
   const baseCubeState: CubeNetState = useMemo(() => {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Header, ActiveTab } from './components/Header';
+import { BottomNavBar } from './components/navigation/BottomNavBar';
 import { Footer } from './components/Footer';
 import { ZenTimerStage } from './components/timer/ZenTimerStage';
 import { MetricCards } from './components/metrics/MetricCards';
@@ -26,6 +27,7 @@ const DEFAULT_SCRAMBLE = "D2 B2 R2 U' L2 F2 D R2 U' B2 U F R' U2 L' D2 B' F D' L
 export const App: React.FC = () => {
   // Navigation - default to 'scramble-timer' to showcase the redesigned tab
   const [activeTab, setActiveTab] = useState<ActiveTab>('scramble-timer');
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
 
   // Custom Algorithm loaded for 3D exploration
   const [customAlgorithmFor3D, setCustomAlgorithmFor3D] = useState<CustomAlgorithmData | null>(null);
@@ -288,10 +290,11 @@ export const App: React.FC = () => {
           setActiveTab(tab);
         }}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
+        isTimerRunning={isTimerRunning}
       />
 
       {/* Main Content Area */}
-      <main className="w-full pt-16 sm:pt-20 pb-16 flex-1 flex flex-col justify-start">
+      <main className="w-full pt-16 sm:pt-20 pb-24 lg:pb-16 flex-1 flex flex-col justify-start">
         {/* TAB 1: Solve & Learn */}
         {activeTab === 'solve-learn' && (
           <div className="max-w-[1440px] w-full mx-auto px-3 sm:px-6 lg:px-8">
@@ -324,6 +327,7 @@ export const App: React.FC = () => {
               inspectionEnabled={inspectionEnabled}
               onToggleInspection={() => setInspectionEnabled(!inspectionEnabled)}
               displayTimeMs={solves.length > 0 ? solves[0].timeMs : 8420}
+              onTimerRunningChange={setIsTimerRunning}
             />
 
             {/* Apple-style Refined Bottom Dock & Session Split Grid */}
@@ -368,14 +372,30 @@ export const App: React.FC = () => {
       </main>
 
       {/* 2. Global Footer */}
-      <Footer />
+      <div className="pb-16 lg:pb-0">
+        <Footer />
+      </div>
 
-      {/* 3. Global Scroll to Top Button (Shifted up on mobile when on algorithms tab to avoid floating dock) */}
-      <ScrollToTopButton
-        className={activeTab === 'algorithms' ? 'bottom-24 lg:bottom-6' : 'bottom-6'}
+      {/* 3. Sleek Frosted Glass Bottom Navigation Bar (< 1024px lg breakpoint) */}
+      <BottomNavBar
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          if (tab !== activeTab) {
+            setSelectedSolveForAnalysis(null);
+            setCustomAlgorithmFor3D(null);
+          }
+          setActiveTab(tab);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        isTimerRunning={isTimerRunning}
       />
 
-      {/* 4. PWA Installation Banner */}
+      {/* 4. Global Scroll to Top Button (Shifted above Bottom Navigation Bar on mobile) */}
+      <ScrollToTopButton
+        className={activeTab === 'algorithms' ? 'bottom-28 lg:bottom-6' : 'bottom-20 lg:bottom-6'}
+      />
+
+      {/* 5. PWA Installation Banner */}
       <PWAInstallBanner />
 
       {/* Modals */}

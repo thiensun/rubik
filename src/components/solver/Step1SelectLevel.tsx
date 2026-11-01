@@ -193,7 +193,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
                 onSelectLevel('auto-solve');
                 onProceedToScan();
               }}
-              className="w-full py-3 px-5 rounded-xl bg-[#111111] hover:bg-[#222222] text-white font-medium text-sm flex items-center justify-center gap-2 transition-transform active:scale-[0.99] shadow-sm"
+              className="w-full h-12 py-3 px-5 rounded-xl bg-[#111111] hover:bg-[#222222] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-transform active:scale-[0.99] shadow-sm"
             >
               <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
               <span className="font-bold">Select Optimal Auto-Solve</span>
@@ -232,13 +232,13 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
         </div>
       </div>
 
-      {/* 3. BOTTOM 4-COLUMN BENTO GRID: LEVELS 1 TO 4 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+      {/* 3. BOTTOM 4-COLUMN BENTO GRID / HORIZONTAL SWIPE CAROUSEL (Mobile & Tablet): LEVELS 1 TO 4 */}
+      <div className="flex lg:grid overflow-x-auto lg:overflow-x-visible snap-x snap-mandatory lg:snap-none gap-4 pb-4 px-1 no-scrollbar lg:grid-cols-4 items-stretch">
         {/* LEVEL 01: BEGINNER */}
         <div
           id="card-level-1"
           onClick={() => handleCardClick('level-1')}
-          className={`bg-white border rounded-[20px] p-5 flex flex-col justify-between h-full cursor-pointer relative transition-all duration-200 ${
+          className={`min-w-[285px] sm:min-w-[320px] lg:min-w-0 snap-center shrink-0 lg:shrink bg-white border rounded-[20px] p-5 flex flex-col justify-between h-full cursor-pointer relative transition-all duration-200 ${
             selectedLevel === 'level-1'
               ? 'border-[#111111] border-[2px] shadow-[0_4px_18px_rgba(0,0,0,0.06)]'
               : 'border-[#EAECEF] hover:border-[#D0D5DD] hover:shadow-[0_4px_20px_-2px_rgba(16,24,40,0.04)]'
@@ -302,15 +302,14 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
                 e.stopPropagation();
                 handleLevelProceed('level-1');
               }}
-              className={`w-full font-medium text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
+              className={`w-full h-12 font-semibold text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
                 selectedLevel === 'level-1'
                   ? 'bg-[#111111] hover:bg-neutral-800 text-white shadow-sm'
                   : 'bg-[#F8F9FA] hover:bg-[#111111] text-[#111111] hover:text-white border border-[#EAECEF]'
               }`}
             >
-              <Camera className="w-3.5 h-3.5 shrink-0" />
-              <span>Quét 6 Mặt Camera</span>
-              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+              <Camera className="w-4 h-4 shrink-0" />
+              <span>Quét 6 Mặt Camera →</span>
             </button>
 
             {/* Bottom Benchmark Target */}
@@ -325,7 +324,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
         <div
           id="card-level-2"
           onClick={() => handleCardClick('level-2')}
-          className={`bg-white border rounded-[20px] p-5 flex flex-col justify-between h-full cursor-pointer relative transition-all duration-200 ${
+          className={`min-w-[285px] sm:min-w-[320px] lg:min-w-0 snap-center shrink-0 lg:shrink bg-white border rounded-[20px] p-5 flex flex-col justify-between h-full cursor-pointer relative transition-all duration-200 ${
             selectedLevel === 'level-2'
               ? 'border-[#111111] border-[2px] shadow-[0_4px_18px_rgba(0,0,0,0.06)]'
               : 'border-[#EAECEF] hover:border-[#D0D5DD] hover:shadow-[0_4px_20px_-2px_rgba(16,24,40,0.04)]'
@@ -389,15 +388,14 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
                 e.stopPropagation();
                 handleLevelProceed('level-2');
               }}
-              className={`w-full font-medium text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
+              className={`w-full h-12 font-semibold text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
                 selectedLevel === 'level-2'
                   ? 'bg-[#111111] hover:bg-neutral-800 text-white shadow-sm'
                   : 'bg-[#F8F9FA] hover:bg-[#111111] text-[#111111] hover:text-white border border-[#EAECEF]'
               }`}
             >
-              <Camera className="w-3.5 h-3.5 shrink-0" />
-              <span>Quét 6 Mặt Camera</span>
-              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+              <Camera className="w-4 h-4 shrink-0" />
+              <span>Quét 6 Mặt Camera →</span>
             </button>
 
             {/* Bottom Benchmark Target */}
@@ -412,7 +410,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
         <div
           id="card-level-3"
           onClick={() => handleCardClick('level-3')}
-          className={`bg-white border rounded-[20px] p-5 flex flex-col justify-between h-full cursor-pointer relative transition-all duration-200 ${
+          className={`min-w-[285px] sm:min-w-[320px] lg:min-w-0 snap-center shrink-0 lg:shrink bg-white border rounded-[20px] p-5 flex flex-col justify-between h-full cursor-pointer relative transition-all duration-200 ${
             selectedLevel === 'level-3'
               ? 'border-[#111111] border-[2px] shadow-[0_4px_18px_rgba(0,0,0,0.06)]'
               : 'border-[#EAECEF] hover:border-[#D0D5DD] hover:shadow-[0_4px_20px_-2px_rgba(16,24,40,0.04)]'
@@ -476,15 +474,14 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
                 e.stopPropagation();
                 handleLevelProceed('level-3');
               }}
-              className={`w-full font-medium text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
+              className={`w-full h-12 font-semibold text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
                 selectedLevel === 'level-3'
                   ? 'bg-[#111111] hover:bg-neutral-800 text-white shadow-sm'
                   : 'bg-[#F8F9FA] hover:bg-[#111111] text-[#111111] hover:text-white border border-[#EAECEF]'
               }`}
             >
-              <Camera className="w-3.5 h-3.5 shrink-0" />
-              <span>Quét 6 Mặt Camera</span>
-              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+              <Camera className="w-4 h-4 shrink-0" />
+              <span>Quét 6 Mặt Camera →</span>
             </button>
 
             {/* Bottom Benchmark Target */}
@@ -499,7 +496,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
         <div
           id="card-level-4"
           onClick={() => handleCardClick('level-4')}
-          className={`bg-white border rounded-[20px] p-5 flex flex-col justify-between h-full cursor-pointer relative transition-all duration-200 ${
+          className={`min-w-[285px] sm:min-w-[320px] lg:min-w-0 snap-center shrink-0 lg:shrink bg-white border rounded-[20px] p-5 flex flex-col justify-between h-full cursor-pointer relative transition-all duration-200 ${
             selectedLevel === 'level-4'
               ? 'border-[#111111] border-[2px] shadow-[0_4px_18px_rgba(0,0,0,0.06)]'
               : 'border-[#EAECEF] hover:border-[#D0D5DD] hover:shadow-[0_4px_20px_-2px_rgba(16,24,40,0.04)]'
@@ -563,15 +560,14 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
                 e.stopPropagation();
                 handleLevelProceed('level-4');
               }}
-              className={`w-full font-medium text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
+              className={`w-full h-12 font-semibold text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all ${
                 selectedLevel === 'level-4'
                   ? 'bg-[#111111] hover:bg-neutral-800 text-white shadow-sm'
                   : 'bg-[#F8F9FA] hover:bg-[#111111] text-[#111111] hover:text-white border border-[#EAECEF]'
               }`}
             >
-              <Camera className="w-3.5 h-3.5 shrink-0" />
-              <span>Quét 6 Mặt Camera</span>
-              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+              <Camera className="w-4 h-4 shrink-0" />
+              <span>Quét 6 Mặt Camera →</span>
             </button>
 
             {/* Bottom Benchmark Target */}

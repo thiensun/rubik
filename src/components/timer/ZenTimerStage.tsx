@@ -19,6 +19,7 @@ interface ZenTimerStageProps {
   inspectionEnabled: boolean;
   onToggleInspection: () => void;
   displayTimeMs: number;
+  onTimerRunningChange?: (isRunning: boolean) => void;
 }
 
 type TimerState = 'idle' | 'holding' | 'ready' | 'running' | 'inspection' | 'stopped';
@@ -49,6 +50,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
   inspectionEnabled,
   onToggleInspection,
   displayTimeMs,
+  onTimerRunningChange,
 }) => {
   const [timerState, setTimerState] = useState<TimerState>('idle');
   const [currentMs, setCurrentMs] = useState<number>(displayTimeMs);
@@ -82,6 +84,11 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       setCurrentMs(displayTimeMs);
     }
   }, [displayTimeMs, timerState]);
+
+  // Notify parent component of running state for Zen Focus
+  useEffect(() => {
+    onTimerRunningChange?.(timerState === 'running');
+  }, [timerState, onTimerRunningChange]);
 
   // Clean up timers on unmount
   useEffect(() => {

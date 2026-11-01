@@ -104,9 +104,9 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
         </div>
       </div>
 
-      {/* Row 2: 4-Level Switcher + Mastery Status Filter */}
+      {/* Row 2: 4-Level Switcher (Horizontal Scrolling Pill Bar) + Mastery Status Filter */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5 bg-[#F8F9FA] p-1.5 rounded-2xl border border-[#EAECEF]">
+        <div className="snap-x flex gap-2 overflow-x-auto no-scrollbar py-2 px-1 bg-[#F8F9FA] rounded-2xl border border-[#EAECEF] max-w-full">
           {[
             { id: 'level-1' as const, label: 'Lv.1 Beginner (7)' },
             { id: 'level-2' as const, label: 'Lv.2 CFOP System (119)' },
@@ -121,7 +121,7 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
                   setActiveLevel(lvl.id);
                   sound.playTick();
                 }}
-                className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+                className={`shrink-0 snap-start min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center ${
                   isActive
                     ? 'bg-[#111111] text-white shadow-sm'
                     : 'text-neutral-600 hover:text-neutral-900 hover:bg-white'
@@ -133,7 +133,7 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
           })}
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 bg-[#F8F9FA] p-1.5 rounded-2xl border border-[#EAECEF]">
+        <div className="snap-x flex gap-1.5 overflow-x-auto no-scrollbar py-1.5 px-1 bg-[#F8F9FA] rounded-2xl border border-[#EAECEF] max-w-full">
           {[
             { id: 'all' as const, label: `Tất cả (${masteryCounts.total})` },
             { id: 'mastered' as const, label: `Đã thuộc (Mastered ✓ · ${masteryCounts.mastered})` },

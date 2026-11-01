@@ -116,3 +116,31 @@ Người dùng cầm khối Rubik nhìn thẳng vào mặt trước và xoay the
 ### 6.3. Component Size Guardrails (Quy Chuẩn Kích Thước Component)
 - **Ngưỡng giới hạn**: Không component React đơn lẻ nào được vượt quá 350 dòng code (`LOC <= 350`).
 - **Tự động chia tách (Decomposition)**: Nếu một component phát triển vượt quá 400 dòng, bắt buộc tự động phân tách module thành các sub-components theo phạm vi tính năng (feature-scoped components).
+
+---
+
+## 7. Rubik Mathematical Engine & Solver Invariants
+
+### 7.1. Notation & Trigger Standards
+- **Các bước xoay hỗ trợ**:
+  - Mặt ngoài: `U, D, L, R, F, B` (kèm modifier `'`, `2`).
+  - Lát kép (Wide): `u, d, l, r, f, b` (hoặc `Uw, Dw, Lw, Rw, Fw, Bw`).
+  - Lát giữa (Slice): `M, E, S` (trong đó $M$ theo chiều $L$, $E$ theo chiều $D$, $S$ theo chiều $F$).
+  - Xoay toàn khối (Cube rotations): `x, y, z`.
+- **Nhận diện & tô màu cụm Trigger (Trigger Tokenization)**: Luôn phân tích cú pháp và hiển thị nổi bật các cụm ngoặc tròn:
+  - `(R U R' U')` $\rightarrow$ **Sexy Move** (Emerald `#059669`)
+  - `(U R U' R')` $\rightarrow$ **Inverse Sexy** (Sky Blue `#0284C7`)
+  - `(R' F R F')` $\rightarrow$ **Sledgehammer** (Amber `#D97706`)
+  - `(F R' F' R)` $\rightarrow$ **Hedgeslammer** (Violet `#7C3AED`)
+  - `(L' U' L U)` $\rightarrow$ **Left Sexy** (Teal `#0D9488`)
+  - `(R U2 R')`   $\rightarrow$ **Fast Flick** (Rose `#E11D48`)
+
+### 7.2. State & Inverse Rules
+- **Đảo ngược thuật toán (`invertAlg`)**: Bắt buộc loại bỏ toàn bộ dấu ngoặc đơn `( )`, tách token theo khoảng trắng, **ĐẢO NGƯỢC THỨ TỰ MẢNG TỪ CUỐI LÊN ĐẦU** (`.reverse()`), sau đó đảo modifier (`R` $\leftrightarrow$ `R'`, `R2` giữ nguyên `R2`).
+- **Trạng thái tiền thực thi 2D & 3D (Pre-execution State)**: Luôn áp dụng `invertAlg(mainAlg)` lên một khối đã giải (Solved Cube) để tạo ra trạng thái xuất phát chính xác 100%.
+- **Bắt cặp AUF (AUF Tracking)**: Hỗ trợ Pre-AUF (`U, U', U2`) quan sát căn chỉnh trước khi thực thi công thức tầng cuối (Last Layer - OLL/PLL/ZBLL).
+
+### 7.3. Solver Optimization Invariants
+- **Move count tối ưu cho CFOP**: Tổng số bước giải CFOP luôn nằm trong khoảng thực tế của speedcuber con người: **45 đến 65 bước** (không vượt quá 95 bước trong mọi scramble ngẫu nhiên).
+- **Loại bỏ vòng lặp thừa**: Tuyệt đối không xuất bản vòng lặp lặp đi lặp lại như `(R U R' U') x 4`. Bắt buộc chạy `optimizeMoves()` trên toàn bộ chuỗi giải để triệt tiêu các bước nghịch đảo liền kề (`R + R' -> []`, `R + R -> R2`, `U2 + U -> U'`).
+- **Phân tách 4 cặp F2L chuẩn xác**: Tầng F2L phải được chia rõ thành 4 cặp độc lập (`FR`, `FL`, `BR`, `BL`), mỗi cặp chỉ tiêu tốn từ **4 đến 8 bước**.

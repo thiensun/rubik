@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { RotateCw, Copy, Check, Timer as TimerIcon, LayoutGrid, X, Plus, Edit3 } from 'lucide-react';
 import { sound } from '../../utils/audio';
 import { haptic } from '../../utils/haptics';
-import { CubeNet2D } from '../scramble/CubeNet2D';
 import { CubeNetState } from '../../utils/cubeState';
 import { parseTimeInput } from '../../utils/cubingStats';
+import { ScrambleHeader } from './ScrambleHeader';
 
 interface ZenTimerStageProps {
   scramble: string;
@@ -22,7 +21,7 @@ interface ZenTimerStageProps {
   onTimerRunningChange?: (isRunning: boolean) => void;
 }
 
-type TimerState = 'idle' | 'holding' | 'ready' | 'running' | 'inspection' | 'stopped';
+export type TimerState = 'idle' | 'holding' | 'ready' | 'running' | 'inspection' | 'stopped';
 
 /**
  * Responsive font size scaling for digital timer display:
@@ -39,8 +38,6 @@ export const getTimerFontSizeClass = (formattedTime: string): string => {
 
 export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
   scramble,
-  roundNumber = 2,
-  solveNumber = 42,
   onNextScramble,
   cubeNetState,
   onSolveComplete,
@@ -55,8 +52,6 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
   const [timerState, setTimerState] = useState<TimerState>('idle');
   const [currentMs, setCurrentMs] = useState<number>(displayTimeMs);
   const [inspectionSeconds, setInspectionSeconds] = useState<number>(15);
-  const [copied, setCopied] = useState(false);
-  const [isNetOpen, setIsNetOpen] = useState(false);
 
   // Manual In-Place Time Input State
   const [isManualInputActive, setIsManualInputActive] = useState<boolean>(false);
@@ -69,14 +64,6 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
   const inspectionIntervalRef = useRef<number | null>(null);
   const inspectionStartRef = useRef<number>(0);
   const pendingPenaltyRef = useRef<'none' | '+2' | 'dnf'>('none');
-  const netPopoverRef = useRef<HTMLDivElement | null>(null);
-  const toggleNetBtnRef = useRef<HTMLButtonElement | null>(null);
-
-  // Stackmat Dual-Thumb State for Mobile Ergonomics
-  const [isLeftThumbActive, setIsLeftThumbActive] = useState(false);
-  const [isRightThumbActive, setIsRightThumbActive] = useState(false);
-  const leftThumbRef = useRef(false);
-  const rightThumbRef = useRef(false);
 
   // Sync display time if external prop changes while idle/stopped
   useEffect(() => {
@@ -98,35 +85,6 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       if (inspectionIntervalRef.current) clearInterval(inspectionIntervalRef.current);
     };
   }, []);
-
-  // Close 2D Net popover when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        isNetOpen &&
-        netPopoverRef.current &&
-        !netPopoverRef.current.contains(e.target as Node) &&
-        toggleNetBtnRef.current &&
-        !toggleNetBtnRef.current.contains(e.target as Node)
-      ) {
-        setIsNetOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isNetOpen]);
-
-  // Copy scramble handler
-  const handleCopy = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      await navigator.clipboard.writeText(scramble.trim());
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Fallback
-    }
-  };
 
   // Start 15s inspection countdown
   const startInspection = useCallback(() => {
@@ -150,11 +108,9 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       if (remaining > 0) {
         setInspectionSeconds(remaining);
       } else if (remaining >= -2) {
-        // Between 15s and 17s: +2 penalty
         setInspectionSeconds(remaining);
         pendingPenaltyRef.current = '+2';
       } else {
-        // Past 17s: DNF
         setInspectionSeconds(remaining);
         pendingPenaltyRef.current = 'dnf';
       }
@@ -183,7 +139,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
     return `${pad(totalSeconds)}.${pad(hundredths)}`;
   };
 
-  // Start the actual high-precision timer
+  // Start the high-precision timer
   const startTimer = useCallback(() => {
     if (inspectionIntervalRef.current) {
       clearInterval(inspectionIntervalRef.current);
@@ -266,46 +222,6 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
     }
   }, [timerState, startTimer, inspectionEnabled]);
 
-  const handleLeftThumbDown = useCallback(() => {
-    leftThumbRef.current = true;
-    setIsLeftThumbActive(true);
-    if (timerState === 'running') {
-      stopTimer();
-      return;
-    }
-    if (rightThumbRef.current) {
-      handleHoldStart();
-    }
-  }, [handleHoldStart, stopTimer, timerState]);
-
-  const handleLeftThumbUp = useCallback(() => {
-    leftThumbRef.current = false;
-    setIsLeftThumbActive(false);
-    if (timerState === 'ready' || timerState === 'holding') {
-      handleHoldRelease();
-    }
-  }, [timerState, handleHoldRelease]);
-
-  const handleRightThumbDown = useCallback(() => {
-    rightThumbRef.current = true;
-    setIsRightThumbActive(true);
-    if (timerState === 'running') {
-      stopTimer();
-      return;
-    }
-    if (leftThumbRef.current) {
-      handleHoldStart();
-    }
-  }, [handleHoldStart, stopTimer, timerState]);
-
-  const handleRightThumbUp = useCallback(() => {
-    rightThumbRef.current = false;
-    setIsRightThumbActive(false);
-    if (timerState === 'ready' || timerState === 'holding') {
-      handleHoldRelease();
-    }
-  }, [timerState, handleHoldRelease]);
-
   // Keyboard controls: Space, Esc, +2
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -366,96 +282,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
     };
   }, [timerState, handleHoldStart, handleHoldRelease, stopTimer, onReset, onTogglePenalty]);
 
-  const moveCount = scramble.trim().split(/\s+/).filter(Boolean).length;
-
-  // Dynamic State Pill styling matching Stitch HTML
-  const renderStatePill = () => {
-    if (timerState === 'inspection') {
-      const isOver15 = inspectionSeconds <= 0 && inspectionSeconds >= -2;
-      const isDNF = inspectionSeconds < -2;
-      return (
-        <div
-          id="timer-state-pill"
-          className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full border text-xs font-mono font-bold transition-all duration-200 shadow-sm ${
-            isDNF
-              ? 'bg-rose-50 text-rose-700 border-rose-300 animate-pulse'
-              : isOver15
-              ? 'bg-orange-50 text-orange-700 border-orange-300 animate-pulse'
-              : inspectionSeconds <= 3
-              ? 'bg-red-50 text-red-600 border-red-300 animate-pulse'
-              : 'bg-indigo-50 text-indigo-700 border-indigo-300'
-          }`}
-        >
-          <span
-            className={`w-2 h-2 rounded-full ${
-              isDNF || isOver15 || inspectionSeconds <= 3 ? 'bg-red-500 animate-ping' : 'bg-indigo-500 animate-pulse'
-            }`}
-          />
-          <span>
-            {isDNF
-              ? 'INSPECTION TIME OVER (DNF)'
-              : isOver15
-              ? 'INSPECTION TIME OVER (+2s Penalty)'
-              : `INSPECTION (${inspectionSeconds}s) · Hold [SPACE] to Arm`}
-          </span>
-        </div>
-      );
-    }
-    if (timerState === 'holding') {
-      return (
-        <div
-          id="timer-state-pill"
-          className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-300 text-xs font-mono font-medium transition-all duration-200 shadow-sm"
-        >
-          <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-          <span>ARMING... (Hold for Emerald)</span>
-        </div>
-      );
-    }
-    if (timerState === 'ready') {
-      return (
-        <div
-          id="timer-state-pill"
-          className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 text-xs font-mono font-semibold transition-all duration-200 shadow-sm"
-        >
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-          <span>READY · Release to Start!</span>
-        </div>
-      );
-    }
-    if (timerState === 'running') {
-      return (
-        <div
-          id="timer-state-pill"
-          className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-mono-950 text-white text-xs font-mono font-medium transition-all duration-200 shadow-sm"
-        >
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>TIMING SOLVE...</span>
-        </div>
-      );
-    }
-    if (timerState === 'stopped') {
-      return (
-        <div
-          id="timer-state-pill"
-          className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-mono-100 text-mono-800 text-xs font-mono font-medium border border-mono-200/60 transition-all duration-200"
-        >
-          <span className="w-2 h-2 rounded-full bg-mono-950" />
-          <span>SOLVE FINISHED · Tap to reset</span>
-        </div>
-      );
-    }
-    return (
-      <div
-        id="timer-state-pill"
-        className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-mono-100/90 text-mono-700 text-xs font-mono font-medium border border-mono-200/60 transition-all duration-200 shadow-sm"
-      >
-        <span className="w-2 h-2 rounded-full bg-mono-400" />
-        <span>Tap anywhere or hold [SPACE]</span>
-      </div>
-    );
-  };
-
+  // Zen Color Mapping
   const getTimerColorClass = () => {
     if (timerState === 'inspection') {
       if (inspectionSeconds < -2) return 'text-rose-600';
@@ -463,9 +290,36 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       if (inspectionSeconds <= 3) return 'text-red-600';
       return 'text-indigo-600';
     }
-    if (timerState === 'holding') return 'text-amber-600';
-    if (timerState === 'ready') return 'text-emerald-600';
-    return 'text-mono-950';
+    if (timerState === 'holding') return 'text-[#D97706]';
+    if (timerState === 'ready') return 'text-[#059669]';
+    return 'text-[#111111]';
+  };
+
+  // Tiny monospace micro-hint
+  const renderMicroHint = () => {
+    if (timerState === 'running') return null;
+
+    let hintText = 'Giữ để bắt đầu';
+    let hintClass = 'text-neutral-400';
+
+    if (timerState === 'inspection') {
+      hintText = `Quan sát: ${inspectionSeconds}s · Giữ để sẵn sàng`;
+      hintClass = inspectionSeconds <= 3 ? 'text-red-500 animate-pulse font-bold' : 'text-indigo-600';
+    } else if (timerState === 'holding') {
+      hintText = 'Đang chuẩn bị...';
+      hintClass = 'text-[#D97706] font-bold';
+    } else if (timerState === 'ready') {
+      hintText = 'Thả để đếm giờ!';
+      hintClass = 'text-[#059669] font-bold animate-pulse';
+    }
+
+    return (
+      <div className={`transition-opacity duration-200 mt-3 text-center ${timerState === 'running' ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <span className={`inline-block font-mono text-xs tracking-wider uppercase ${hintClass}`}>
+          {hintText}
+        </span>
+      </div>
+    );
   };
 
   return (
@@ -500,15 +354,12 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
           }
         }
       }}
-      className="w-full relative flex flex-col items-center justify-between min-h-[75vh] min-h-[75dvh] sm:min-h-[82vh] sm:min-h-[82dvh] md:min-h-[85vh] md:min-h-[85dvh] pt-3 sm:pt-8 pb-5 sm:pb-12 px-2 sm:px-10 select-none bg-white rounded-3xl border border-mono-200/70 shadow-apple-float transition-all overflow-visible"
+      className="w-full relative flex flex-col items-center justify-between min-h-[65vh] sm:min-h-[72vh] md:min-h-[75vh] pt-4 sm:pt-6 pb-6 sm:pb-8 px-3 sm:px-8 select-none touch-manipulation bg-white rounded-[24px] border border-[#EAECEF] shadow-sm transition-all overflow-hidden"
     >
-      {/* Subtle Zen backdrop aura effect */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-mono-100/40 via-transparent to-transparent pointer-events-none opacity-60 rounded-3xl" />
-
-      {/* Dynamic Halo Glow during Holding / Ready */}
+      {/* Dynamic Background Halo during Holding / Ready */}
       <div
         id="halo-glow"
-        className={`absolute inset-0 transition-opacity duration-300 pointer-events-none rounded-3xl ${
+        className={`absolute inset-0 transition-opacity duration-300 pointer-events-none rounded-[24px] ${
           timerState === 'holding'
             ? 'bg-amber-500/10 opacity-100'
             : timerState === 'ready'
@@ -517,376 +368,89 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
         }`}
       />
 
-      {/* Scramble Zone: Centered Directly Above Timer with Minimalist Tooltipped Icon Actions */}
-      <div className={`relative z-20 w-full max-w-4xl flex flex-col items-center text-center gap-1 sm:gap-2.5 mb-1.5 sm:mb-4 shrink-0 transition-opacity duration-300 ${
-        timerState === 'running' ? 'opacity-0 pointer-events-none' : 'opacity-100'
-      }`}>
-        {/* Metadata chips */}
-        <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-mono-100 text-mono-600 font-mono text-[10px] sm:text-[11px] font-medium border border-mono-200/50">
-            <span className="w-1.5 h-1.5 rounded-full bg-mono-400" />
-            WCA Rule 4b
-          </span>
-          <span className="px-2 py-0.5 rounded-md bg-mono-100 text-mono-700 font-mono text-[10px] sm:text-[11px] font-medium">
-            Round {roundNumber} · #{solveNumber}
-          </span>
-          <span className="text-mono-300 text-xs hidden sm:inline">|</span>
-          <span className="text-[10px] sm:text-[11px] font-mono text-mono-500 hidden xs:inline">{moveCount} Moves (HTM)</span>
-        </div>
+      {/* Scramble Header Component */}
+      <ScrambleHeader
+        scramble={scramble}
+        onNextScramble={onNextScramble}
+        cubeNetState={cubeNetState}
+        inspectionEnabled={inspectionEnabled}
+        onToggleInspection={onToggleInspection}
+        isManualInputActive={isManualInputActive}
+        onToggleManualInput={() => {
+          setIsManualInputActive((prev) => {
+            const next = !prev;
+            if (next) {
+              setManualInputVal('');
+              setTimeout(() => manualInputRef.current?.focus(), 50);
+            }
+            return next;
+          });
+        }}
+        isTimerRunning={timerState === 'running'}
+      />
 
-        {/* Centered Scramble Formula */}
-        <div className="w-full px-1 sm:px-2">
-          <p
-            id="current-scramble"
-            className="font-mono text-xs xs:text-sm sm:text-xl md:text-2xl leading-snug sm:leading-relaxed tracking-tight xs:tracking-normal sm:tracking-wider text-mono-950 font-semibold break-words select-all text-center max-h-16 xs:max-h-20 sm:max-h-none overflow-y-auto"
+      {/* Entire Area Below Scramble Card: Responsive Touch-Down Surface & Grand Digits */}
+      <div
+        id="click-trigger-area"
+        className="relative z-10 flex-1 w-full flex flex-col items-center justify-center cursor-pointer select-none touch-manipulation max-w-full overflow-hidden my-auto py-4"
+      >
+        {isManualInputActive ? (
+          <div
+            className="flex items-baseline justify-center max-w-full px-1 w-full"
+            onClick={(e) => e.stopPropagation()}
           >
-            {scramble}
-          </p>
-        </div>
-
-        {/* Minimalist Centered Icon-Only Action Toolbar with Tooltips */}
-        <div className="flex items-center justify-center gap-1.5 sm:gap-2 pt-0.5 sm:pt-1 relative">
-          {/* Next Scramble Icon Button */}
-          <div className="relative group">
-            <button
-              type="button"
-              id="next-scramble-btn"
-              aria-label="Next Scramble"
-              onClick={(e) => {
-                e.stopPropagation();
-                onNextScramble();
-              }}
-              className="w-8 h-8 rounded-lg bg-mono-100 hover:bg-mono-950 hover:text-white text-mono-700 flex items-center justify-center transition-all active:scale-95 border border-mono-200/70"
-            >
-              <RotateCw className="w-[15px] h-[15px]" />
-            </button>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex items-center px-2 py-1 rounded bg-mono-900 text-white text-[10px] font-mono whitespace-nowrap shadow-md pointer-events-none z-30 transition-opacity">
-              Next Scramble (Alt+N)
-            </div>
-          </div>
-
-          {/* Copy Scramble Icon Button */}
-          <div className="relative group">
-            <button
-              type="button"
-              id="copy-scramble-btn"
-              aria-label="Copy Scramble"
-              onClick={handleCopy}
-              className="w-8 h-8 rounded-lg bg-mono-100 hover:bg-mono-200/80 text-mono-700 flex items-center justify-center transition-all active:scale-95 border border-mono-200/70"
-            >
-              {copied ? (
-                <Check className="w-[15px] h-[15px] text-emerald-600" />
-              ) : (
-                <Copy className="w-[15px] h-[15px] text-mono-700" />
-              )}
-            </button>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex items-center px-2 py-1 rounded bg-mono-900 text-white text-[10px] font-mono whitespace-nowrap shadow-md pointer-events-none z-30 transition-opacity">
-              {copied ? 'Copied to clipboard!' : 'Copy Scramble'}
-            </div>
-          </div>
-
-          {/* 15s Inspection Toggle Icon Button */}
-          <div className="relative group">
-            <button
-              type="button"
-              id="inspection-toggle-btn"
-              aria-label="Toggle 15s Inspection"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleInspection();
-              }}
-              className={
-                inspectionEnabled
-                  ? 'w-8 h-8 rounded-lg bg-mono-950 text-white flex items-center justify-center transition-all active:scale-95 border border-mono-950'
-                  : 'w-8 h-8 rounded-lg bg-mono-100 text-mono-400 hover:text-mono-700 flex items-center justify-center transition-all active:scale-95 border border-mono-200/70'
-              }
-            >
-              <TimerIcon className="w-[15px] h-[15px]" />
-            </button>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex items-center px-2 py-1 rounded bg-mono-900 text-white text-[10px] font-mono whitespace-nowrap shadow-md pointer-events-none z-30 transition-opacity">
-              15s Inspection ({inspectionEnabled ? 'Enabled' : 'Disabled'})
-            </div>
-          </div>
-
-          {/* Manual Input Toggle Icon Button */}
-          <div className="relative group">
-            <button
-              type="button"
-              id="manual-input-btn"
-              aria-label="Manual Time Entry"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsManualInputActive((prev) => {
-                  const next = !prev;
-                  if (next) {
-                    setManualInputVal('');
-                    setTimeout(() => manualInputRef.current?.focus(), 50);
-                  }
-                  return next;
-                });
-              }}
-              className={
-                isManualInputActive
-                  ? 'w-8 h-8 rounded-lg bg-mono-950 text-white flex items-center justify-center transition-all active:scale-95 border border-mono-950'
-                  : 'w-8 h-8 rounded-lg bg-mono-100 text-mono-600 hover:text-mono-950 hover:bg-mono-200 flex items-center justify-center transition-all active:scale-95 border border-mono-200/70'
-              }
-            >
-              <Plus className="w-[15px] h-[15px]" />
-            </button>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex items-center px-2 py-1 rounded bg-mono-900 text-white text-[10px] font-mono whitespace-nowrap shadow-md pointer-events-none z-30 transition-opacity">
-              {isManualInputActive ? 'Đang nhập thủ công' : 'Nhập thời gian thủ công'}
-            </div>
-          </div>
-
-          <div className="h-4 w-px bg-mono-200 mx-1" />
-
-          {/* Collapsible / Toggleable 2D Cube Net Preview Popover Trigger */}
-          <div className="relative">
-            <div className="group relative">
-              <button
-                ref={toggleNetBtnRef}
-                type="button"
-                id="toggle-net-btn"
-                aria-label="Toggle 2D Net Preview"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsNetOpen((prev) => !prev);
-                }}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-mono-100/90 hover:bg-mono-200/80 text-mono-700 text-xs font-mono font-medium border border-mono-200/70 transition-all active:scale-95"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline text-[11px]">2D Net</span>
-              </button>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex items-center px-2 py-1 rounded bg-mono-900 text-white text-[10px] font-mono whitespace-nowrap shadow-md pointer-events-none z-30 transition-opacity">
-                Toggle 2D Net Preview
-              </div>
-            </div>
-
-            {/* Floating Glass Popover for 2D Unfolded Cube Net */}
-            {isNetOpen && (
-              <div
-                ref={netPopoverRef}
-                id="net-popover"
-                onClick={(e) => e.stopPropagation()}
-                className="flex absolute right-1/2 sm:right-0 translate-x-1/2 sm:translate-x-0 top-full mt-2.5 z-40 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl border border-mono-200/80 shadow-apple-dock flex-col items-center transition-all"
-              >
-                <div className="flex items-center justify-between w-full pb-2 mb-2 border-b border-mono-100 gap-4">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-mono-500 font-semibold whitespace-nowrap">
-                    WCA Net Preview
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="Close Preview"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsNetOpen(false);
-                    }}
-                    className="text-mono-400 hover:text-mono-800 transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <CubeNet2D state={cubeNetState} />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Center Stage: Grand Digital Precision Timer Focal Point */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-between w-full py-2 sm:py-6">
-        {/* Huge, Commanding Monospace Digital Timer - Fills vertical center space */}
-        <div
-          id="click-trigger-area"
-          className="relative z-10 flex-1 flex flex-col items-center justify-center cursor-pointer transform transition-transform active:scale-[0.99] group text-center max-w-full overflow-hidden w-full my-auto"
-        >
-          {isManualInputActive ? (
-            <div
-              className="flex items-baseline justify-center max-w-full px-1 w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <input
-                ref={manualInputRef}
-                type="text"
-                value={manualInputVal}
-                placeholder={formatDigits(currentMs)}
-                onChange={(e) => setManualInputVal(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const parsed = parseTimeInput(manualInputVal);
-                    if (parsed !== null && parsed > 0) {
-                      if (onManualTimeEntry) {
-                        onManualTimeEntry(parsed);
-                      } else {
-                        onSolveComplete(parsed);
-                      }
-                      setCurrentMs(parsed);
-                      setIsManualInputActive(false);
-                      setManualInputVal('');
+            <input
+              ref={manualInputRef}
+              type="text"
+              value={manualInputVal}
+              placeholder={formatDigits(currentMs)}
+              onChange={(e) => setManualInputVal(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const parsed = parseTimeInput(manualInputVal);
+                  if (parsed !== null && parsed > 0) {
+                    if (onManualTimeEntry) {
+                      onManualTimeEntry(parsed);
                     } else {
-                      alert('Vui lòng nhập định dạng thời gian hợp lệ (ví dụ: 9.31, 1:04.25 hoặc 931)');
+                      onSolveComplete(parsed);
                     }
-                  } else if (e.key === 'Escape') {
+                    setCurrentMs(parsed);
                     setIsManualInputActive(false);
                     setManualInputVal('');
+                  } else {
+                    alert('Vui lòng nhập định dạng thời gian hợp lệ (ví dụ: 9.31, 1:04.25 hoặc 931)');
                   }
-                }}
-                className={`font-mono-dotted leading-none font-bold tabular-nums text-mono-950 bg-transparent border-none text-center focus:outline-none focus:ring-0 p-0 m-0 w-full max-w-full caret-mono-950 ${getTimerFontSizeClass(
-                  manualInputVal || formatDigits(currentMs)
-                )}`}
-              />
-            </div>
-          ) : (
-            <div className="flex items-baseline justify-center max-w-full px-1">
-              {(() => {
-                const formattedTime = formatDigits(currentMs);
-                return (
-                  <span
-                    id="timer-main"
-                    className={`font-mono-dotted leading-none font-bold tabular-nums transition-colors ${getTimerFontSizeClass(
-                      formattedTime
-                    )} ${getTimerColorClass()}`}
-                  >
-                    {formattedTime}
-                  </span>
-                );
-              })()}
-            </div>
-          )}
-        </div>
-
-        {/* Mobile Stackmat Dual-Thumb Touch Sensor Pads */}
-        <div
-          className={`w-full max-w-sm flex items-center justify-between px-4 pt-2 pb-1 sm:hidden transition-all duration-300 ${
-            timerState === 'running' ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100'
-          }`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Left Hand Pad */}
-          <div
-            onPointerDown={(e) => {
-              e.stopPropagation();
-              (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-              handleLeftThumbDown();
-            }}
-            onPointerUp={(e) => {
-              e.stopPropagation();
-              handleLeftThumbUp();
-            }}
-            onPointerCancel={(e) => {
-              e.stopPropagation();
-              handleLeftThumbUp();
-            }}
-            className={`w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all select-none touch-none cursor-pointer ${
-              isLeftThumbActive
-                ? timerState === 'ready'
-                  ? 'bg-emerald-500/20 border-emerald-500 scale-95 shadow-md'
-                  : 'bg-amber-500/20 border-amber-500 scale-95 shadow-md'
-                : 'bg-neutral-50/90 border-neutral-300/80 active:scale-95 shadow-2xs'
-            }`}
-          >
-            <span className="text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-tight">Tay Trái</span>
-            <span className="text-xl select-none">🖐️</span>
+                } else if (e.key === 'Escape') {
+                  setIsManualInputActive(false);
+                  setManualInputVal('');
+                }
+              }}
+              className={`font-mono leading-none font-bold tabular-nums text-[#111111] bg-transparent border-none text-center focus:outline-none focus:ring-0 p-0 m-0 w-full max-w-full caret-[#111111] ${getTimerFontSizeClass(
+                manualInputVal || formatDigits(currentMs)
+              )}`}
+            />
           </div>
-
-          {/* Center Stackmat Status Badge */}
-          <div className="flex flex-col items-center gap-1">
-            <div
-              className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border transition-all ${
-                timerState === 'ready'
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-300 animate-pulse'
-                  : timerState === 'holding'
-                  ? 'bg-amber-50 text-amber-700 border-amber-300'
-                  : 'bg-white text-neutral-600 border-[#EAECEF]'
-              }`}
-            >
-              {timerState === 'ready'
-                ? 'READY · THẢ RA'
-                : timerState === 'holding'
-                ? 'GIỮ 2 TAY...'
-                : 'STACKMAT PAD'}
-            </div>
-            <span className="text-[9px] text-neutral-400 font-mono">Chạm 2 ngón để canh</span>
+        ) : (
+          <div className="flex items-baseline justify-center max-w-full px-1">
+            {(() => {
+              const formattedTime = formatDigits(currentMs);
+              return (
+                <span
+                  id="timer-main"
+                  className={`font-mono leading-none font-bold tabular-nums transition-colors select-none ${getTimerFontSizeClass(
+                    formattedTime
+                  )} ${getTimerColorClass()}`}
+                >
+                  {formattedTime}
+                </span>
+              );
+            })()}
           </div>
+        )}
 
-          {/* Right Hand Pad */}
-          <div
-            onPointerDown={(e) => {
-              e.stopPropagation();
-              (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-              handleRightThumbDown();
-            }}
-            onPointerUp={(e) => {
-              e.stopPropagation();
-              handleRightThumbUp();
-            }}
-            onPointerCancel={(e) => {
-              e.stopPropagation();
-              handleRightThumbUp();
-            }}
-            className={`w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all select-none touch-none cursor-pointer ${
-              isRightThumbActive
-                ? timerState === 'ready'
-                  ? 'bg-emerald-500/20 border-emerald-500 scale-95 shadow-md'
-                  : 'bg-amber-500/20 border-amber-500 scale-95 shadow-md'
-                : 'bg-neutral-50/90 border-neutral-300/80 active:scale-95 shadow-2xs'
-            }`}
-          >
-            <span className="text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-tight">Tay Phải</span>
-            <span className="text-xl select-none">✋</span>
-          </div>
-        </div>
-
-        {/* Bottom Section inside Timer card: Inspection prompt & ao5/ao12 pushed to bottom */}
-        <div className={`w-full flex flex-col items-center justify-center gap-2 pt-2 sm:pt-4 shrink-0 transition-opacity duration-300 ${
-          timerState === 'running' ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}>
-          <p className="text-mono-400 text-xs sm:text-sm font-sans tracking-wide text-center">
-            {timerState === 'inspection'
-              ? 'Đang xem trước 15s · Nhấn giữ Spacebar hoặc click giữ để vào trạng thái Sẵn sàng'
-              : inspectionEnabled
-              ? 'Nhấn Spacebar hoặc click để bắt đầu 15s Inspection'
-              : 'Click, tap screen, or hold Spacebar'}
-          </p>
-
-          {/* Quick Stats HUD pushed cleanly to bottom of timer card */}
-          <div className="flex items-center justify-center gap-5 sm:gap-8 text-mono-600 font-mono text-xs sm:text-base">
-            <span className="flex items-center gap-1.5">
-              <span className="text-mono-400 font-medium">ao5:</span>
-              <span className="font-bold text-mono-900">08.52</span>
-            </span>
-            <span className="text-mono-300">•</span>
-            <span className="flex items-center gap-1.5">
-              <span className="text-mono-400 font-medium">ao12:</span>
-              <span className="font-bold text-mono-900">07.81</span>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Subtle keyboard hints underneath (Hidden on touch mobile devices) */}
-      <div className="relative z-10 hidden sm:flex items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-mono text-mono-400 pt-1 sm:pt-2 shrink-0">
-        <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 rounded bg-mono-100 text-mono-600 border border-mono-200/50">
-            Space
-          </kbd>{' '}
-          Arm &amp; Release
-        </span>
-        <span className="text-mono-200">•</span>
-        <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 rounded bg-mono-100 text-mono-600 border border-mono-200/50">
-            Esc
-          </kbd>{' '}
-          Reset
-        </span>
-        <span className="text-mono-200">•</span>
-        <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 rounded bg-mono-100 text-mono-600 border border-mono-200/50">
-            +2
-          </kbd>{' '}
-          Penalty
-        </span>
+        {/* Tiny Monospace Micro-Hint */}
+        {renderMicroHint()}
       </div>
     </section>
   );

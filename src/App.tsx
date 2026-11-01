@@ -331,7 +331,9 @@ export const App: React.FC = () => {
             />
 
             {/* Apple-style Refined Bottom Dock & Session Split Grid */}
-            <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className={`w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start transition-opacity duration-200 ${
+              isTimerRunning ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}>
               {/* Left Side (7 Columns): Compact Metric Cards, Velocity Pace Curve, Hardware Dock */}
               <div className="lg:col-span-7 flex flex-col gap-5">
                 <MetricCards stats={sessionStats} />
@@ -372,7 +374,7 @@ export const App: React.FC = () => {
       </main>
 
       {/* 2. Global Footer */}
-      <div className="pb-16 lg:pb-0">
+      <div className={`pb-16 lg:pb-0 transition-opacity duration-200 ${isTimerRunning ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <Footer />
       </div>
 

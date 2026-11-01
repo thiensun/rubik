@@ -371,7 +371,7 @@ export const App: React.FC = () => {
 
       {/* 3. Global Scroll to Top Button (Shifted up on mobile when on algorithms tab to avoid floating dock) */}
       <ScrollToTopButton
-        className={activeTab === 'algorithms' ? 'bottom-20 lg:bottom-6' : 'bottom-6'}
+        className={activeTab === 'algorithms' ? 'bottom-24 lg:bottom-6' : 'bottom-6'}
       />
 
       {/* Modals */}

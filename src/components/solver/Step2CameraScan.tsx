@@ -975,43 +975,12 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
               </div>
             )}
 
-            {/* Top Viewport Telemetry Badges - Pinned to top of flex container */}
-            <div className={`w-full flex items-center justify-between z-20 pointer-events-none shrink-0 transition-opacity duration-200 ${cameraError !== null ? 'opacity-10' : ''}`}>
-              <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/15 text-white font-mono text-[10px] sm:text-[11px] shadow-sm">
-                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span className="font-semibold">{cameraStatus === 'virtual' ? 'VIRTUAL' : 'LIVE'}</span>
-                <span className="text-slate-400">•</span>
-                <span className="text-slate-300">{streamResolution}</span>
-              </div>
-
-              <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/15 text-white font-mono text-[10px] sm:text-[11px] shadow-sm">
-                <Sun className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${isLightingGood ? 'text-amber-400' : 'text-red-400'}`} />
-                <span>{isLightingGood ? 'AI Light: Optimal' : 'AI Light: Sub-optimal'}</span>
-                <span className="text-slate-400">•</span>
-                <span className="text-cyan-400 font-bold">{aiConfidenceScore}% Acc</span>
-              </div>
-            </div>
-
-            {/* Center Status Banner (Alignment Guidance) - Hidden when camera warning banner is active or camera disconnected */}
+            {/* Minimal Guidance Pill */}
             {!(isCameraBlockedOrGreen && cameraStatus === 'active') && !cameraError && (
               <div className="z-20 pointer-events-none shrink-0 my-1 transition-opacity duration-200">
-                <div
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-white shadow-lg backdrop-blur-md transition-all duration-300 ${
-                    centerAligned && !isCameraBlockedOrGreen
-                      ? 'bg-emerald-950/85 border-emerald-400 text-emerald-200'
-                      : 'bg-slate-900/90 border-amber-500/50 text-white'
-                  }`}
-                >
-                  <span
-                    className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
-                      centerAligned && !isCameraBlockedOrGreen ? 'bg-emerald-400 animate-ping' : 'bg-amber-400 animate-pulse'
-                    }`}
-                  />
-                  <span className="font-mono text-[10px] sm:text-xs font-semibold tracking-wide">
-                    {centerAligned && !isCameraBlockedOrGreen
-                      ? `✓ Center Aligned: ${activeFaceMeta.centerColor.toUpperCase()} (${autoHoldProgress > 0 ? `${autoHoldProgress}%` : 'Hold still'})`
-                      : `Hold Still 0.8s... Align ${activeFaceMeta.centerColor.toUpperCase()} CENTER`}
-                  </span>
+                <div className="flex items-center gap-2 px-3.5 py-1 rounded-full border border-white/20 bg-neutral-900/80 text-white shadow-lg backdrop-blur-md text-xs font-medium">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: activeFaceMeta.centerHex }} />
+                  <span>Căn mặt {activeFaceMeta.centerColor === 'green' ? 'Xanh Lá' : activeFaceMeta.centerColor === 'red' ? 'Đỏ' : activeFaceMeta.centerColor === 'blue' ? 'Xanh Dương' : activeFaceMeta.centerColor === 'orange' ? 'Cam' : activeFaceMeta.centerColor === 'white' ? 'Trắng' : 'Vàng'} vào khung hình</span>
                 </div>
               </div>
             )}

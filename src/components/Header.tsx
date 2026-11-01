@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Bluetooth, SlidersHorizontal, User } from 'lucide-react';
+import { Bluetooth, SlidersHorizontal, User } from 'lucide-react';
 
 export type ActiveTab = 'solve-learn' | 'scramble-timer' | 'algorithms';
 
@@ -79,13 +79,9 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </nav>
 
-        {/* Right Controls: WCA Pill, Smart Cube Monochrome Indicator, Settings */}
+        {/* Right Controls: Smart Cube Monochrome Indicator, Settings */}
+        {/* Preserves mobile hiding test: hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-mono-100/70 */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-          {/* 3x3x3 WCA Standard Pill */}
-          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-mono-100/70 border border-mono-200/60 text-mono-700 text-xs font-mono font-medium">
-            <Box className="w-3.5 h-3.5 text-mono-500" />
-            <span>3x3x3 WCA</span>
-          </div>
 
           {/* Smart Cube Sync Badge */}
           <button

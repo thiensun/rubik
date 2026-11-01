@@ -737,30 +737,12 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
             <span className="text-xs font-mono font-black text-emerald-400">
               {currentMove || slice}
             </span>
-            <span className="text-[9.5px] font-mono text-neutral-400">
-              ({turnAngle === '180.0°' || currentMove?.includes('2') ? '180°' : '90°'})
+            <span className="text-[10px] font-mono text-neutral-400">
+              {currentMove?.includes('2') || turnAngle === '180.0°' ? '180°' : currentMove?.includes("'") ? '-90°' : '90°'}
             </span>
-            {!compact && (
-              <span className="text-[9px] font-sans text-neutral-300 font-medium whitespace-nowrap">
-                ·{' '}
-                {currentMove?.includes("'")
-                  ? 'Ngược KĐH'
-                  : currentMove?.includes('2')
-                  ? 'Xoay 180°'
-                  : 'Thuận KĐH'}
-              </span>
-            )}
           </div>
         </div>
       )}
-
-      {/* Bottom-Left Spatial Orientation Pill */}
-      <div className="absolute bottom-2.5 left-2.5 max-w-[55%] flex items-center pointer-events-none z-10">
-        <div className="bg-white/85 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] text-[10px] max-w-full font-mono text-neutral-500 shadow-2xs flex items-center gap-1 min-w-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-          <span className="truncate">U: Vàng · D: Trắng · Xoay 360°</span>
-        </div>
-      </div>
     </div>
   );
 };

@@ -17,12 +17,12 @@ export const CrossStrategyCard: React.FC<CrossStrategyCardProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 border-b border-[#F2F4F7] gap-2">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200 shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-[#F8F9FA] text-[#111111] flex items-center justify-center border border-[#EAECEF] shrink-0">
             <Target className="w-4 h-4 stroke-[2.2]" />
           </div>
           <div>
             <span className="font-mono text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">
-              INSPECTION &amp; CROSS STRATEGY (15s WCA)
+              Chiến Thuật Cross
             </span>
             <h3 className="font-bold text-sm sm:text-base text-neutral-900">
               Gợi Ý Chọn Cross Theo Cấp Độ
@@ -30,7 +30,7 @@ export const CrossStrategyCard: React.FC<CrossStrategyCardProps> = ({
           </div>
         </div>
 
-        <span className="self-start sm:self-auto px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-mono font-bold tracking-tight">
+        <span className="self-start sm:self-auto px-2.5 py-1 rounded-full bg-[#111111] text-white text-[10px] font-mono font-bold tracking-tight">
           {crossAdvisor.badgeVi}
         </span>
       </div>

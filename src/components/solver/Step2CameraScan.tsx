@@ -91,6 +91,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
 
   // Camera Stream Status
   const [cameraStatus, setCameraStatus] = useState<'requesting' | 'active' | 'denied' | 'virtual'>('requesting');
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const [streamResolution, setStreamResolution] = useState<string>('1280x720 @ 60 FPS');
   const [isShutterFlashing, setIsShutterFlashing] = useState<boolean>(false);
   const [autoHoldProgress, setAutoHoldProgress] = useState<number>(0);
@@ -163,6 +164,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   // Start real webcam stream with robust constraints & device selection
   const startCamera = useCallback(async (deviceIdOverride?: string, facingOverride?: 'user' | 'environment') => {
     setCameraStatus('requesting');
+    setCameraError(null);
     setIsCameraBlockedOrGreen(false);
 
     // Stop existing stream tracks
@@ -225,12 +227,15 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
         await refreshDevicesList();
 
         setCameraStatus('active');
-      } catch (err) {
+        setCameraError(null);
+      } catch (err: any) {
         console.warn('Camera access denied or device not found, falling back to simulated HUD:', err);
         setCameraStatus('denied');
+        setCameraError(err?.message || 'Webcam was not granted permission or is in use.');
       }
     } else {
       setCameraStatus('denied');
+      setCameraError('Camera API is not supported in this browser environment.');
     }
   }, [selectedDeviceId, cameraFacing, refreshDevicesList]);
 
@@ -257,6 +262,15 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
       }
     }
   }, [activeStream]);
+
+  // Synchronize cameraError with cameraStatus
+  useEffect(() => {
+    if (cameraStatus === 'denied' && !cameraError) {
+      setCameraError('Webcam was not granted permission or is in use.');
+    } else if (cameraStatus !== 'denied' && cameraError) {
+      setCameraError(null);
+    }
+  }, [cameraStatus, cameraError]);
 
   // Initial camera startup
   useEffect(() => {
@@ -880,39 +894,53 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
 
             {/* 3. Camera Request / Denied States */}
             {cameraStatus === 'requesting' && (
-              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/80 text-white gap-3 p-6 text-center">
+              <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-950/80 text-white gap-3 p-6 text-center">
                 <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin" />
                 <span className="font-mono text-sm font-bold">Connecting to camera feed...</span>
                 <span className="text-xs text-slate-400">Please allow camera permissions if prompted by your browser.</span>
               </div>
             )}
 
-            {cameraStatus === 'denied' && (
-              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/90 text-white gap-3 p-6 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-1">
-                  <AlertCircle className="w-6 h-6" />
-                </div>
-                <span className="font-mono text-sm font-bold text-amber-300">Camera Access Not Available</span>
-                <p className="text-xs text-slate-300 max-w-sm">
-                  Webcam was not granted permission or is in use. Click below to retry or switch to Virtual Demo Camera.
-                </p>
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <button
-                    type="button"
-                    onClick={() => startCamera()}
-                    className="px-4 py-2 rounded-xl bg-white text-neutral-900 font-bold text-xs hover:bg-neutral-100 transition-all flex items-center gap-1.5 shadow-sm"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Try Again (Thử Lại)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCameraStatus('virtual')}
-                    className="px-4 py-2 rounded-xl bg-neutral-800 text-white font-bold text-xs hover:bg-neutral-700 transition-all flex items-center gap-1.5 border border-white/20"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Virtual Demo Feed (Camera Ảo)</span>
-                  </button>
+            {(cameraStatus === 'denied' || cameraError !== null) && (
+              <div
+                className="camera-error-overlay absolute inset-0 z-40 flex flex-col items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-sm select-auto"
+                style={{ zIndex: 40 }}
+              >
+                <div className="w-full max-w-sm bg-neutral-900/95 backdrop-blur-md border border-amber-500/20 p-6 rounded-2xl shadow-2xl flex flex-col items-center text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-[#F59E0B] flex items-center justify-center mb-3 border border-amber-500/20">
+                    <AlertTriangle className="w-6 h-6 text-[#F59E0B]" />
+                  </div>
+                  <div className="flex items-center justify-center gap-1.5 font-bold text-sm lg:text-base font-mono text-[#F59E0B] mb-2">
+                    <AlertTriangle className="w-4 h-4 text-[#F59E0B] shrink-0" />
+                    <span>Camera Access Not Available</span>
+                  </div>
+                  <p className="text-xs text-neutral-300 leading-relaxed max-w-xs mb-4">
+                    Webcam was not granted permission or is in use. Click below to retry or switch to Virtual Demo Camera.
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-2 w-full">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCameraError(null);
+                        startCamera();
+                      }}
+                      className="bg-white text-neutral-800 font-medium px-4 py-2 text-xs rounded-xl hover:bg-neutral-100 flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Try Again</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCameraError(null);
+                        setCameraStatus('virtual');
+                      }}
+                      className="bg-[#1A1A1A] hover:bg-neutral-800 text-white border border-neutral-700 font-medium px-4 py-2 text-xs rounded-xl flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Dùng Demo (Camera Ảo)</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -940,7 +968,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
             )}
 
             {/* Top Viewport Telemetry Badges - Pinned to top of flex container */}
-            <div className="w-full flex items-center justify-between z-20 pointer-events-none shrink-0">
+            <div className={`w-full flex items-center justify-between z-20 pointer-events-none shrink-0 transition-opacity duration-200 ${cameraError !== null ? 'opacity-10' : ''}`}>
               <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/15 text-white font-mono text-[10px] sm:text-[11px] shadow-sm">
                 <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-ping" />
                 <span className="font-semibold">{cameraStatus === 'virtual' ? 'VIRTUAL' : 'LIVE'}</span>
@@ -956,9 +984,9 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
               </div>
             </div>
 
-            {/* Center Status Banner (Alignment Guidance) - Hidden when camera warning banner is active so they never overlap */}
-            {!(isCameraBlockedOrGreen && cameraStatus === 'active') && (
-              <div className="z-20 pointer-events-none shrink-0 my-1">
+            {/* Center Status Banner (Alignment Guidance) - Hidden when camera warning banner is active or camera disconnected */}
+            {!(isCameraBlockedOrGreen && cameraStatus === 'active') && !cameraError && (
+              <div className="z-20 pointer-events-none shrink-0 my-1 transition-opacity duration-200">
                 <div
                   className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-white shadow-lg backdrop-blur-md transition-all duration-300 ${
                     centerAligned && !isCameraBlockedOrGreen
@@ -981,7 +1009,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
             )}
 
             {/* 3x3 PRECISION ALIGNMENT RETICLE - Centered vertically with zero collisions */}
-            <div className="relative z-20 w-[205px] h-[205px] sm:w-[260px] sm:h-[260px] aspect-square border border-white/30 rounded-2xl p-1.5 sm:p-2 bg-black/15 backdrop-blur-[1px] shadow-2xl my-auto shrink-0">
+            <div className={`relative z-20 w-[205px] h-[205px] sm:w-[260px] sm:h-[260px] aspect-square border border-white/30 rounded-2xl p-1.5 sm:p-2 bg-black/15 backdrop-blur-[1px] shadow-2xl my-auto shrink-0 transition-opacity duration-200 ${cameraError !== null ? 'opacity-10 pointer-events-none' : ''}`}>
               {/* 4 Viewfinder Corner Brackets */}
               <div className="absolute -top-1.5 -left-1.5 w-5 h-5 sm:w-6 sm:h-6 border-t-[3px] border-l-[3px] border-white rounded-tl" />
               <div className="absolute -top-1.5 -right-1.5 w-5 h-5 sm:w-6 sm:h-6 border-t-[3px] border-r-[3px] border-white rounded-tr" />
@@ -1054,7 +1082,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
             </div>
 
             {/* Bottom Viewport Next Face / Instruction Banner - Pinned to bottom of flex container */}
-            <div className="w-full flex items-center justify-center gap-1.5 bg-slate-900/85 backdrop-blur-md py-1.5 px-3 rounded-xl border border-white/15 text-white font-mono text-[10px] sm:text-[11px] z-20 shrink-0">
+            <div className={`w-full flex items-center justify-center gap-1.5 bg-slate-900/85 backdrop-blur-md py-1.5 px-3 rounded-xl border border-white/15 text-white font-mono text-[10px] sm:text-[11px] z-20 shrink-0 transition-opacity duration-200 ${cameraError !== null ? 'opacity-10 pointer-events-none' : ''}`}>
               <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400 shrink-0" />
               <span className="truncate">{activeFaceMeta.nextPrompt}</span>
             </div>

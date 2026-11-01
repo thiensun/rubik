@@ -932,17 +932,27 @@ export function getStaticSolutionForLevel(level: SolverLevelId): {
 
 export function getSolutionForLevel(
   level: SolverLevelId,
-  scrambleStr?: string,
-  cubeState?: CubeNetState
+  scrambleStr?: string | CubeNetState,
+  cubeState?: CubeNetState | '2-look' | '1-look',
+  lookMode?: '2-look' | '1-look'
 ): {
   totalMoves: number;
   stages: SolutionStage[];
   currentStageIndex: number;
   estTime: string;
 } {
+  // Support polymorphic parameter order
+  const resolvedScramble = typeof scrambleStr === 'string' ? scrambleStr : undefined;
+  const resolvedCubeState: CubeNetState | undefined =
+    typeof scrambleStr === 'object' && scrambleStr !== null && 'U' in scrambleStr
+      ? (scrambleStr as CubeNetState)
+      : typeof cubeState === 'object' && cubeState !== null && 'U' in cubeState
+      ? (cubeState as CubeNetState)
+      : undefined;
+
   // If cubeState is provided, solve it directly using authentic solver engine
-  if (cubeState) {
-    const solveRes = solveCube(cubeState, level);
+  if (resolvedCubeState) {
+    const solveRes = solveCube(resolvedCubeState, level);
     if (solveRes.success && solveRes.stages.length > 0) {
       return {
         totalMoves: solveRes.moves.length,
@@ -953,11 +963,11 @@ export function getSolutionForLevel(
     }
   }
 
-  const isExactLevelDemo = !scrambleStr || scrambleStr === DEMO_SCRAMBLES[level];
+  const isExactLevelDemo = !resolvedScramble || resolvedScramble === DEMO_SCRAMBLES[level];
 
   if (isExactLevelDemo) {
     return getStaticSolutionForLevel(level);
   }
-  return generateDynamicSolution(level, scrambleStr);
+  return generateDynamicSolution(level, resolvedScramble);
 }
 

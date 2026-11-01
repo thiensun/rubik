@@ -11,6 +11,7 @@ import { AlgorithmsView } from './components/views/AlgorithmsView';
 import { AuditLogModal } from './components/history/AuditLogModal';
 import { SettingsModal, ColorSchemePresetKey } from './components/SettingsModal';
 import { ScrollToTopButton } from './components/ScrollToTopButton';
+import { PWAInstallBanner } from './components/common/PWAInstallBanner';
 import { SolveRecord, PenaltyType } from './types/cubing';
 import { SEED_SOLVES, computeSessionStats } from './utils/cubingStats';
 import { applyScrambleForNet, generateWCAScramble, CubeNetState } from './utils/cubeState';
@@ -373,6 +374,9 @@ export const App: React.FC = () => {
       <ScrollToTopButton
         className={activeTab === 'algorithms' ? 'bottom-24 lg:bottom-6' : 'bottom-6'}
       />
+
+      {/* 4. PWA Installation Banner */}
+      <PWAInstallBanner />
 
       {/* Modals */}
       <AuditLogModal

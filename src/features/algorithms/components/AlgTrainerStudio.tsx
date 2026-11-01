@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Target } from 'lucide-react';
+import { ExternalLink, Target, X } from 'lucide-react';
 import { AlgorithmEntry } from '../../../data/algorithms';
 import { CubeNetState } from '../../../utils/cubeState';
 import { ThreeCubeViewer } from '../../../components/solver/ThreeCubeViewer';
@@ -107,56 +107,54 @@ export const AlgTrainerStudio: React.FC<AlgTrainerStudioProps> = ({
 
       {/* RIGHT STICKY BENTO CARD (Desktop) / MOBILE SLIDE-UP DRAWER */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-50 rounded-t-[28px] p-4 bg-white shadow-2xl border-t border-[#EAECEF] max-h-[75vh] flex flex-col overflow-y-auto transition-transform duration-300 gap-2 lg:static lg:z-auto lg:col-span-4 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:max-h-[760px] lg:overflow-hidden lg:rounded-[24px] lg:border lg:border-[#EAECEF] lg:shadow-sm lg:translate-y-0 ${
+        className={`fixed inset-x-0 bottom-0 z-50 rounded-t-[28px] pt-2 pb-4 px-4 bg-white shadow-2xl border-t border-[#EAECEF] max-h-[75vh] flex flex-col overflow-y-auto transition-transform duration-300 gap-2 lg:static lg:z-auto lg:col-span-4 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:max-h-[760px] lg:overflow-hidden lg:rounded-[24px] lg:border lg:border-[#EAECEF] lg:shadow-sm lg:p-4 lg:translate-y-0 ${
           isMobileSheetOpen ? 'translate-y-0' : 'translate-y-full pointer-events-none lg:pointer-events-auto'
         }`}
       >
-        {/* Mobile Drag Handle & Close Bar */}
-        <div className="flex items-center justify-between pb-1.5 border-b border-neutral-100 lg:hidden shrink-0">
-          <div className="w-10 h-1.5 rounded-full bg-neutral-300 mx-auto" />
+        {/* Mobile Drag Handle Indicator */}
+        <div className="w-10 h-1 bg-neutral-300 rounded-full mx-auto my-1.5 lg:hidden shrink-0" />
+
+        {/* Header: Title + Drill Mode toggle + Mobile Close Button */}
+        <div className="flex items-center justify-between gap-2 pb-2 border-b border-[#EAECEF] shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <h3 className="text-sm font-extrabold text-neutral-900 truncate">
+              {isDrillMode ? '⚡ Luyện Phản Xạ' : '3D Alg Trainer'}
+            </h3>
+
+            <button
+              type="button"
+              onClick={() => {
+                const next = !isDrillMode;
+                setIsDrillMode(next);
+                setIsTrainerPlaying(false);
+                if (next) {
+                  pickNextDrillCase();
+                } else {
+                  sound.playTick();
+                }
+              }}
+              className={`px-2.5 py-1 rounded-xl font-mono text-[11px] font-bold transition-all flex items-center gap-1.5 border shrink-0 cursor-pointer ${
+                isDrillMode
+                  ? 'bg-[#111111] text-white border-[#111111] shadow-xs'
+                  : 'bg-neutral-100 text-neutral-800 border-[#EAECEF] hover:bg-neutral-200'
+              }`}
+            >
+              <Target className="w-3.5 h-3.5" />
+              <span>🎯 Drill Mode</span>
+            </button>
+          </div>
+
+          {/* Minimalist circular close icon button (Mobile only) */}
           <button
             type="button"
             onClick={() => {
               setIsTrainerPlaying(false);
               setIsMobileSheetOpen(false);
             }}
-            className="px-2.5 py-1 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-mono text-[11px] font-bold flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 flex items-center justify-center transition-all lg:hidden shrink-0 cursor-pointer"
+            title="Đóng Khối 3D"
           >
-            <span>✕ Đóng Khối 3D</span>
-          </button>
-        </div>
-
-        {/* Header: Title + Drill Mode toggle */}
-        <div className="flex items-center justify-between gap-2 py-1 border-b border-[#EAECEF] shrink-0">
-          <div className="min-w-0">
-            <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-neutral-400 block leading-none">
-              INTERACTIVE 3D STUDIO
-            </span>
-            <h3 className="text-sm font-extrabold text-neutral-900 truncate mt-0.5">
-              {isDrillMode ? '⚡ Chế Độ Luyện Phản Xạ (Drill)' : '3D Alg Trainer'}
-            </h3>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              const next = !isDrillMode;
-              setIsDrillMode(next);
-              setIsTrainerPlaying(false);
-              if (next) {
-                pickNextDrillCase();
-              } else {
-                sound.playTick();
-              }
-            }}
-            className={`px-2.5 py-1 rounded-xl font-mono text-[11px] font-bold transition-all flex items-center gap-1.5 border shrink-0 cursor-pointer ${
-              isDrillMode
-                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                : 'bg-[#111111] text-white border-[#111111] hover:bg-neutral-800'
-            }`}
-          >
-            <Target className="w-3.5 h-3.5" />
-            <span>🎯 Drill Mode</span>
+            <X className="w-4 h-4" />
           </button>
         </div>
 

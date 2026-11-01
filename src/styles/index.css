@@ -8,6 +8,10 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  button, a, [role="button"], input, select {
+    touch-action: manipulation;
+  }
+
   html, body {
     margin: 0;
     padding: 0;
@@ -23,6 +27,25 @@
     overflow-x: hidden;
     overscroll-behavior: none;
   }
+}
+
+/* Safe Area Insets for Mobile Viewports (iPhone Notch & Home Indicator) */
+.safe-area-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 16px));
+}
+
+.safe-area-top {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 8px));
+}
+
+/* Hide scrollbar for Chrome, Safari, and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .tabular-nums {

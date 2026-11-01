@@ -107,7 +107,7 @@ export const AlgTrainerStudio: React.FC<AlgTrainerStudioProps> = ({
 
       {/* RIGHT STICKY BENTO CARD (Desktop) / MOBILE SLIDE-UP DRAWER */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-50 rounded-t-[24px] bg-white shadow-2xl border-t border-[#EAECEF] max-h-[85vh] overflow-y-auto p-4 transition-transform duration-300 flex flex-col justify-between gap-2 lg:static lg:z-auto lg:col-span-4 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:max-h-[760px] lg:overflow-hidden lg:rounded-[24px] lg:border lg:border-[#EAECEF] lg:shadow-sm lg:translate-y-0 ${
+        className={`fixed inset-x-0 bottom-0 z-50 rounded-t-[28px] p-4 bg-white shadow-2xl border-t border-[#EAECEF] max-h-[75vh] flex flex-col overflow-y-auto transition-transform duration-300 gap-2 lg:static lg:z-auto lg:col-span-4 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:max-h-[760px] lg:overflow-hidden lg:rounded-[24px] lg:border lg:border-[#EAECEF] lg:shadow-sm lg:translate-y-0 ${
           isMobileSheetOpen ? 'translate-y-0' : 'translate-y-full pointer-events-none lg:pointer-events-auto'
         }`}
       >

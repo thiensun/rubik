@@ -7,12 +7,24 @@ interface HeaderProps {
   activeTab: ActiveTab;
   onTabChange: (tab: ActiveTab) => void;
   onOpenSettings: () => void;
+  isTimerRunning?: boolean;
+  className?: string;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, onOpenSettings }) => {
+export const Header: React.FC<HeaderProps> = ({
+  activeTab,
+  onTabChange,
+  onOpenSettings,
+  isTimerRunning = false,
+  className = '',
+}) => {
   return (
-    <header className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-mono-200/60 transition-all">
-      <div className="max-w-[1440px] h-14 mx-auto px-2.5 sm:px-6 flex items-center justify-between gap-1 sm:gap-2">
+    <header
+      className={`fixed top-0 left-0 w-full z-50 bg-white/85 backdrop-blur-md border-b border-mono-200/60 safe-area-top transition-all duration-300 ${
+        isTimerRunning ? 'opacity-0 pointer-events-none -translate-y-4' : 'opacity-100 translate-y-0'
+      } ${className}`}
+    >
+      <div className="max-w-[1440px] h-14 mx-auto px-3 sm:px-6 flex items-center justify-between gap-1 sm:gap-2">
         {/* Brand Logo & Version */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <div className="flex items-center gap-1.5 sm:gap-2">
@@ -23,13 +35,13 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, onOpenSe
               CubeMaster<span className="hidden sm:inline"> AI</span>
             </span>
           </div>
-          <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight bg-mono-100 text-mono-500 border border-mono-200/50">
+          <span className="inline-block px-1.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight bg-mono-100 text-mono-500 border border-mono-200/50">
             v2.4
           </span>
         </div>
 
-        {/* Segmented Navigation Pills */}
-        <nav className="flex items-center gap-1 sm:gap-2 p-0.5 bg-mono-100/80 rounded-full border border-mono-200/60 shrink-0 overflow-x-auto max-w-[55vw] sm:max-w-none">
+        {/* Segmented Navigation Pills - Visible on Desktop/Tablet (>= lg), cleanly replaced by Bottom Navigation Bar on Mobile (< lg) */}
+        <nav className="hidden lg:flex items-center gap-1 sm:gap-2 p-0.5 bg-mono-100/80 rounded-full border border-mono-200/60 shrink-0 overflow-x-auto max-w-[55vw] sm:max-w-none">
           <button
             type="button"
             onClick={() => onTabChange('solve-learn')}
@@ -67,7 +79,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, onOpenSe
           </button>
         </nav>
 
-        {/* Right Controls: WCA Pill, Smart Cube Monochrome Indicator, Profile */}
+        {/* Right Controls: WCA Pill, Smart Cube Monochrome Indicator, Settings */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {/* 3x3x3 WCA Standard Pill */}
           <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-mono-100/70 border border-mono-200/60 text-mono-700 text-xs font-mono font-medium">
@@ -79,7 +91,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, onOpenSe
           <button
             type="button"
             onClick={onOpenSettings}
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-mono-200/80 hover:border-mono-300 text-mono-800 text-xs font-medium shadow-sm transition-colors group"
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-mono-200/80 hover:border-mono-300 text-mono-800 text-xs font-medium shadow-sm transition-colors group cursor-pointer"
             title="Smart Cube Bluetooth Telemetry"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 group-hover:scale-125 transition-transform" />
@@ -89,18 +101,20 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, onOpenSe
 
           <div className="hidden sm:block h-4 w-px bg-mono-200 mx-0.5" />
 
+          {/* Settings Gear - Prominently sized for Apple HIG 44px tap target on mobile */}
           <button
             type="button"
             aria-label="Settings"
             onClick={onOpenSettings}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-mono-500 hover:text-mono-900 hover:bg-mono-100 transition-colors"
-            title="Settings &amp; Preferences"
+            className="w-9 h-9 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-mono-600 hover:text-mono-900 hover:bg-mono-100 transition-colors cursor-pointer"
+            title="Cài đặt & Tùy chọn"
           >
             <SlidersHorizontal className="w-4 h-4" />
           </button>
 
+          {/* User Profile on Desktop */}
           <div
-            className="w-7 h-7 rounded-full bg-mono-950 text-white flex items-center justify-center shadow-sm cursor-pointer hover:bg-mono-800 transition-colors"
+            className="hidden sm:flex w-7 h-7 rounded-full bg-mono-950 text-white items-center justify-center shadow-sm cursor-pointer hover:bg-mono-800 transition-colors"
             title="User Profile"
           >
             <User className="w-3.5 h-3.5" />

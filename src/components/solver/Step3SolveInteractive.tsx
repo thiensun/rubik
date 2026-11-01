@@ -252,7 +252,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
             </div>
           </div>
 
-          {/* REAL THREE.JS INTERACTIVE 3D RUBIK VIEWPORT */}
+          {/* REAL THREE.JS INTERACTIVE 3D RUBIK VIEWPORT WITH SWIPE GESTURES */}
           <CubeViewport3D
             currentMove={currentMove.move}
             moveIndex={currentMoveGlobalIdx}
@@ -269,6 +269,9 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
                 setIsPlaying(false);
               }
             }}
+            onSwipeLeft={handleNextMove}
+            onSwipeRight={handlePrevMove}
+            onTap={() => setIsPlaying((prev) => !prev)}
           />
 
           {/* EXECUTION TAPE & PINNED PLAYBACK CONTROLS */}

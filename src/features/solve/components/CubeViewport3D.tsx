@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Lock, Unlock } from 'lucide-react';
 import { ThreeCubeViewer } from '../../../components/solver/ThreeCubeViewer';
 import { CubeNetState } from '../../../utils/cubeState';
@@ -17,6 +17,9 @@ interface CubeViewport3DProps {
   playbackSpeed: '0.5x' | '1.0x' | '2.0x';
   onAnimationComplete: () => void;
   heightClassName?: string;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
+  onTap?: () => void;
 }
 
 export const CubeViewport3D: React.FC<CubeViewport3DProps> = ({
@@ -31,12 +34,57 @@ export const CubeViewport3D: React.FC<CubeViewport3DProps> = ({
   isSolved,
   playbackSpeed,
   onAnimationComplete,
-  heightClassName = 'h-[190px] sm:h-[220px] lg:h-[250px]',
+  heightClassName = 'h-[38vh] sm:h-[40vh] lg:h-[250px]',
+  onSwipeLeft,
+  onSwipeRight,
+  onTap,
 }) => {
   const [isOrbitLocked, setIsOrbitLocked] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchStartTime = useRef<number>(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+      touchStartTime.current = Date.now();
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    const deltaTime = Date.now() - touchStartTime.current;
+
+    // Detect horizontal swipe if deltaX > 40px, more horizontal than vertical, within 500ms
+    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) && deltaTime < 500) {
+      if (deltaX < 0) {
+        // Swipe Left: Next Move
+        onSwipeLeft?.();
+        haptic.tick();
+      } else {
+        // Swipe Right: Previous Move
+        onSwipeRight?.();
+        haptic.tick();
+      }
+    } else if (Math.abs(deltaX) < 12 && Math.abs(deltaY) < 12 && deltaTime < 300) {
+      // Clean quick tap: Toggle Play / Pause
+      onTap?.();
+      haptic.tick();
+    }
+
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
 
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden bg-neutral-900 border border-neutral-800 shadow-inner flex flex-col justify-center items-center">
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className="relative w-full rounded-2xl overflow-hidden bg-neutral-900 border border-neutral-800 shadow-inner flex flex-col justify-center items-center touch-manipulation"
+    >
       {/* Smart Mobile Touch Isolation Toggle */}
       <button
         type="button"

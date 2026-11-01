@@ -83,7 +83,12 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   const [activeFaceIdx, setActiveFaceIdx] = useState<number>(0);
   const [scanMode, setScanMode] = useState<'auto' | 'manual'>('auto');
   const [selectedBrush, setSelectedBrush] = useState<CubeColor>('yellow');
-  const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user');
+  const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>(() => {
+    if (typeof window !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      return 'environment';
+    }
+    return 'user';
+  });
 
   // Available camera hardware devices
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
@@ -480,6 +485,9 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   // Capture Current Face action
   const handleCaptureFace = useCallback(() => {
     sound.playTimerReady();
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(40);
+    }
     setIsShutterFlashing(true);
     setTimeout(() => setIsShutterFlashing(false), 200);
 
@@ -861,7 +869,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
                 videoRef.current.play().catch(() => {});
               }
             }}
-            className="relative w-full aspect-[4/5] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-[#0A0F1D] border border-slate-800 shadow-inner flex flex-col items-center justify-between p-2.5 sm:p-3 select-none group cursor-pointer"
+            className="relative w-full aspect-[4/5] sm:aspect-[4/3] max-h-[48vh] sm:max-h-none rounded-2xl overflow-hidden bg-[#0A0F1D] border border-slate-800 shadow-inner flex flex-col items-center justify-between p-2.5 sm:p-3 select-none group cursor-pointer"
             title="Click viewport to resume video stream"
           >
             {/* 1. Real Webcam Video Stream Element */}

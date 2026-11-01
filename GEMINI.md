@@ -82,7 +82,37 @@ Người dùng cầm khối Rubik nhìn thẳng vào mặt trước và xoay the
 ---
 
 ## 5. Quy Chuẩn Đóng Gói, Test & Triển Khai (CI/CD)
-- **Kiểm thử tự động bắt buộc**: Trước khi commit và push bất kỳ thay đổi nào, bắt buộc phải chạy `npm test` và đảm bảo **399/399 tests PASS** (15/15 test suites).
+- **Kiểm thử tự động bắt buộc**: Trước khi commit và push bất kỳ thay đổi nào, bắt buộc phải chạy `npm test` và đảm bảo **413/413 tests PASS** (16/16 test suites).
 - **Production Build**: Chạy `npm run build` để kiểm tra độ tương thích TypeScript và kích thước gói bundle không vượt ngưỡng warning của Vite.
 - **Git Remote**: Nhánh chính là `main`, remote `origin` trỏ về `https://github.com/thiensun/rubik.git`.
 - **Đồng bộ song song**: Luôn giữ đồng bộ giữa thư mục phát triển chính `D:\Projects\rubik` và worktree `C:\Users\diamo\.gemini\antigravity\worktrees\rubik\audit_and_refactor_code`.
+
+---
+
+## 6. Design System & Vibe Coding Governance
+
+### 6.1. Visual DNA (Zen Stage & Precision HUD)
+- **Page Background**: `#F8F9FA`
+- **Bento Cards**: `#FFFFFF` với `border: 1px solid #EAECEF`, `border-radius: 20px` hoặc `24px`, shadow tinh tế (`shadow-sm` hoặc `shadow-[0_2px_12px_rgba(0,0,0,0.02)]`).
+- **Primary Buttons**: Matte black `#111111` với chữ trắng, hover `#262626` / `#222222`, bo góc `rounded-xl`.
+- **Accent Badges**:
+  - **Amber Glow** (`#D97706` / bg `#FEF3C7` / `#FEF6EE`): Triggers, holding notes, inspection status, pill 2-Look.
+  - **Emerald Green** (`#059669` / bg `#D1FAE5` / `#ECFDF3`): Solved, active, WCA verified, Mastered.
+  - **Slate/Muted**: `#64748B` / bg `#F1F5F9` / `#F8F9FA`.
+- **Typography**:
+  - **UI text**: `Inter`, system sans-serif.
+  - **Scramble, Notation, Algs, Timers, Keycaps**: Bắt buộc dùng `JetBrains Mono` strictly.
+
+### 6.2. Layout & Viewport Invariants (Bất Biến Bắt Buộc - DO NOT BREAK)
+- **Bố cục 2 cột chia đôi (`Step 3` & `Algorithms`)**:
+  - Container lưới cha (`grid grid-cols-1 lg:grid-cols-12`) **BẮT BUỘC PHẢI CÓ** `items-start` để chống kéo dãn chiều dọc vô hạn theo danh sách bên cạnh.
+  - Cột sticky studio (trái/phải) phải bị chặn trần viewport `h-[calc(100vh-2rem)]` (hoặc `max-h-[760px]`) kết hợp `overflow-hidden` / `overflow-y-auto`.
+  - **Thanh điều khiển Playback (`Play [Space]`, `<`, `>`) BẮT BUỘC** luôn nằm ngay sát dưới khung 3D Canvas, không bao giờ được đẩy tụt xuống dưới các khối nội dung dài như formula scrubber hoặc fingertrick HUD.
+- **Mobile Viewport (< 1024px)**:
+  - Thanh dock nổi dưới đáy phải dùng thẻ Bento kính mờ sáng: `bg-white/95 backdrop-blur-md border border-[#EAECEF]` kèm nút matte black `#111111`.
+  - Thêm khoảng đệm đáy `pb-24 lg:pb-8` cho các danh sách cuộn để dock nổi không che mất phần tử cuối cùng.
+  - Trên mobile ở Step 3, cụm 3D viewport và playback controls ghim thành mobile top dock với `sticky top-14 lg:static z-30 bg-white/95 backdrop-blur-md` để thẻ các stage bên dưới không cuộn đè lên nút điều khiển.
+
+### 6.3. Component Size Guardrails (Quy Chuẩn Kích Thước Component)
+- **Ngưỡng giới hạn**: Không component React đơn lẻ nào được vượt quá 350 dòng code (`LOC <= 350`).
+- **Tự động chia tách (Decomposition)**: Nếu một component phát triển vượt quá 400 dòng, bắt buộc tự động phân tách module thành các sub-components theo phạm vi tính năng (feature-scoped components).

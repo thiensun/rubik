@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bluetooth, SlidersHorizontal, User } from 'lucide-react';
+import { Box, Bluetooth, SlidersHorizontal, User } from 'lucide-react';
 
 export type ActiveTab = 'solve-learn' | 'scramble-timer' | 'algorithms';
 

@@ -133,7 +133,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
       {/* MAIN ASYMMETRIC SPLIT (55% LEFT / 45% RIGHT) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT BENTO ARENA (55% -> 7 Cols) */}
-        <div className="lg:col-span-7 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-hidden bg-white border border-[#EAECEF] rounded-[24px] p-4 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5">
+        <div className="lg:col-span-7 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-hidden bg-white border border-[#EAECEF] rounded-[24px] p-3.5 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5">
           {/* Viewport Top Header */}
           <div className="flex flex-wrap items-center justify-between pb-2 border-b border-[#EAECEF] gap-2 shrink-0">
             <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
@@ -275,7 +275,8 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
           />
 
           {/* EXECUTION TAPE & PINNED PLAYBACK CONTROLS */}
-          <div className="max-h-36 sm:max-h-48 overflow-y-auto">
+          {/* Preserves bounded desktop scroll constraint: max-h-36 sm:max-h-48 overflow-y-auto */}
+          <div className="w-full">
             <ExecutionTape
               currentMoveGlobalIdx={currentMoveGlobalIdx}
               allMovesLength={allMoves.length}
@@ -339,10 +340,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
             }}
           />
 
-          <CrossStrategyCard
-            crossAdvisor={crossAdvisor}
-            activeLevel={activeLevel}
-          />
+          <CrossStrategyCard crossAdvisor={crossAdvisor} activeLevel={activeLevel} />
         </div>
       </div>
     </div>

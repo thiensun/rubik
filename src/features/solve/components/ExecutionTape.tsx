@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   RotateCcw,
   SkipBack,
@@ -54,96 +54,117 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
   stageTitle,
   onSelectMove,
 }) => {
+  const activeMoveRef = useRef<HTMLDivElement | null>(null);
+
+  // Smoothly center the active move badge in the single-row horizontal tape scroller
+  useEffect(() => {
+    if (activeMoveRef.current) {
+      activeMoveRef.current.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      });
+    }
+  }, [currentMoveGlobalIdx]);
+
   return (
     <div className="flex flex-col gap-3">
       {/* PINNED PLAYBACK CONTROLS (Right beneath 3D Canvas) */}
       <div className="bg-white rounded-2xl border border-[#EAECEF] p-2.5 sm:p-3 shadow-xs shrink-0 flex flex-col gap-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          {/* Main Playback Buttons */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Row 1 (Primary Action Row - Full Width) */}
+        <div className="grid grid-cols-[auto_1fr_auto] gap-2 items-center w-full">
+          {/* Left: Compact step-back button with rewind */}
+          <div className="flex items-center gap-1">
             <button
               disabled={currentMoveGlobalIdx === 0}
               onClick={onRewind}
-              className="p-1.5 rounded-xl bg-[#F8F9FA] border border-[#EAECEF] hover:bg-neutral-200 text-neutral-700 transition-colors disabled:opacity-30 disabled:hover:bg-[#F8F9FA] cursor-pointer"
+              className="h-11 px-2.5 rounded-xl bg-[#F8F9FA] border border-[#EAECEF] hover:bg-neutral-200 text-neutral-700 transition-colors disabled:opacity-30 disabled:hover:bg-[#F8F9FA] flex items-center justify-center cursor-pointer active:scale-95"
               title="Về Nước Đầu Tiên [Home]"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
-
             <button
               disabled={currentMoveGlobalIdx === 0}
               onClick={onPrevMove}
-              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 text-xs font-semibold transition-all shadow-2xs flex items-center gap-1 disabled:opacity-30 whitespace-nowrap cursor-pointer"
+              className="h-11 px-3 sm:px-3.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 text-xs font-semibold transition-all shadow-2xs flex items-center gap-1 disabled:opacity-30 whitespace-nowrap cursor-pointer active:scale-95"
               title="Lùi 1 Nước [Mũi tên trái]"
             >
               <SkipBack className="w-3.5 h-3.5 shrink-0" />
               <span>Lùi</span>
             </button>
-
-            <button
-              onClick={onTogglePlay}
-              className="px-3 sm:px-4 py-1.5 rounded-xl bg-[#111111] hover:bg-neutral-800 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 whitespace-nowrap cursor-pointer"
-            >
-              {isPlaying ? (
-                <Pause className="w-3.5 h-3.5 fill-current shrink-0" />
-              ) : (
-                <Play className="w-3.5 h-3.5 fill-current shrink-0" />
-              )}
-              <span className="whitespace-nowrap">
-                {isPlaying
-                  ? 'Tạm Dừng'
-                  : currentMoveGlobalIdx >= allMovesLength && allMovesLength > 0
-                  ? 'Phát Lại'
-                  : 'Tự Động'}
-              </span>
-              <span className="hidden sm:inline-block keycap-dark ml-0.5">Space</span>
-            </button>
-
-            <button
-              disabled={currentMoveGlobalIdx >= allMovesLength}
-              onClick={onNextMove}
-              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 text-xs font-semibold transition-all shadow-2xs flex items-center gap-1 disabled:opacity-30 whitespace-nowrap cursor-pointer"
-              title="Tiến 1 Nước [Mũi tên phải]"
-            >
-              <span>{currentMoveGlobalIdx >= allMovesLength ? 'Đã Xong' : 'Tiến'}</span>
-              <SkipForward className="w-3.5 h-3.5 shrink-0" />
-            </button>
           </div>
 
-          {/* Speed Selector & Smart Cube Sync */}
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center bg-[#F3F4F6] p-0.5 rounded-xl border border-[#EAECEF] text-[11px] font-mono">
-              {(['0.5x', '1.0x', '2.0x'] as const).map((spd) => (
-                <button
-                  key={spd}
-                  onClick={() => setPlaybackSpeed(spd)}
-                  className={`px-2 py-0.5 rounded-lg transition-all cursor-pointer ${
-                    playbackSpeed === spd
-                      ? 'bg-white text-neutral-900 font-bold shadow-2xs'
-                      : 'text-neutral-500'
-                  }`}
-                >
-                  {spd}
-                </button>
-              ))}
-            </div>
+          {/* Center: Prominent matte black button */}
+          <button
+            onClick={onTogglePlay}
+            className="w-full h-11 bg-[#111111] hover:bg-neutral-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+          >
+            {isPlaying ? (
+              <Pause className="w-4 h-4 fill-current shrink-0" />
+            ) : (
+              <Play className="w-4 h-4 fill-current shrink-0" />
+            )}
+            <span className="font-bold">
+              {isPlaying
+                ? 'Tạm Dừng'
+                : currentMoveGlobalIdx >= allMovesLength && allMovesLength > 0
+                ? 'Phát Lại'
+                : 'Tự Động'}
+            </span>
+            <span className="hidden sm:inline-block keycap-dark ml-0.5 text-[10px]">Space</span>
+          </button>
 
-            <label className="hidden xl:flex items-center gap-1.5 cursor-pointer select-none text-[11px] text-neutral-500 hover:text-neutral-900">
-              <input
-                type="checkbox"
-                defaultChecked
-                className="rounded border-[#D1D5DB] text-neutral-900 focus:ring-0 cursor-pointer accent-black w-3.5 h-3.5"
-              />
-              <span>
-                Sync <span className="text-emerald-600 font-bold font-mono">(OK)</span>
-              </span>
-            </label>
+          {/* Right: Compact step-forward button */}
+          <button
+            disabled={currentMoveGlobalIdx >= allMovesLength}
+            onClick={onNextMove}
+            className="h-11 px-3 sm:px-4 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 text-xs font-semibold transition-all shadow-2xs flex items-center gap-1 disabled:opacity-30 whitespace-nowrap cursor-pointer active:scale-95"
+            title="Tiến 1 Nước [Mũi tên phải]"
+          >
+            <span>{currentMoveGlobalIdx >= allMovesLength ? 'Xong' : 'Tiến'}</span>
+            <SkipForward className="w-3.5 h-3.5 shrink-0" />
+          </button>
+        </div>
+
+        {/* Row 2 (Secondary Controls Row) */}
+        <div className="flex items-center justify-between w-full pt-1.5 border-t border-[#F2F4F7]">
+          {/* Left: Compact speed pill group */}
+          <div className="flex items-center bg-[#F3F4F6] p-0.5 rounded-xl border border-[#EAECEF] text-[11px] font-mono">
+            {(['0.5x', '1.0x', '2.0x'] as const).map((spd) => (
+              <button
+                key={spd}
+                onClick={() => setPlaybackSpeed(spd)}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer text-xs ${
+                  playbackSpeed === spd
+                    ? 'bg-white text-neutral-900 font-bold shadow-2xs'
+                    : 'text-neutral-500 hover:text-neutral-800'
+                }`}
+              >
+                {spd}
+              </button>
+            ))}
+          </div>
+
+          {/* Right: Move counter badge & Reset icon */}
+          <div className="flex items-center gap-2 font-mono text-[11px]">
+            <span className="px-2.5 py-1 rounded-lg bg-[#F8F9FA] border border-[#EAECEF] font-bold text-neutral-700">
+              {currentMoveGlobalIdx >= allMovesLength && allMovesLength > 0
+                ? 'Hoàn Thành ✓'
+                : `Bước ${Math.min(currentMoveGlobalIdx + 1, allMovesLength || 1)} / ${allMovesLength || 0}`}
+            </span>
+            <button
+              onClick={onRewind}
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+              title="Đặt lại về nước ban đầu"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </div>
 
       {/* SCROLLABLE ALGORITHMIC EXECUTION TAPE */}
-      <div className="bg-[#F8F9FA] rounded-2xl border border-[#EAECEF] p-3 flex-1 min-h-0 flex flex-col justify-between gap-2 overflow-hidden">
+      <div className="bg-[#F8F9FA] rounded-2xl border border-[#EAECEF] p-3 sm:p-3.5 flex-1 min-h-0 flex flex-col justify-between gap-2 overflow-hidden">
         <div className="flex items-center justify-between pb-1 border-b border-[#EAECEF]/60 text-[10.5px] font-mono text-neutral-400 font-semibold uppercase tracking-wider shrink-0">
           <span>ALGORITHMIC EXECUTION TAPE</span>
           <span className="text-neutral-600 font-bold truncate max-w-[55%]">
@@ -151,8 +172,8 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
           </span>
         </div>
 
-        {/* Tape Reel (Scrollable if long) */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-2 pb-1 px-1 max-h-36 sm:max-h-48 overflow-y-auto max-h-[160px]">
+        {/* Tape Reel (Single-row horizontal scroller on mobile with ample height) */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2.5 px-1 w-full">
           {tapeMoves.length === 0 ? (
             <div className="py-2 px-3 text-xs font-mono font-bold text-emerald-800 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center gap-2">
               <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
@@ -171,8 +192,9 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
               return (
                 <div
                   key={m.num}
+                  ref={isCurrentTarget ? activeMoveRef : null}
                   onClick={() => onSelectMove(m.num)}
-                  className={`font-mono px-2.5 py-1.5 rounded-xl flex flex-col items-center justify-center min-w-[48px] cursor-pointer transition-all ${
+                  className={`font-mono shrink-0 min-w-[52px] h-[58px] px-2 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all ${
                     isCurrentTarget
                       ? 'bg-[#111111] text-white shadow-sm scale-105 ring-2 ring-emerald-500'
                       : isAllDone
@@ -186,7 +208,7 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
                 >
                   <span className="font-bold text-base leading-none">{m.move}</span>
                   <span
-                    className={`text-[8.5px] mt-0.5 ${
+                    className={`text-[9px] mt-1 tracking-tight font-mono ${
                       isCurrentTarget
                         ? 'text-emerald-400 font-bold'
                         : isAllDone
@@ -196,7 +218,7 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
                         : 'text-neutral-400'
                     }`}
                   >
-                    {isAllDone ? 'ĐÃ GIẢI ✓' : isCurrentTarget ? 'ACTIVE' : `#${m.num}`}
+                    {isAllDone ? 'ĐÃ GIẢI' : isCurrentTarget ? 'ACTIVE' : `#${m.num}`}
                   </span>
                 </div>
               );

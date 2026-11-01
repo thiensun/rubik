@@ -18,7 +18,7 @@ export const HardwareStatusBar: React.FC<HardwareStatusBarProps> = ({
         </div>
         <div>
           <p className="text-xs font-semibold text-mono-900 leading-tight">GAN 12 UI MagLev</p>
-          <p className="text-[11px] font-mono text-mono-500">100% Battery · 12ms gyro latency</p>
+          <p className="text-[11px] font-mono text-neutral-500">100% Pin · Đã kết nối</p>
         </div>
       </div>
       <div className="flex items-center gap-2">

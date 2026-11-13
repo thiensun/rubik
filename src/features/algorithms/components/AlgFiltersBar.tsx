@@ -11,14 +11,24 @@ import {
   CollGroupNode,
 } from '../../../data/algorithms/zbllHierarchy';
 import { ColorScheme } from '../../../engine/algSimulator';
+import { CubeSize } from '../../../types/cubing';
 import { sound } from '../../../utils/audio';
 import { ZbllBreadcrumbsTree } from './ZbllBreadcrumbsTree';
+import { ScrollablePillBar } from './ScrollablePillBar';
 
 export type LevelTab = 'level-1' | 'level-2' | 'level-3' | 'level-4';
 export type MasteryFilter = 'all' | 'unlearned' | 'learning' | 'mastered';
 export type CfopMode = 'two-look' | 'full-cfop';
 export type CfopCategory = 'ALL' | 'F2L' | 'OLL' | 'PLL';
 export type RouxFilter = 'ALL' | 'Roux LSE' | 'CMLL';
+export type Filter2x2 = 'ALL' | '2x2 LBL' | 'Ortega OLL' | 'Ortega PBL' | 'CLL';
+export type Filter4x4 =
+  | 'ALL'
+  | 'Yau Cross'
+  | 'Last 2 Centers (L2C)'
+  | 'Last 2 Edges (L2E)'
+  | 'OLL Parity'
+  | 'PLL Parity';
 
 interface AlgFiltersBarProps {
   searchQuery: string;
@@ -41,6 +51,11 @@ interface AlgFiltersBarProps {
   onSelectCollGroup: (groupId: string, collAlg: any) => void;
   colorScheme: ColorScheme;
   onBackToTimer: () => void;
+  cubeSize?: CubeSize;
+  filter2x2?: Filter2x2;
+  setFilter2x2?: (filter: Filter2x2) => void;
+  filter4x4?: Filter4x4;
+  setFilter4x4?: (filter: Filter4x4) => void;
 }
 
 export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
@@ -64,7 +79,47 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
   onSelectCollGroup,
   colorScheme,
   onBackToTimer,
+  cubeSize = 3,
+  filter2x2 = 'ALL',
+  setFilter2x2,
+  filter4x4 = 'ALL',
+  setFilter4x4,
 }) => {
+  const categoryTabs: Array<{ id: string; label: string }> =
+    cubeSize === 2
+      ? [
+          { id: 'ALL', label: 'Tất Cả 2×2 (58)' },
+          { id: '2x2 LBL', label: '2×2 LBL (4)' },
+          { id: 'Ortega OLL', label: 'Ortega OLL (7)' },
+          { id: 'Ortega PBL', label: 'Ortega PBL (5)' },
+          { id: 'CLL', label: 'CLL Master (42)' },
+        ]
+      : cubeSize === 4
+      ? [
+          { id: 'ALL', label: 'Tất Cả 4×4 (16)' },
+          { id: 'Yau Cross', label: 'Yau Cross (3)' },
+          { id: 'Last 2 Centers (L2C)', label: 'Last 2 Centers (L2C)' },
+          { id: 'Last 2 Edges (L2E)', label: 'Last 2 Edges (L2E)' },
+          { id: 'OLL Parity', label: 'OLL Parity' },
+          { id: 'PLL Parity', label: 'PLL Parity' },
+        ]
+      : [
+          { id: 'level-1', label: 'Lv.1 Beginner (7)' },
+          { id: 'level-2', label: 'Lv.2 CFOP System (119)' },
+          { id: 'level-3', label: 'Lv.3 Roux (51)' },
+          { id: 'level-4', label: 'Lv.4 ZBLL & COLL Tree' },
+        ];
+
+  const activeCategoryId =
+    cubeSize === 2 ? filter2x2 : cubeSize === 4 ? filter4x4 : activeLevel;
+
+  const handleSelectCategory = (id: string) => {
+    if (cubeSize === 2) setFilter2x2?.(id as Filter2x2);
+    else if (cubeSize === 4) setFilter4x4?.(id as Filter4x4);
+    else setActiveLevel(id as LevelTab);
+    sound.playTick();
+  };
+
   return (
     <section className="bg-white border border-[#EAECEF] rounded-[24px] p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.02)] space-y-4">
       {/* Title & Search / Back Row */}
@@ -78,7 +133,11 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-extrabold text-neutral-900 tracking-tight">
-            Thư Viện Công Thức Speedcubing (Lv.1 &#8594; Lv.4 ZBLL)
+            {cubeSize === 2
+              ? 'Thư Viện Công Thức 2×2×2 (Ortega & 42 CLL)'
+              : cubeSize === 4
+              ? 'Thư Viện Công Thức 4×4×4 (L2C, L2E & OLL/PLL Parity)'
+              : 'Thư Viện Công Thức Speedcubing (Lv.1 \u2192 Lv.4 ZBLL)'}
           </h2>
         </div>
 
@@ -104,62 +163,63 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
         </div>
       </div>
 
-      {/* Row 2: 4-Level Switcher (Horizontal Scrolling Pill Bar) + Mastery Status Filter */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
-        <div className="snap-x flex gap-2 overflow-x-auto no-scrollbar py-2 px-1 bg-[#F8F9FA] rounded-2xl border border-[#EAECEF] max-w-full">
-          {[
-            { id: 'level-1' as const, label: 'Lv.1 Beginner (7)' },
-            { id: 'level-2' as const, label: 'Lv.2 CFOP System (119)' },
-            { id: 'level-3' as const, label: 'Lv.3 Roux (51)' },
-            { id: 'level-4' as const, label: 'Lv.4 ZBLL & COLL Tree' },
-          ].map((lvl) => {
-            const isActive = activeLevel === lvl.id;
+      {/* Row 2: Dedicated Full-Width Category & Status Filter Bars (No Squishing / Wrapping) */}
+      <div className="flex flex-col gap-2.5 w-full">
+        {/* Row 2A: Category Filter Bar */}
+        <ScrollablePillBar activeId={`${cubeSize}-${activeCategoryId}`} className="py-2 px-1.5 gap-2">
+          {categoryTabs.map((tab) => {
+            const isActive = activeCategoryId === tab.id;
             return (
               <button
-                key={lvl.id}
-                onClick={() => {
-                  setActiveLevel(lvl.id);
-                  sound.playTick();
-                }}
-                className={`shrink-0 snap-start min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center ${
+                key={tab.id}
+                type="button"
+                data-active={isActive ? 'true' : 'false'}
+                onClick={() => handleSelectCategory(tab.id)}
+                className={`whitespace-nowrap shrink-0 snap-start min-h-[40px] px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center ${
                   isActive
                     ? 'bg-[#111111] text-white shadow-sm'
                     : 'text-neutral-600 hover:text-neutral-900 hover:bg-white'
                 }`}
               >
-                {lvl.label}
+                {tab.label}
               </button>
             );
           })}
-        </div>
+        </ScrollablePillBar>
 
-        <div className="snap-x flex gap-1.5 overflow-x-auto no-scrollbar py-1.5 px-1 bg-[#F8F9FA] rounded-2xl border border-[#EAECEF] max-w-full">
+        {/* Row 2B: Mastery Status Filter Bar */}
+        <ScrollablePillBar activeId={masteryFilter} className="py-1.5 px-1.5 gap-1.5">
           {[
             { id: 'all' as const, label: `Tất cả (${masteryCounts.total})` },
             { id: 'mastered' as const, label: `Đã thuộc (Mastered ✓ · ${masteryCounts.mastered})` },
-            { id: 'learning' as const, label: `Đang học (Learning ● · ${masteryCounts.learning})` },
+            { id: 'learning' as const, label: `Đang học (Learning · ${masteryCounts.learning})` },
             { id: 'unlearned' as const, label: `Chưa học (${masteryCounts.unlearned})` },
-          ].map((m) => (
-            <button
-              key={m.id}
-              onClick={() => {
-                setMasteryFilter(m.id);
-                sound.playTick();
-              }}
-              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-mono font-bold transition-all cursor-pointer ${
-                masteryFilter === m.id
-                  ? 'bg-white text-neutral-900 shadow-xs border border-[#EAECEF]'
-                  : 'text-neutral-500 hover:text-neutral-900'
-              }`}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
+          ].map((m) => {
+            const isActive = masteryFilter === m.id;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                data-active={isActive ? 'true' : 'false'}
+                onClick={() => {
+                  setMasteryFilter(m.id);
+                  sound.playTick();
+                }}
+                className={`whitespace-nowrap shrink-0 snap-start px-3 py-1.5 rounded-xl text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-white text-neutral-900 shadow-xs border border-[#EAECEF]'
+                    : 'text-neutral-500 hover:text-neutral-900'
+                }`}
+              >
+                {m.label}
+              </button>
+            );
+          })}
+        </ScrollablePillBar>
       </div>
 
       {/* Row 3A: CFOP Sub-Filters */}
-      {activeLevel === 'level-2' && (
+      {cubeSize === 3 && activeLevel === 'level-2' && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-[#F1F3F5]">
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -167,7 +227,7 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
                 setCfopMode('two-look');
                 sound.playTick();
               }}
-              className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 border cursor-pointer ${
+              className={`whitespace-nowrap px-3.5 py-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 border cursor-pointer ${
                 cfopMode === 'two-look'
                   ? 'bg-[#111111] text-white border-[#111111] shadow-sm'
                   : 'bg-[#F8F9FA] text-neutral-700 border-[#EAECEF] hover:bg-neutral-100'
@@ -182,7 +242,7 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
                 setCfopMode('full-cfop');
                 sound.playTick();
               }}
-              className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 border cursor-pointer ${
+              className={`whitespace-nowrap px-3.5 py-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 border cursor-pointer ${
                 cfopMode === 'full-cfop'
                   ? 'bg-[#111111] text-white border-[#111111] shadow-sm'
                   : 'bg-[#F8F9FA] text-neutral-700 border-[#EAECEF] hover:bg-neutral-100'
@@ -207,7 +267,7 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
                     setCfopCategory(cat.id);
                     sound.playTick();
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                  className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                     cfopCategory === cat.id
                       ? 'bg-[#111111] text-white shadow-xs'
                       : 'bg-white text-neutral-600 border border-[#EAECEF] hover:text-neutral-900'
@@ -222,7 +282,7 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
       )}
 
       {/* Row 3B: Roux Sub-Filters */}
-      {activeLevel === 'level-3' && (
+      {cubeSize === 3 && activeLevel === 'level-3' && (
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#F1F3F5]">
           {[
             { id: 'ALL' as const, label: 'Toàn Bộ Roux (51 Cases)' },
@@ -235,7 +295,7 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
                 setRouxFilter(item.id);
                 sound.playTick();
               }}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold border transition-all cursor-pointer ${
+              className={`whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold border transition-all cursor-pointer ${
                 rouxFilter === item.id
                   ? 'bg-[#111111] text-white border-[#111111]'
                   : 'bg-[#F8F9FA] text-neutral-600 border-[#EAECEF] hover:text-neutral-900'
@@ -248,7 +308,7 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
       )}
 
       {/* Row 3C: ZBLL 3-Tier Tree Explorer */}
-      {activeLevel === 'level-4' && (
+      {cubeSize === 3 && activeLevel === 'level-4' && (
         <ZbllBreadcrumbsTree
           selectedZbllRoot={selectedZbllRoot}
           onSelectZbllRoot={onSelectZbllRoot}

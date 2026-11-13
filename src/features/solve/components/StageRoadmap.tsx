@@ -3,6 +3,7 @@ import { Check, Lock, ArrowLeft } from 'lucide-react';
 import { SolutionData, SolutionStage } from '../../../utils/solutionStages';
 import { CustomAlgorithmData } from '../../../components/solver/Step3SolveInteractive';
 import { ColorScheme } from '../../../engine/algSimulator';
+import { CubeSize } from '../../../types/cubing';
 import { sound } from '../../../utils/audio';
 import { ActiveStageCard } from './ActiveStageCard';
 
@@ -24,6 +25,7 @@ interface StageRoadmapProps {
   onSelectStage: (stage: SolutionStage) => void;
   onMarkStageComplete: () => void;
   onJumpToSubStep: (subIdx: number, startMoveNum?: number) => void;
+  cubeSize?: CubeSize;
 }
 
 export const StageRoadmap: React.FC<StageRoadmapProps> = ({
@@ -43,6 +45,7 @@ export const StageRoadmap: React.FC<StageRoadmapProps> = ({
   onSelectStage,
   onMarkStageComplete,
   onJumpToSubStep,
+  cubeSize = 3,
 }) => {
   return (
     <div className="bg-white rounded-[24px] border border-[#EAECEF] p-5 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4">
@@ -61,7 +64,7 @@ export const StageRoadmap: React.FC<StageRoadmapProps> = ({
         </div>
 
         {/* CFOP 2-Look vs Full 1-Look Segmented Toggle */}
-        {activeLevel === 'level-2' && !customAlgorithm && (
+        {cubeSize === 3 && activeLevel === 'level-2' && !customAlgorithm && (
           <div className="grid grid-cols-2 p-1 rounded-xl bg-[#F3F4F6] border border-[#EAECEF] gap-1">
             <button
               type="button"
@@ -129,6 +132,18 @@ export const StageRoadmap: React.FC<StageRoadmapProps> = ({
                   copiedFormula={copiedFormula}
                   onCopyFormula={onCopyFormula}
                   onJumpToSubStep={onJumpToSubStep}
+                  cubeSize={cubeSize}
+                  activeLevel={activeLevel}
+                  onJumpToParity={() => {
+                    const parityStage =
+                      solutionData.stages.find((s) =>
+                        s.titleVi.toLowerCase().includes('parity'),
+                      ) || solutionData.stages[solutionData.stages.length - 1];
+                    if (parityStage) {
+                      onSelectStage(parityStage);
+                      sound.playTick();
+                    }
+                  }}
                 />
               );
             }

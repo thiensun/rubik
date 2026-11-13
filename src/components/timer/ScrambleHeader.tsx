@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { RotateCw, Copy, Check, Timer as TimerIcon, LayoutGrid, X, Plus } from 'lucide-react';
 import { CubeNet2D } from '../scramble/CubeNet2D';
 import { CubeNetState } from '../../utils/cubeState';
+import { CubeSize } from '../../types/cubing';
 
 interface ScrambleHeaderProps {
   scramble: string;
@@ -12,6 +13,7 @@ interface ScrambleHeaderProps {
   isManualInputActive: boolean;
   onToggleManualInput: () => void;
   isTimerRunning: boolean;
+  cubeSize?: CubeSize;
 }
 
 export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
@@ -23,6 +25,7 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
   isManualInputActive,
   onToggleManualInput,
   isTimerRunning,
+  cubeSize = 3,
 }) => {
   const [copied, setCopied] = useState(false);
   const [isNetOpen, setIsNetOpen] = useState(false);
@@ -187,7 +190,7 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <CubeNet2D state={cubeNetState} />
+              <CubeNet2D state={cubeNetState} cubeSize={cubeSize} />
             </div>
           )}
         </div>

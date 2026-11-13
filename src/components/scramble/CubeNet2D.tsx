@@ -1,8 +1,10 @@
 import React from 'react';
 import { CubeNetState, CUBE_HEX_COLORS, CubeColor, FaceKey } from '../../utils/cubeState';
+import { CubeSize } from '../../core/types';
 
 interface CubeNet2DProps {
   state: CubeNetState;
+  cubeSize?: CubeSize;
 }
 
 const SVG_COLOR_MAP: Record<CubeColor, string> = {
@@ -14,31 +16,53 @@ const SVG_COLOR_MAP: Record<CubeColor, string> = {
   red: '#ef4444',
 };
 
-export const CubeNet2D: React.FC<CubeNet2DProps> = ({ state }) => {
-  const renderSvgFace = (faceKey: FaceKey, colors: CubeColor[], translateX: number, translateY: number) => (
-    <g id={`face-${faceKey}`} transform={`translate(${translateX}, ${translateY})`}>
-      {colors.map((color, idx) => {
-        const col = idx % 3;
-        const row = Math.floor(idx / 3);
+export const CubeNet2D: React.FC<CubeNet2DProps> = ({ state, cubeSize }) => {
+  const inferredSize = Math.round(Math.sqrt(state?.U?.length || 9));
+  const n: CubeSize =
+    cubeSize || (inferredSize === 2 || inferredSize === 4 ? (inferredSize as CubeSize) : 3);
+  const step = 30 / n;
+  const cellSize = step - 1;
+
+  const renderSvgFace = (
+    faceKey: FaceKey,
+    colors: CubeColor[],
+    translateX: number,
+    translateY: number,
+  ) => {
+    const srcDim = Math.round(Math.sqrt(colors.length)) || 3;
+    const cells: React.ReactNode[] = [];
+
+    for (let row = 0; row < n; row++) {
+      for (let col = 0; col < n; col++) {
+        const srcRow = srcDim === n ? row : Math.min(srcDim - 1, Math.floor((row * srcDim) / n));
+        const srcCol = srcDim === n ? col : Math.min(srcDim - 1, Math.floor((col * srcDim) / n));
+        const color = colors[srcRow * srcDim + srcCol] || 'white';
         const fill = SVG_COLOR_MAP[color] || CUBE_HEX_COLORS[color];
         const isWhite = color === 'white';
-        const isCenter = idx === 4;
-        return (
+        const isCenter = n === 3 && row === 1 && col === 1;
+
+        cells.push(
           <rect
-            key={idx}
-            x={col * 10}
-            y={row * 10}
-            width="9"
-            height="9"
-            rx="1.5"
+            key={`${row}-${col}`}
+            x={col * step}
+            y={row * step}
+            width={cellSize}
+            height={cellSize}
+            rx={n === 4 ? '1' : '1.5'}
             fill={fill}
             stroke={isWhite ? (isCenter ? '#a1a1aa' : '#d4d4d8') : undefined}
             strokeWidth={isWhite ? (isCenter ? '0.8' : '0.6') : undefined}
-          />
+          />,
         );
-      })}
-    </g>
-  );
+      }
+    }
+
+    return (
+      <g id={`face-${faceKey}`} transform={`translate(${translateX}, ${translateY})`}>
+        {cells}
+      </g>
+    );
+  };
 
   return (
     <div className="flex flex-col items-center">
@@ -56,7 +80,7 @@ export const CubeNet2D: React.FC<CubeNet2DProps> = ({ state }) => {
         {renderSvgFace('D', state.D, 30, 60)}
       </svg>
       <div className="text-center font-mono text-[9px] text-mono-400 mt-1 uppercase tracking-widest">
-        U F R B L D
+        {n}x{n}x{n} · U F R B L D
       </div>
     </div>
   );

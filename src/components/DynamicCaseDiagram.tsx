@@ -6,6 +6,9 @@ import {
   PermutationArrow,
 } from '../engine/algSimulator';
 import { CUBE_HEX_COLORS, CubeColor, FaceKey } from '../utils/cubeState';
+import { CubeSize } from '../core/types';
+import { getPreExecutionParametricState } from '../core/simulator';
+import { DiagramArrow } from '../data/algorithms/beginnerAlgs';
 
 export interface DynamicCaseDiagramProps {
   id: string;
@@ -15,7 +18,8 @@ export interface DynamicCaseDiagramProps {
   subGroup?: string;
   colorScheme?: ColorScheme;
   size?: number;
-  customArrows?: PermutationArrow[];
+  cubeSize?: CubeSize;
+  customArrows?: Array<PermutationArrow | DiagramArrow>;
 }
 
 const COLOR_HEX_MAP: Record<CubeColor, string> = {
@@ -102,6 +106,7 @@ export const DynamicCaseDiagram: React.FC<DynamicCaseDiagramProps> = ({
   subGroup = '',
   colorScheme = DEFAULT_COLOR_SCHEME,
   size = 86,
+  cubeSize,
   customArrows,
 }) => {
   const effectiveAlg = setupAlg || mainAlg;
@@ -110,6 +115,20 @@ export const DynamicCaseDiagram: React.FC<DynamicCaseDiagramProps> = ({
   const idLower = id.toLowerCase();
   const catUpper = category.toUpperCase();
   const subUpper = subGroup.toUpperCase();
+
+  const effectiveCubeSize: CubeSize =
+    cubeSize ??
+    (catUpper.includes('ORTEGA') ||
+    catUpper.includes('CLL') ||
+    catUpper.includes('PBL') ||
+    idLower.startsWith('2x2-')
+      ? 2
+      : catUpper.includes('L2C') ||
+        catUpper.includes('L2E') ||
+        catUpper.includes('PARITY') ||
+        idLower.startsWith('4x4-')
+      ? 4
+      : 3);
 
   // Distinguish LBL Last Layer cases (which belong to Top-Down 2D view) from First/Second Layer Isometric cases
   const isLBLLastLayer =
@@ -120,23 +139,26 @@ export const DynamicCaseDiagram: React.FC<DynamicCaseDiagramProps> = ({
     subUpper.includes('YELLOW CROSS');
 
   const isIsometricView =
-    catUpper.includes('F2L') || (catUpper.includes('LBL') && !isLBLLastLayer);
+    effectiveCubeSize === 3 &&
+    (catUpper.includes('F2L') || (catUpper.includes('LBL') && !isLBLLastLayer));
 
   const isLeftHandCase =
     idLower.includes('left') ||
     (!mainAlg.includes('R') && !mainAlg.includes('r') && mainAlg.includes('L'));
 
   const isOLL =
-    catUpper.includes('OLL') ||
+    (catUpper.includes('OLL') && !catUpper.includes('PARITY')) ||
     catUpper.includes('LSE') ||
     idLower.includes('yellow-cross') ||
     idLower.includes('sune');
 
   const isLseCase = catUpper.includes('LSE');
-  const isCollOrCmll = catUpper.includes('COLL') || catUpper.includes('CMLL');
+  const isCollOrCmll = catUpper.includes('COLL') || catUpper.includes('CMLL') || catUpper.includes('CLL');
 
   const isPermutationView =
     catUpper.includes('PLL') ||
+    catUpper.includes('PBL') ||
+    catUpper.includes('CLL') ||
     catUpper.includes('CMLL') ||
     catUpper.includes('COLL') ||
     catUpper.includes('ZBLL');
@@ -358,8 +380,79 @@ export const DynamicCaseDiagram: React.FC<DynamicCaseDiagramProps> = ({
     return COLOR_HEX_MAP[color];
   };
 
-  const xCoords = [20, 41, 62];
-  const yCoords = [20, 41, 62];
+  const n = effectiveCubeSize;
+  const xCoords = n === 2 ? [21, 51] : n === 4 ? [19.5, 35, 50.5, 66] : [20, 41, 62];
+  const yCoords = xCoords;
+  const cellW = n === 2 ? 28 : n === 4 ? 14.5 : 18;
+
+  const paramState = useMemo(
+    () =>
+      n === 3 ? null : getPreExecutionParametricState(effectiveAlg, n, colorScheme),
+    [n, effectiveAlg, colorScheme],
+  );
+
+  const sideTopStickers: CubeColor[] = paramState
+    ? Array.from({ length: n }, (_, i) => paramState.B[n - 1 - i])
+    : sim.sideStickers.top;
+  const sideBottomStickers: CubeColor[] = paramState
+    ? Array.from({ length: n }, (_, i) => paramState.F[i])
+    : sim.sideStickers.bottom;
+  const sideLeftStickers: CubeColor[] = paramState
+    ? Array.from({ length: n }, (_, i) => paramState.L[i])
+    : sim.sideStickers.left;
+  const sideRightStickers: CubeColor[] = paramState
+    ? Array.from({ length: n }, (_, i) => paramState.R[n - 1 - i])
+    : sim.sideStickers.right;
+
+  const isL2CCase = n === 4 && catUpper.includes('L2C');
+  const isL2EOrOllParity =
+    n === 4 && (catUpper.includes('L2E') || (catUpper.includes('OLL') && catUpper.includes('PARITY')));
+
+  const topCells: {
+    x: number;
+    y: number;
+    r: number;
+    c: number;
+    color: CubeColor;
+    srcIdx: number;
+  }[] = [];
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      const idx = r * n + c;
+      topCells.push({
+        x: xCoords[c],
+        y: yCoords[r],
+        r,
+        c,
+        color: paramState ? paramState.U[idx] : sim.topFaceColors[idx],
+        srcIdx: idx,
+      });
+    }
+  }
+
+  // Normalize arrows: convert grid [row, col] indices (<= 4) to SVG pixel coordinates
+  const resolvedArrows = useMemo(() => {
+    const toPixel = (pt: [number, number]): [number, number] => {
+      if (pt[0] < n && pt[1] < n && pt[0] <= 3 && pt[1] <= 3) {
+        return [xCoords[pt[1]] + cellW / 2, yCoords[pt[0]] + cellW / 2];
+      }
+      return pt;
+    };
+
+    if (n !== 3 && customArrows && customArrows.length > 0) {
+      return customArrows.map((a) => ({
+        from: toPixel(a.from),
+        to: toPixel(a.to),
+        bidirectional: a.bidirectional ?? true,
+        pieceType: ('pieceType' in a ? a.pieceType : 'corner') as 'corner' | 'edge',
+      }));
+    }
+    return arrowsToRender.map((a) => ({
+      ...a,
+      from: toPixel(a.from),
+      to: toPixel(a.to),
+    }));
+  }, [n, customArrows, arrowsToRender, xCoords, yCoords, cellW]);
 
   return (
     <div
@@ -410,61 +503,61 @@ export const DynamicCaseDiagram: React.FC<DynamicCaseDiagramProps> = ({
           </marker>
         </defs>
 
-        {/* 12 Surrounding Top-Layer Side Stickers (B=top, F=bottom, L=left, R=right) */}
-        {sim.sideStickers.top.map((col, i) => (
+        {/* Surrounding Top-Layer Side Stickers (B=top, F=bottom, L=left, R=right) */}
+        {sideTopStickers.map((col, i) => (
           <rect
             key={`top-${i}`}
             x={xCoords[i]}
             y="8"
-            width="18"
+            width={cellW}
             height="6.5"
             rx="1.8"
-            fill={getSideStickerFill(col, i)}
+            fill={getSideStickerFill(col, n === 2 ? (i === 0 ? 0 : 2) : n === 4 ? (i === 0 ? 0 : i === 3 ? 2 : 1) : i)}
             stroke={SUBSTRATE_DARK}
             strokeWidth="0.9"
           />
         ))}
-        {sim.sideStickers.bottom.map((col, i) => (
+        {sideBottomStickers.map((col, i) => (
           <rect
             key={`bot-${i}`}
             x={xCoords[i]}
             y="85.5"
-            width="18"
+            width={cellW}
             height="6.5"
             rx="1.8"
-            fill={getSideStickerFill(col, i)}
+            fill={getSideStickerFill(col, n === 2 ? (i === 0 ? 0 : 2) : n === 4 ? (i === 0 ? 0 : i === 3 ? 2 : 1) : i)}
             stroke={SUBSTRATE_DARK}
             strokeWidth="0.9"
           />
         ))}
-        {sim.sideStickers.left.map((col, i) => (
+        {sideLeftStickers.map((col, i) => (
           <rect
             key={`left-${i}`}
             x="8"
             y={yCoords[i]}
             width="6.5"
-            height="18"
+            height={cellW}
             rx="1.8"
-            fill={getSideStickerFill(col, i)}
+            fill={getSideStickerFill(col, n === 2 ? (i === 0 ? 0 : 2) : n === 4 ? (i === 0 ? 0 : i === 3 ? 2 : 1) : i)}
             stroke={SUBSTRATE_DARK}
             strokeWidth="0.9"
           />
         ))}
-        {sim.sideStickers.right.map((col, i) => (
+        {sideRightStickers.map((col, i) => (
           <rect
             key={`right-${i}`}
             x="85.5"
             y={yCoords[i]}
             width="6.5"
-            height="18"
+            height={cellW}
             rx="1.8"
-            fill={getSideStickerFill(col, i)}
+            fill={getSideStickerFill(col, n === 2 ? (i === 0 ? 0 : 2) : n === 4 ? (i === 0 ? 0 : i === 3 ? 2 : 1) : i)}
             stroke={SUBSTRATE_DARK}
             strokeWidth="0.9"
           />
         ))}
 
-        {/* 3x3 Dark Substrate */}
+        {/* N×N Dark Substrate */}
         <rect
           x="17.5"
           y="17.5"
@@ -476,28 +569,40 @@ export const DynamicCaseDiagram: React.FC<DynamicCaseDiagramProps> = ({
           strokeWidth="1.2"
         />
 
-        {/* 9 Top Face (U) Stickers */}
-        {sim.topFaceColors.map((color, idx) => {
-          const pos = cellPositions[idx];
-          const fill = getTopCellFill(color, idx);
+        {/* N×N Top Face (U) Stickers */}
+        {topCells.map((cell, idx) => {
+          const isCenter4x4 =
+            n === 4 && (cell.r === 1 || cell.r === 2) && (cell.c === 1 || cell.c === 2);
+          const isWingEdge4x4 =
+            n === 4 &&
+            (((cell.r === 0 || cell.r === 3) && (cell.c === 1 || cell.c === 2)) ||
+              ((cell.c === 0 || cell.c === 3) && (cell.r === 1 || cell.r === 2)));
+
+          const isHighlighted4x4 =
+            (isL2CCase && isCenter4x4) || (isL2EOrOllParity && isWingEdge4x4);
+          const isDimmed4x4 =
+            (isL2CCase && !isCenter4x4) || (isL2EOrOllParity && !isWingEdge4x4 && !isCenter4x4);
+
+          const fill = getTopCellFill(cell.color, cell.srcIdx);
           return (
             <rect
               key={`u-cell-${idx}`}
-              x={pos.x}
-              y={pos.y}
-              width="18"
-              height="18"
-              rx="2.5"
+              x={cell.x}
+              y={cell.y}
+              width={cellW}
+              height={cellW}
+              rx={n === 4 ? '1.8' : '2.5'}
               fill={fill}
-              stroke={SUBSTRATE_DARK}
-              strokeWidth="0.9"
+              opacity={isDimmed4x4 ? 0.55 : 1}
+              stroke={isHighlighted4x4 ? '#10B981' : SUBSTRATE_DARK}
+              strokeWidth={isHighlighted4x4 ? '1.5' : '0.9'}
             />
           );
         })}
 
-        {/* Automatic Permutation Vector Arrows for PLL, CMLL, COLL, ZBLL */}
+        {/* Automatic Permutation Vector Arrows for PLL, PBL, CLL, CMLL, COLL, ZBLL */}
         {isPermutationView &&
-          arrowsToRender.map((arr, i) => {
+          resolvedArrows.map((arr, i) => {
             const dx = arr.to[0] - arr.from[0];
             const dy = arr.to[1] - arr.from[1];
             const len = Math.hypot(dx, dy) || 1;

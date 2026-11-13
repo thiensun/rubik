@@ -60,6 +60,7 @@ export default defineConfig({
           if (normalized.includes('node_modules/three')) return 'three';
           if (normalized.includes('node_modules/lucide-react')) return 'lucide';
           if (normalized.includes('node_modules/react') || normalized.includes('node_modules/react-dom')) return 'react-vendor';
+          if (normalized.includes('/src/data/algorithms/')) return 'alg-database';
         }
       }
     }

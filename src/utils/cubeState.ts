@@ -160,6 +160,17 @@ export function applyMove(cube: CubeNetState, move: string): CubeNetState {
     return applyMove(applyMove(applyMove(cube, base), base), base);
   }
 
+  // Normalize 4x4 inner slice moves (2R, 2L, 2U, 2D, 2F, 2B) for 3x3 simulation compatibility
+  if (m.length === 2 && m[0] === '2') {
+    const inner = m[1].toUpperCase();
+    if (inner === 'R') return applyMove(cube, "M'");
+    if (inner === 'L') return applyMove(cube, 'M');
+    if (inner === 'U') return applyMove(cube, "E'");
+    if (inner === 'D') return applyMove(cube, 'E');
+    if (inner === 'F') return applyMove(cube, 'S');
+    if (inner === 'B') return applyMove(cube, "S'");
+  }
+
   // Normalize wide moves with 'w' suffix (e.g. Rw -> r, Lw -> l, Uw -> u, etc.)
   if (m.length === 2 && (m[1] === 'w' || m[1] === 'W')) {
     m = m[0].toLowerCase();
@@ -328,4 +339,73 @@ export function generateWCAScramble(length = 21): string {
   }
 
   return moves.join(' ');
+}
+
+// Official WCA 2x2x2 11-move <U, R, F> Scramble Generator
+const FACES_2X2: FaceKey[] = ['U', 'R', 'F'];
+
+export function generate2x2Scramble(length = 11): string {
+  const moves: string[] = [];
+  let lastFace: FaceKey | null = null;
+
+  for (let i = 0; i < length; i++) {
+    const allowedFaces = FACES_2X2.filter((f) => f !== lastFace);
+    const chosenFace = allowedFaces[Math.floor(Math.random() * allowedFaces.length)];
+    const chosenMod = MODIFIERS[Math.floor(Math.random() * MODIFIERS.length)];
+    moves.push(`${chosenFace}${chosenMod}`);
+    lastFace = chosenFace;
+  }
+
+  return moves.join(' ');
+}
+
+// Official WCA 4x4x4 40-move Scramble Generator with Wide Moves (Rw, Uw, Fw)
+const MOVES_4X4_OUTER: FaceKey[] = ['U', 'D', 'L', 'R', 'F', 'B'];
+const MOVES_4X4_WIDE = ['U', 'D', 'L', 'R', 'F', 'B', 'Rw', 'Uw', 'Fw'] as const;
+const AXES_4X4: Record<string, number> = {
+  U: 0,
+  D: 0,
+  Uw: 0,
+  L: 1,
+  R: 1,
+  Rw: 1,
+  F: 2,
+  B: 2,
+  Fw: 2,
+};
+
+export function generate4x4Scramble(length = 40): string {
+  const moves: string[] = [];
+  let lastBase = '';
+  let secondLastBase = '';
+
+  for (let i = 0; i < length; i++) {
+    // First 20 moves outer-heavy, last 20 moves include wide moves Rw, Uw, Fw
+    const pool = i < 18 ? MOVES_4X4_OUTER : MOVES_4X4_WIDE;
+    const allowed = pool.filter((m) => {
+      if (m === lastBase) return false;
+      if (
+        secondLastBase &&
+        AXES_4X4[m] === AXES_4X4[lastBase] &&
+        AXES_4X4[m] === AXES_4X4[secondLastBase]
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    const chosen = allowed[Math.floor(Math.random() * allowed.length)];
+    const chosenMod = MODIFIERS[Math.floor(Math.random() * MODIFIERS.length)];
+    moves.push(`${chosen}${chosenMod}`);
+    secondLastBase = lastBase;
+    lastBase = chosen;
+  }
+
+  return moves.join(' ');
+}
+
+export function generateScrambleForSize(cubeSize: 2 | 3 | 4 = 3): string {
+  if (cubeSize === 2) return generate2x2Scramble(11);
+  if (cubeSize === 4) return generate4x4Scramble(40);
+  return generateWCAScramble(21);
 }

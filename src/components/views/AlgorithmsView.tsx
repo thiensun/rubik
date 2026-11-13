@@ -7,6 +7,17 @@ import {
   PLL_ALGS,
   ROUX_ALGS,
   ZBLL_HIERARCHY_TREE,
+  CUBE_2X2_ALGS,
+  LBL_2X2_ALGS,
+  ORTEGA_OLL_ALGS,
+  ORTEGA_PBL_ALGS,
+  CLL_2X2_ALGS,
+  CUBE_4X4_ALGS,
+  YAU_CROSS_4X4_ALGS,
+  L2C_4X4_ALGS,
+  L2E_4X4_ALGS,
+  OLL_PARITY_4X4_ALGS,
+  PLL_PARITY_4X4_ALGS,
 } from '../../data/algorithms';
 import {
   ZbllRootSetNode,
@@ -15,6 +26,7 @@ import {
 import { ColorScheme, DEFAULT_COLOR_SCHEME } from '../../engine/algSimulator';
 import { sound } from '../../utils/audio';
 import { CustomAlgorithmData } from '../solver/Step3SolveInteractive';
+import { CubeSize } from '../../types/cubing';
 
 // Modular Feature Components
 import {
@@ -24,6 +36,8 @@ import {
   CfopMode,
   CfopCategory,
   RouxFilter,
+  Filter2x2,
+  Filter4x4,
 } from '../../features/algorithms/components/AlgFiltersBar';
 import {
   AlgCardGrid,
@@ -44,12 +58,14 @@ interface AlgorithmsViewProps {
   onBackToTimer: () => void;
   onLoadInto3D: (algData: CustomAlgorithmData & { prob?: string; holdingNoteVi?: string }) => void;
   colorScheme?: ColorScheme;
+  cubeSize?: CubeSize;
 }
 
 export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
   onBackToTimer,
   onLoadInto3D,
   colorScheme = DEFAULT_COLOR_SCHEME,
+  cubeSize = 3,
 }) => {
   const [activeLevel, setActiveLevel] = useState<LevelTab>('level-2');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -60,6 +76,8 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
   const [cfopMode, setCfopMode] = useState<CfopMode>('two-look');
   const [cfopCategory, setCfopCategory] = useState<CfopCategory>('ALL');
   const [rouxFilter, setRouxFilter] = useState<RouxFilter>('ALL');
+  const [filter2x2, setFilter2x2] = useState<Filter2x2>('ALL');
+  const [filter4x4, setFilter4x4] = useState<Filter4x4>('ALL');
 
   // Level 4 ZBLL State
   const [selectedZbllRoot, setSelectedZbllRoot] = useState<string>('T');
@@ -96,8 +114,23 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
     );
   }, [activeZbllRootNode, selectedCollGroupId]);
 
-  // Base list of algorithms for active level
+  // Base list of algorithms for active level / cube size
   const baseLevelAlgs = useMemo<AlgorithmEntry[]>(() => {
+    if (cubeSize === 2) {
+      if (filter2x2 === '2x2 LBL') return LBL_2X2_ALGS;
+      if (filter2x2 === 'Ortega OLL') return ORTEGA_OLL_ALGS;
+      if (filter2x2 === 'Ortega PBL') return ORTEGA_PBL_ALGS;
+      if (filter2x2 === 'CLL') return CLL_2X2_ALGS;
+      return CUBE_2X2_ALGS;
+    }
+    if (cubeSize === 4) {
+      if (filter4x4 === 'Yau Cross') return YAU_CROSS_4X4_ALGS;
+      if (filter4x4 === 'Last 2 Centers (L2C)') return L2C_4X4_ALGS;
+      if (filter4x4 === 'Last 2 Edges (L2E)') return L2E_4X4_ALGS;
+      if (filter4x4 === 'OLL Parity') return OLL_PARITY_4X4_ALGS;
+      if (filter4x4 === 'PLL Parity') return PLL_PARITY_4X4_ALGS;
+      return CUBE_4X4_ALGS;
+    }
     if (activeLevel === 'level-1') return BEGINNER_ALGS;
     if (activeLevel === 'level-2') {
       const fullCfop = [...F2L_ALGS, ...OLL_ALGS, ...PLL_ALGS];
@@ -113,13 +146,15 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
       return ROUX_ALGS;
     }
     return activeCollGroupNode.zbllCases;
-  }, [activeLevel, cfopMode, cfopCategory, rouxFilter, activeCollGroupNode]);
+  }, [cubeSize, filter2x2, filter4x4, activeLevel, cfopMode, cfopCategory, rouxFilter, activeCollGroupNode]);
 
   // All algorithms flat map for global search / drill
   const allDatabaseAlgs = useMemo<AlgorithmEntry[]>(() => {
+    if (cubeSize === 2) return CUBE_2X2_ALGS;
+    if (cubeSize === 4) return CUBE_4X4_ALGS;
     const zblls = ZBLL_HIERARCHY_TREE.flatMap((r) => r.collGroups.flatMap((g) => g.zbllCases));
     return [...BEGINNER_ALGS, ...F2L_ALGS, ...OLL_ALGS, ...PLL_ALGS, ...ROUX_ALGS, ...zblls];
-  }, []);
+  }, [cubeSize]);
 
   // Filtered algorithms by search query and mastery filter
   const filteredAlgs = useMemo<AlgorithmEntry[]>(() => {
@@ -147,7 +182,17 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
     baseLevelAlgs,
     allDatabaseAlgs,
     masteryMap,
+    cubeSize,
   );
+
+  // Sync trainer algorithm when cubeSize changes
+  useEffect(() => {
+    if (baseLevelAlgs.length > 0) {
+      trainer.setSelectedTrainerAlg(baseLevelAlgs[0]);
+      trainer.setTrainerMoveIdx(0);
+      trainer.setIsTrainerPlaying(false);
+    }
+  }, [cubeSize]);
 
   const handleCycleMastery = (algId: string) => {
     setMasteryMap((prev) => {
@@ -225,6 +270,11 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
         }}
         colorScheme={colorScheme}
         onBackToTimer={onBackToTimer}
+        cubeSize={cubeSize}
+        filter2x2={filter2x2}
+        setFilter2x2={setFilter2x2}
+        filter4x4={filter4x4}
+        setFilter4x4={setFilter4x4}
       />
 
       {/* 2. ASYMMETRIC MAIN WORKSPACE */}
@@ -275,6 +325,7 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
           drillStartRef={trainer.drillStartRef}
           pickNextDrillCase={trainer.pickNextDrillCase}
           optimalPreAufMove={trainer.optimalPreAufMove}
+          cubeSize={cubeSize}
         />
       </div>
     </div>

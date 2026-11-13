@@ -11,13 +11,105 @@ import {
   Palette,
   Camera,
 } from 'lucide-react';
-import { SolverLevelId } from '../../types/cubing';
+import { SolverLevelId, CubeSize } from '../../types/cubing';
 
 interface Step1SelectLevelProps {
   selectedLevel: SolverLevelId;
   onSelectLevel: (levelId: SolverLevelId) => void;
   onProceedToScan: () => void;
+  cubeSize?: CubeSize;
 }
+
+interface CurriculumCardSpec {
+  id: SolverLevelId;
+  levelTag: string;
+  title: string;
+  badgeText: string;
+  badgeClass: string;
+  stagesText: string;
+  algsText: string;
+  movesText: string;
+  pipelineText: string;
+  benchmarkText: string;
+}
+
+const CUBE_2X2_CARDS: CurriculumCardSpec[] = [
+  {
+    id: 'level-1',
+    levelTag: 'LEVEL 01 · BEGINNER',
+    title: 'Beginner LBL (2×2×2)',
+    badgeText: 'Recommended for Newbies',
+    badgeClass: 'bg-[#ECFDF3] border-[#ABEFC6] text-[#067647]',
+    stagesText: '3 Stages (1st Layer → OLL → PLL)',
+    algsText: '2 Core Algs',
+    movesText: '~25 Moves',
+    pipelineText: '1st Layer → OLL → PLL',
+    benchmarkText: '~30s - 1:00',
+  },
+  {
+    id: 'level-2',
+    levelTag: 'LEVEL 02 · ORTEGA METHOD',
+    title: 'Ortega Method (Varasano)',
+    badgeText: 'WCA 2x2 Speed Standard',
+    badgeClass: 'bg-[#FEF6EE] border-[#F9DBAF] text-[#B54708]',
+    stagesText: '3 Stages (Face → OLL → PBL)',
+    algsText: '12 Algs (7 OLL + 5 PBL)',
+    movesText: '~16 Moves',
+    pipelineText: '1st Face → 7 OLL → 5 PBL',
+    benchmarkText: 'Sub-5s',
+  },
+  {
+    id: 'level-3',
+    levelTag: 'LEVEL 03 · CLL MASTER',
+    title: 'CLL Master (1-Look LL)',
+    badgeText: 'Pro / Sub-2.5s Target',
+    badgeClass: 'bg-[#F9F5FF] border-[#E9D7FE] text-[#6941C6]',
+    stagesText: '2 Stages (1st Layer → CLL)',
+    algsText: '42 CLL Algs (7 Sets)',
+    movesText: '~12 Moves',
+    pipelineText: '1st Layer → 42 CLL (Sune, Anti-Sune, Pi, U, L, T, H)',
+    benchmarkText: 'Sub-2.5s Elite',
+  },
+];
+
+const CUBE_4X4_CARDS: CurriculumCardSpec[] = [
+  {
+    id: 'level-1',
+    levelTag: 'LEVEL 01 · REDUCTION',
+    title: 'Beginner Reduction',
+    badgeText: '4x4 Foundation',
+    badgeClass: 'bg-[#ECFDF3] border-[#ABEFC6] text-[#067647]',
+    stagesText: '4 Stages (Centers → Edges → 3x3)',
+    algsText: '2 Parity Algs',
+    movesText: '~115 Moves',
+    pipelineText: '6 Centers → Freeslice Edge Pairing → 3x3 Stage → OLL & PLL Parity',
+    benchmarkText: '~2:00 - 3:30',
+  },
+  {
+    id: 'level-2',
+    levelTag: 'LEVEL 02 · YAU METHOD',
+    title: 'Yau Method',
+    badgeText: 'WCA 4x4 Speed Standard',
+    badgeClass: 'bg-[#FEF6EE] border-[#F9DBAF] text-[#B54708]',
+    stagesText: '5 Stages (2C → 3 Cross → L4C → 3-2-3)',
+    algsText: 'L2C + L2E + 2 Parity',
+    movesText: '~95 Moves',
+    pipelineText: '2 Centers → 3 Cross Dedges → Last 4 Centers → 3-2-3 Edge Pairing → 3x3 + Parity',
+    benchmarkText: 'Sub-45s',
+  },
+  {
+    id: 'level-3',
+    levelTag: 'LEVEL 03 · HOYA & OPA',
+    title: 'Hoya & Advanced Parity Avoidance (OPA)',
+    badgeText: 'Pro / Sub-32s Target',
+    badgeClass: 'bg-[#EFF8FF] border-[#B2DDFF] text-[#175CD3]',
+    stagesText: '4 Stages (4C → Cross → L2C → OPA)',
+    algsText: 'OPA + L2E + Parity',
+    movesText: '~85 Moves',
+    pipelineText: '4 Centers → 4 Cross Dedges → Last 2 Centers → Edge Pairing + Parity Avoidance',
+    benchmarkText: 'Sub-32s Elite',
+  },
+];
 
 const LEVEL_INFO: Record<
   SolverLevelId,
@@ -58,8 +150,10 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
   selectedLevel,
   onSelectLevel,
   onProceedToScan,
+  cubeSize = 3,
 }) => {
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  const customCards = cubeSize === 2 ? CUBE_2X2_CARDS : cubeSize === 4 ? CUBE_4X4_CARDS : null;
 
   // Keyboard shortcuts: Enter (proceed / select), Space (proceed), M (manual input modal)
   useEffect(() => {
@@ -106,10 +200,18 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5 flex-1 min-w-0">
             <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#111111]">
-              Tự Động Giải Tối Ưu (Auto-Solve)
+              {cubeSize === 2
+                ? 'Tự Động Giải Tối Ưu 2×2 (≤ 11 Bước HTM)'
+                : cubeSize === 4
+                ? 'Tự Động Giải 4×4 (Optimal Reduction)'
+                : 'Tự Động Giải Tối Ưu (Auto-Solve)'}
             </h2>
             <p className="text-xs sm:text-sm text-[#667085] leading-relaxed">
-              Tự động tính toán đường giải ngắn nhất theo số bước tối ưu để phục hồi khối Rubik trong thời gian nhanh nhất.
+              {cubeSize === 2
+                ? "Tự động tính toán lời giải ngắn nhất ≤ 11 bước HTM (God's Number 2×2×2) chỉ trong tích tắc."
+                : cubeSize === 4
+                ? 'Tự động ghép 6 tâm, 12 cặp cạnh và giải tầng 3×3 kèm xử lý OLL/PLL Parity chuẩn xác.'
+                : 'Tự động tính toán đường giải ngắn nhất theo số bước tối ưu để phục hồi khối Rubik trong thời gian nhanh nhất.'}
             </p>
           </div>
 
@@ -141,7 +243,88 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
         </h2>
       </div>
 
-      {/* 3. RESPONSIVE CSS GRID: 1 col on mobile, 2 cols on tablet, 4 cols on desktop */}
+      {/* 3. RESPONSIVE CSS GRID: 1 col on mobile, 2 cols on tablet, 3 or 4 cols on desktop */}
+      {customCards ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+          {customCards.map((card) => (
+            <div
+              key={card.id}
+              id={`card-${card.id}`}
+              onClick={() => handleCardClick(card.id)}
+              className={`w-full bg-white rounded-2xl border p-4 sm:p-5 flex flex-col justify-between shadow-sm transition-all cursor-pointer relative ${
+                selectedLevel === card.id
+                  ? 'border-[#111111] border-[2px] shadow-[0_4px_18px_rgba(0,0,0,0.06)]'
+                  : 'border-[#EAECEF] hover:border-[#D0D5DD] hover:shadow-[0_4px_20px_-2px_rgba(16,24,40,0.04)]'
+              }`}
+            >
+              <div className="flex-1 flex flex-col">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-mono text-[11px] font-bold tracking-wider text-[#111111] uppercase">
+                    {card.levelTag}
+                  </span>
+                  <div
+                    className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                      selectedLevel === card.id ? 'bg-[#111111] text-white shadow-2xs' : 'border border-[#D0D5DD]'
+                    }`}
+                  >
+                    {selectedLevel === card.id && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
+                </div>
+
+                <h3 className="text-xl font-bold tracking-tight text-[#111111] mb-1.5">
+                  {card.title}
+                </h3>
+                <span className={`inline-block px-2.5 py-0.5 rounded-full border font-mono text-[11px] font-semibold mb-3 self-start ${card.badgeClass}`}>
+                  {card.badgeText}
+                </span>
+
+                <div className="p-2.5 rounded-xl bg-[#F8F9FA] border border-[#EAECEF] mb-3 font-mono text-[11px] text-[#344054] space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-[#667085]">Stages:</span>
+                    <span className="font-bold">{card.stagesText}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#667085]">Algorithms:</span>
+                    <span className="font-bold">{card.algsText}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#667085]">Avg Moves:</span>
+                    <span className="font-bold">{card.movesText}</span>
+                  </div>
+                </div>
+
+                <div className="text-[12px] text-[#475467] leading-relaxed space-y-1">
+                  <span className="font-mono text-[10px] text-[#98A2B3] uppercase block font-semibold">
+                    Stage Pipeline
+                  </span>
+                  <div className="font-mono text-[11px] bg-[#F8F9FA] p-2 rounded-lg border border-[#EAECEF] text-[#111111]">
+                    {card.pipelineText}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-[#F2F4F7] flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLevelProceed(card.id);
+                  }}
+                  className="w-full h-11 bg-[#111111] hover:bg-neutral-800 text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-2 mt-3 shadow-sm transition-all active:scale-[0.98]"
+                >
+                  <Camera className="w-4 h-4 shrink-0 text-emerald-400" />
+                  <span>Quét 6 Mặt Camera →</span>
+                </button>
+
+                <div className="flex items-center justify-between font-mono text-xs">
+                  <span className="text-[#667085]">Benchmark:</span>
+                  <span className="font-bold text-[#111111]">{card.benchmarkText}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
         {/* LEVEL 01: BEGINNER */}
         <div
@@ -471,6 +654,7 @@ export const Step1SelectLevel: React.FC<Step1SelectLevelProps> = ({
           </div>
         </div>
       </div>
+      )}
 
       {/* Reference tokens preserved for regression & responsive test fixtures:
           sticky bottom-3 sm:bottom-4 z-40

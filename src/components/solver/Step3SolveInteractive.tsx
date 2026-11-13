@@ -3,8 +3,8 @@ import { RotateCcw, Camera, ChevronDown, Sparkles, Check } from 'lucide-react';
 import { CubeNetState } from '../../utils/cubeState';
 import { getCrossAdvisor } from '../../utils/crossAnalysis';
 import { sound } from '../../utils/audio';
-import { SolveRecord } from '../../types/cubing';
-import { DEFAULT_COLOR_SCHEME } from '../../engine/algSimulator';
+import { SolveRecord, CubeSize } from '../../types/cubing';
+import { DEFAULT_COLOR_SCHEME, ColorScheme } from '../../engine/algSimulator';
 
 // Modular Feature Components
 import { CubeViewport3D } from '../../features/solve/components/CubeViewport3D';
@@ -28,7 +28,9 @@ export interface CustomAlgorithmData {
 interface Step3SolveInteractiveProps {
   scannedCubeState?: CubeNetState | null;
   activeLevel?: 'auto-solve' | 'level-1' | 'level-2' | 'level-3' | 'level-4';
+  selectedLevel?: 'auto-solve' | 'level-1' | 'level-2' | 'level-3' | 'level-4';
   onBackToScan: () => void;
+  onSwitchLevel?: () => void;
   onUpdateScannedCube?: (newState: CubeNetState) => void;
   demoScramble?: string | null;
   onSetDemoScramble?: (scramble: string | null) => void;
@@ -36,11 +38,14 @@ interface Step3SolveInteractiveProps {
   onClearCustomAlgorithm?: () => void;
   analyzedSolve?: SolveRecord | null;
   onClearAnalyzedSolve?: () => void;
+  colorScheme?: ColorScheme;
+  cubeSize?: CubeSize;
 }
 
 export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
   scannedCubeState,
-  activeLevel: initialActiveLevel = 'auto-solve',
+  activeLevel: initialActiveLevel,
+  selectedLevel,
   onBackToScan,
   onUpdateScannedCube,
   demoScramble,
@@ -49,8 +54,9 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
   onClearCustomAlgorithm,
   analyzedSolve,
   onClearAnalyzedSolve,
+  cubeSize = 3,
 }) => {
-  const [activeLevel, setActiveLevel] = useState(initialActiveLevel);
+  const [activeLevel, setActiveLevel] = useState(initialActiveLevel || selectedLevel || 'auto-solve');
   const [cameraAngle, setCameraAngle] = useState<'Iso' | 'Bottom' | 'Top' | 'Front'>('Iso');
   const [isAlertDismissed, setIsAlertDismissed] = useState(false);
   const [isResetMenuOpen, setIsResetMenuOpen] = useState(false);
@@ -90,6 +96,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
     cfopLookMode,
     onUpdateScannedCube,
     onSetDemoScramble,
+    cubeSize,
   });
 
   const handleResetToDemo = () => { baseResetToDemo(); setIsResetMenuOpen(false); };
@@ -264,6 +271,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
             activeStageHint={`Bước ${currentStage.stageNumber}: ${currentStage.titleVi}`}
             isSolved={isActuallySolved}
             playbackSpeed={playbackSpeed}
+            cubeSize={cubeSize}
             onAnimationComplete={() => {
               if (currentMoveGlobalIdx >= allMoves.length && allMoves.length > 0) {
                 setIsPlaying(false);
@@ -330,6 +338,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
             onCopyFormula={(f) => copyWithToast(f, setCopiedFormula)}
             onSelectStage={handleSelectStage}
             onMarkStageComplete={handleMarkStageComplete}
+            cubeSize={cubeSize}
             onJumpToSubStep={(subIdx, startMoveNum) => {
               setActiveSubStepIndex(subIdx);
               if (startMoveNum !== undefined) {

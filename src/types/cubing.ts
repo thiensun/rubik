@@ -1,3 +1,4 @@
+export { type CubeSize, type CubeSizeConfig, CUBE_SIZE_CONFIGS } from '../core/types';
 export type PenaltyType = 'none' | '+2' | 'dnf';
 
 export interface SolveRecord {

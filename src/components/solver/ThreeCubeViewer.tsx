@@ -2,9 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { SolutionMove } from '../../utils/solutionStages';
-import { CubeNetState, CubeColor, CUBE_HEX_COLORS } from '../../utils/cubeState';
+import { CubeNetState, CubeColor } from '../../utils/cubeState';
+import { CubeSize } from '../../core/types';
 
 interface ThreeCubeViewerProps {
+  cubeSize?: CubeSize;
   currentMove?: string;
   moveIndex?: number;
   currentMoveIndex?: number;
@@ -22,13 +24,11 @@ interface ThreeCubeViewerProps {
   isOrbitLocked?: boolean;
 }
 
-// Map playback speed to smooth 3D rotation duration
 function getAnimationDuration(speed?: '0.5x' | '1.0x' | '2.0x' | number): number {
-  if (speed === '0.5x' || speed === 0.5) return 380; // learner pace
-  if (speed === '2.0x' || speed === 2.0) return 110; // snappy speedcube pace
-  return 180; // default 1.0x
+  if (speed === '0.5x' || speed === 0.5) return 380;
+  if (speed === '2.0x' || speed === 2.0) return 110;
+  return 180;
 }
-
 
 interface ActiveAnimation {
   pivot: THREE.Group;
@@ -43,10 +43,17 @@ interface ActiveAnimation {
 interface CubeletInitialState {
   mesh: THREE.Mesh;
   initialPos: THREE.Vector3;
+  ix: number;
+  iy: number;
+  iz: number;
 }
 
-// Convert WCA move string to rotation parameters
-function parseMoveToRotation(moveStr: string, isReversed = false): {
+export function parseMoveToRotation(
+  moveStr: string,
+  isReversed = false,
+  cubeSize: CubeSize = 3,
+  spacing = 3.0 / cubeSize,
+): {
   axis: THREE.Vector3;
   angleRad: number;
   filter: (pos: THREE.Vector3) => boolean;
@@ -54,114 +61,162 @@ function parseMoveToRotation(moveStr: string, isReversed = false): {
   const m = moveStr.trim().replace(/[()[\]]/g, '');
   if (!m) return null;
 
-  const isPrime = m.includes("'");
-  const isDouble = m.includes('2');
-
+  const offset = (cubeSize - 1) / 2;
+  let isInnerSlice = false;
   let base = m[0];
-  if (m.length >= 2 && (m[1] === 'w' || m[1] === 'W')) {
+  let modifiers = m.slice(1);
+
+  if (m.startsWith('2') && m.length >= 2 && /[RLUDFBrludfb]/.test(m[1])) {
+    isInnerSlice = true;
+    base = m[1].toUpperCase();
+    modifiers = m.slice(2);
+  } else if (m.length >= 2 && (m[1] === 'w' || m[1] === 'W')) {
     base = m[0].toLowerCase();
+    modifiers = m.slice(2);
   }
+
+  const isPrime = modifiers.includes("'");
+  const isDouble = modifiers.includes('2');
 
   let axis = new THREE.Vector3(1, 0, 0);
   let baseAngle = -Math.PI / 2;
   let filter = (_p: THREE.Vector3) => true;
 
-  switch (base) {
-    case 'R':
-      axis = new THREE.Vector3(1, 0, 0);
-      baseAngle = -Math.PI / 2;
-      filter = (p) => p.x > 0.5;
-      break;
-    case 'L':
-      axis = new THREE.Vector3(1, 0, 0);
-      baseAngle = Math.PI / 2;
-      filter = (p) => p.x < -0.5;
-      break;
-    case 'U':
-      axis = new THREE.Vector3(0, 1, 0);
-      baseAngle = -Math.PI / 2;
-      filter = (p) => p.y > 0.5;
-      break;
-    case 'D':
-      axis = new THREE.Vector3(0, 1, 0);
-      baseAngle = Math.PI / 2;
-      filter = (p) => p.y < -0.5;
-      break;
-    case 'F':
-      axis = new THREE.Vector3(0, 0, 1);
-      baseAngle = -Math.PI / 2;
-      filter = (p) => p.z > 0.5;
-      break;
-    case 'B':
-      axis = new THREE.Vector3(0, 0, 1);
-      baseAngle = Math.PI / 2;
-      filter = (p) => p.z < -0.5;
-      break;
-    // Slices
-    case 'M':
-      axis = new THREE.Vector3(1, 0, 0);
-      baseAngle = Math.PI / 2;
-      filter = (p) => p.x > -0.5 && p.x < 0.5;
-      break;
-    case 'E':
-      axis = new THREE.Vector3(0, 1, 0);
-      baseAngle = Math.PI / 2;
-      filter = (p) => p.y > -0.5 && p.y < 0.5;
-      break;
-    case 'S':
-      axis = new THREE.Vector3(0, 0, 1);
-      baseAngle = -Math.PI / 2;
-      filter = (p) => p.z > -0.5 && p.z < 0.5;
-      break;
-    // Wide moves
-    case 'r':
-      axis = new THREE.Vector3(1, 0, 0);
-      baseAngle = -Math.PI / 2;
-      filter = (p) => p.x > -0.5;
-      break;
-    case 'l':
-      axis = new THREE.Vector3(1, 0, 0);
-      baseAngle = Math.PI / 2;
-      filter = (p) => p.x < 0.5;
-      break;
-    case 'u':
-      axis = new THREE.Vector3(0, 1, 0);
-      baseAngle = -Math.PI / 2;
-      filter = (p) => p.y > -0.5;
-      break;
-    case 'd':
-      axis = new THREE.Vector3(0, 1, 0);
-      baseAngle = Math.PI / 2;
-      filter = (p) => p.y < 0.5;
-      break;
-    case 'f':
-      axis = new THREE.Vector3(0, 0, 1);
-      baseAngle = -Math.PI / 2;
-      filter = (p) => p.z > -0.5;
-      break;
-    case 'b':
-      axis = new THREE.Vector3(0, 0, 1);
-      baseAngle = Math.PI / 2;
-      filter = (p) => p.z < 0.5;
-      break;
-    // Cube Rotations
-    case 'x':
-      axis = new THREE.Vector3(1, 0, 0);
-      baseAngle = -Math.PI / 2;
-      filter = () => true;
-      break;
-    case 'y':
-      axis = new THREE.Vector3(0, 1, 0);
-      baseAngle = -Math.PI / 2;
-      filter = () => true;
-      break;
-    case 'z':
-      axis = new THREE.Vector3(0, 0, 1);
-      baseAngle = -Math.PI / 2;
-      filter = () => true;
-      break;
-    default:
-      return null;
+  if (isInnerSlice) {
+    // 4x4x4 inner slice moves: 2R, 2L, 2U, 2D, 2F, 2B
+    const innerLayerCoord = Math.max(0.5, offset - 1);
+    switch (base) {
+      case 'R':
+        axis = new THREE.Vector3(1, 0, 0);
+        baseAngle = -Math.PI / 2;
+        filter = (p) => Math.abs(p.x / spacing - innerLayerCoord) < 0.4;
+        break;
+      case 'L':
+        axis = new THREE.Vector3(1, 0, 0);
+        baseAngle = Math.PI / 2;
+        filter = (p) => Math.abs(p.x / spacing + innerLayerCoord) < 0.4;
+        break;
+      case 'U':
+        axis = new THREE.Vector3(0, 1, 0);
+        baseAngle = -Math.PI / 2;
+        filter = (p) => Math.abs(p.y / spacing - innerLayerCoord) < 0.4;
+        break;
+      case 'D':
+        axis = new THREE.Vector3(0, 1, 0);
+        baseAngle = Math.PI / 2;
+        filter = (p) => Math.abs(p.y / spacing + innerLayerCoord) < 0.4;
+        break;
+      case 'F':
+        axis = new THREE.Vector3(0, 0, 1);
+        baseAngle = -Math.PI / 2;
+        filter = (p) => Math.abs(p.z / spacing - innerLayerCoord) < 0.4;
+        break;
+      case 'B':
+        axis = new THREE.Vector3(0, 0, 1);
+        baseAngle = Math.PI / 2;
+        filter = (p) => Math.abs(p.z / spacing + innerLayerCoord) < 0.4;
+        break;
+      default:
+        return null;
+    }
+  } else {
+    switch (base) {
+      case 'R':
+        axis = new THREE.Vector3(1, 0, 0);
+        baseAngle = -Math.PI / 2;
+        filter = (p) => p.x / spacing > offset - 0.5;
+        break;
+      case 'L':
+        axis = new THREE.Vector3(1, 0, 0);
+        baseAngle = Math.PI / 2;
+        filter = (p) => p.x / spacing < -offset + 0.5;
+        break;
+      case 'U':
+        axis = new THREE.Vector3(0, 1, 0);
+        baseAngle = -Math.PI / 2;
+        filter = (p) => p.y / spacing > offset - 0.5;
+        break;
+      case 'D':
+        axis = new THREE.Vector3(0, 1, 0);
+        baseAngle = Math.PI / 2;
+        filter = (p) => p.y / spacing < -offset + 0.5;
+        break;
+      case 'F':
+        axis = new THREE.Vector3(0, 0, 1);
+        baseAngle = -Math.PI / 2;
+        filter = (p) => p.z / spacing > offset - 0.5;
+        break;
+      case 'B':
+        axis = new THREE.Vector3(0, 0, 1);
+        baseAngle = Math.PI / 2;
+        filter = (p) => p.z / spacing < -offset + 0.5;
+        break;
+      // Slices
+      case 'M':
+        axis = new THREE.Vector3(1, 0, 0);
+        baseAngle = Math.PI / 2;
+        filter = (p) => Math.abs(p.x / spacing) < offset - 0.4;
+        break;
+      case 'E':
+        axis = new THREE.Vector3(0, 1, 0);
+        baseAngle = Math.PI / 2;
+        filter = (p) => Math.abs(p.y / spacing) < offset - 0.4;
+        break;
+      case 'S':
+        axis = new THREE.Vector3(0, 0, 1);
+        baseAngle = -Math.PI / 2;
+        filter = (p) => Math.abs(p.z / spacing) < offset - 0.4;
+        break;
+      // Wide moves (2 outer layers)
+      case 'r':
+        axis = new THREE.Vector3(1, 0, 0);
+        baseAngle = -Math.PI / 2;
+        filter = (p) => p.x / spacing > offset - 1.5;
+        break;
+      case 'l':
+        axis = new THREE.Vector3(1, 0, 0);
+        baseAngle = Math.PI / 2;
+        filter = (p) => p.x / spacing < -offset + 1.5;
+        break;
+      case 'u':
+        axis = new THREE.Vector3(0, 1, 0);
+        baseAngle = -Math.PI / 2;
+        filter = (p) => p.y / spacing > offset - 1.5;
+        break;
+      case 'd':
+        axis = new THREE.Vector3(0, 1, 0);
+        baseAngle = Math.PI / 2;
+        filter = (p) => p.y / spacing < -offset + 1.5;
+        break;
+      case 'f':
+        axis = new THREE.Vector3(0, 0, 1);
+        baseAngle = -Math.PI / 2;
+        filter = (p) => p.z / spacing > offset - 1.5;
+        break;
+      case 'b':
+        axis = new THREE.Vector3(0, 0, 1);
+        baseAngle = Math.PI / 2;
+        filter = (p) => p.z / spacing < -offset + 1.5;
+        break;
+      // Cube Rotations
+      case 'x':
+        axis = new THREE.Vector3(1, 0, 0);
+        baseAngle = -Math.PI / 2;
+        filter = () => true;
+        break;
+      case 'y':
+        axis = new THREE.Vector3(0, 1, 0);
+        baseAngle = -Math.PI / 2;
+        filter = () => true;
+        break;
+      case 'z':
+        axis = new THREE.Vector3(0, 0, 1);
+        baseAngle = -Math.PI / 2;
+        filter = () => true;
+        break;
+      default:
+        return null;
+    }
   }
 
   let angle = baseAngle;
@@ -174,59 +229,79 @@ function parseMoveToRotation(moveStr: string, isReversed = false): {
 
 function getCubeletFaceColor(
   face: 'R' | 'L' | 'U' | 'D' | 'F' | 'B',
-  x: number,
-  y: number,
-  z: number,
-  initialCubeState?: CubeNetState | null
+  ix: number,
+  iy: number,
+  iz: number,
+  cubeSize: CubeSize,
+  initialCubeState?: CubeNetState | null,
 ): number {
   const fallbackColors = {
-    R: 0xb71234, // Red
-    L: 0xff5800, // Orange
-    U: 0xffd000, // Yellow (Top - Last Layer)
-    D: 0xffffff, // White (Down - Cross)
-    F: 0x009b48, // Green
-    B: 0x0046ad, // Blue
+    R: 0xb71234,
+    L: 0xff5800,
+    U: 0xffd000,
+    D: 0xffffff,
+    F: 0x009b48,
+    B: 0x0046ad,
   };
 
   if (!initialCubeState) {
     return fallbackColors[face];
   }
 
+  const faceArr = initialCubeState[face] as unknown as CubeColor[];
+  if (!faceArr || !faceArr.length) return fallbackColors[face];
+
+  const netDim = Math.round(Math.sqrt(faceArr.length)) || 3;
+  const mapIdx = (coord: number) =>
+    netDim === cubeSize ? coord : Math.min(netDim - 1, Math.floor((coord * netDim) / cubeSize));
+
+  const mx = mapIdx(ix);
+  const my = mapIdx(iy);
+  const mz = mapIdx(iz);
+  const last = netDim - 1;
+
   let colorName: CubeColor = 'white';
   switch (face) {
     case 'U':
-      colorName = initialCubeState.U[(z + 1) * 3 + (x + 1)] || 'yellow';
+      colorName = faceArr[mz * netDim + mx] || 'yellow';
       break;
     case 'D':
-      colorName = initialCubeState.D[(1 - z) * 3 + (x + 1)] || 'white';
+      colorName = faceArr[(last - mz) * netDim + mx] || 'white';
       break;
     case 'F':
-      colorName = initialCubeState.F[(1 - y) * 3 + (x + 1)] || 'green';
+      colorName = faceArr[(last - my) * netDim + mx] || 'green';
       break;
     case 'B':
-      colorName = initialCubeState.B[(1 - y) * 3 + (1 - x)] || 'blue';
+      colorName = faceArr[(last - my) * netDim + (last - mx)] || 'blue';
       break;
     case 'L':
-      colorName = initialCubeState.L[(1 - y) * 3 + (z + 1)] || 'orange';
+      colorName = faceArr[(last - my) * netDim + mz] || 'orange';
       break;
     case 'R':
-      colorName = initialCubeState.R[(1 - y) * 3 + (1 - z)] || 'red';
+      colorName = faceArr[(last - my) * netDim + (last - mz)] || 'red';
       break;
   }
 
-
   switch (colorName) {
-    case 'white': return 0xffffff;
-    case 'yellow': return 0xffd000;
-    case 'green': return 0x009b48;
-    case 'blue': return 0x0046ad;
-    case 'red': return 0xb71234;
-    case 'orange': return 0xff5800;
-    default: return fallbackColors[face];
+    case 'white':
+      return 0xffffff;
+    case 'yellow':
+      return 0xffd000;
+    case 'green':
+      return 0x009b48;
+    case 'blue':
+      return 0x0046ad;
+    case 'red':
+      return 0xb71234;
+    case 'orange':
+      return 0xff5800;
+    default:
+      return fallbackColors[face];
   }
 }
 
 export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
+  cubeSize = 3,
   currentMove = 'R',
   moveIndex = 0,
   currentMoveIndex,
@@ -255,13 +330,17 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
   const shadowMeshRef = useRef<THREE.Mesh | null>(null);
   const onAnimationCompleteRef = useRef(onAnimationComplete);
 
+  const offset = (cubeSize - 1) / 2;
+  const cubieScale = 2.7 / cubeSize;
+  const spacing = 3.0 / cubeSize;
+
+  const snapCoord = (val: number) => (Math.round(val / spacing + offset) - offset) * spacing;
+
   useEffect(() => {
     onAnimationCompleteRef.current = onAnimationComplete;
   }, [onAnimationComplete]);
 
-
-
-  // 1. Initialize Scene & 3D Rubik's Cube
+  // 1. Initialize Scene & Parametric N×N×N 3D Rubik's Cube
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
@@ -269,15 +348,12 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     const width = container.clientWidth || 400;
     const height = container.clientHeight || 340;
 
-    // Scene
     const scene = new THREE.Scene();
 
-    // Perspective Camera
     const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
     camera.position.set(5.2, 4.2, 6.2);
     cameraRef.current = camera;
 
-    // WebGL Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -286,16 +362,15 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     rendererRef.current = renderer;
     container.appendChild(renderer.domElement);
 
-    // Orbit Controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.enablePan = false;
     controls.minDistance = 4.5;
     controls.maxDistance = 12;
+    controls.enabled = !isOrbitLocked;
     controlsRef.current = controls;
 
-    // Studio Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
     scene.add(ambientLight);
 
@@ -303,7 +378,7 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     dirLight1.position.set(10, 15, 12);
     scene.add(dirLight1);
 
-    const dirLight2 = new THREE.DirectionalLight(0x38bdf8, 0.6); // Cyan rim light
+    const dirLight2 = new THREE.DirectionalLight(0x38bdf8, 0.6);
     dirLight2.position.set(-10, -8, -10);
     scene.add(dirLight2);
 
@@ -311,67 +386,94 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     dirLight3.position.set(0, -10, 10);
     scene.add(dirLight3);
 
-    // Cube Group
     const cubeGroup = new THREE.Group();
     scene.add(cubeGroup);
     cubeGroupRef.current = cubeGroup;
 
-    const cubeSize = 0.94;
-    const spacing = 1.0;
-    const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-
+    const geometry = new THREE.BoxGeometry(cubieScale, cubieScale, cubieScale);
     const cubelets: CubeletInitialState[] = [];
 
-    for (let x = -1; x <= 1; x++) {
-      for (let y = -1; y <= 1; y++) {
-        for (let z = -1; z <= 1; z++) {
+    for (let ix = 0; ix < cubeSize; ix++) {
+      for (let iy = 0; iy < cubeSize; iy++) {
+        for (let iz = 0; iz < cubeSize; iz++) {
+          // Only generate surface cubies
+          const isSurface =
+            ix === 0 ||
+            ix === cubeSize - 1 ||
+            iy === 0 ||
+            iy === cubeSize - 1 ||
+            iz === 0 ||
+            iz === cubeSize - 1;
+          if (!isSurface) continue;
+
+          const gx = ix - offset;
+          const gy = iy - offset;
+          const gz = iz - offset;
+
           const materials = [
             new THREE.MeshStandardMaterial({
-              color: x === 1 ? getCubeletFaceColor('R', x, y, z, initialCubeState) : 0x111317,
+              color:
+                ix === cubeSize - 1
+                  ? getCubeletFaceColor('R', ix, iy, iz, cubeSize, initialCubeState)
+                  : 0x111317,
               roughness: 0.25,
               metalness: 0.05,
             }),
             new THREE.MeshStandardMaterial({
-              color: x === -1 ? getCubeletFaceColor('L', x, y, z, initialCubeState) : 0x111317,
+              color:
+                ix === 0
+                  ? getCubeletFaceColor('L', ix, iy, iz, cubeSize, initialCubeState)
+                  : 0x111317,
               roughness: 0.25,
               metalness: 0.05,
             }),
             new THREE.MeshStandardMaterial({
-              color: y === 1 ? getCubeletFaceColor('U', x, y, z, initialCubeState) : 0x111317,
+              color:
+                iy === cubeSize - 1
+                  ? getCubeletFaceColor('U', ix, iy, iz, cubeSize, initialCubeState)
+                  : 0x111317,
               roughness: 0.25,
               metalness: 0.05,
             }),
             new THREE.MeshStandardMaterial({
-              color: y === -1 ? getCubeletFaceColor('D', x, y, z, initialCubeState) : 0x111317,
+              color:
+                iy === 0
+                  ? getCubeletFaceColor('D', ix, iy, iz, cubeSize, initialCubeState)
+                  : 0x111317,
               roughness: 0.25,
               metalness: 0.05,
             }),
             new THREE.MeshStandardMaterial({
-              color: z === 1 ? getCubeletFaceColor('F', x, y, z, initialCubeState) : 0x111317,
+              color:
+                iz === cubeSize - 1
+                  ? getCubeletFaceColor('F', ix, iy, iz, cubeSize, initialCubeState)
+                  : 0x111317,
               roughness: 0.25,
               metalness: 0.05,
             }),
             new THREE.MeshStandardMaterial({
-              color: z === -1 ? getCubeletFaceColor('B', x, y, z, initialCubeState) : 0x111317,
+              color:
+                iz === 0
+                  ? getCubeletFaceColor('B', ix, iy, iz, cubeSize, initialCubeState)
+                  : 0x111317,
               roughness: 0.25,
               metalness: 0.05,
             }),
           ];
 
           const mesh = new THREE.Mesh(geometry, materials);
-          const initialPos = new THREE.Vector3(x * spacing, y * spacing, z * spacing);
+          const initialPos = new THREE.Vector3(gx * spacing, gy * spacing, gz * spacing);
           mesh.position.copy(initialPos);
           mesh.castShadow = true;
           mesh.receiveShadow = true;
           cubeGroup.add(mesh);
 
-          cubelets.push({ mesh, initialPos });
+          cubelets.push({ mesh, initialPos, ix, iy, iz });
         }
       }
     }
     cubeletsRef.current = cubelets;
 
-    // Soft Radial Ground Shadow Plane
     const shadowGeo = new THREE.PlaneGeometry(5.2, 5.2);
     const canvasShadow = document.createElement('canvas');
     canvasShadow.width = 128;
@@ -397,17 +499,17 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     scene.add(shadowMesh);
     shadowMeshRef.current = shadowMesh;
 
-    // Animation Render Loop
+    // Replay current step if initialized mid-sequence
+    snapCubeToStep(effectiveMoveIndex);
+
     let animId: number;
     const animate = (time: number) => {
       animId = requestAnimationFrame(animate);
 
-      // Handle ongoing slice rotation animation
       const activeAnim = activeAnimationRef.current;
       if (activeAnim) {
         const elapsed = time - activeAnim.startTime;
         const progress = Math.min(1, elapsed / activeAnim.duration);
-        // Cubic ease-out
         const ease = 1 - Math.pow(1 - progress, 3);
 
         activeAnim.pivot.setRotationFromAxisAngle(activeAnim.axis, activeAnim.targetAngle * ease);
@@ -425,7 +527,6 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     };
     animId = requestAnimationFrame(animate);
 
-    // Responsive Resize Observer
     const resizeObserver = new ResizeObserver(() => {
       if (!container) return;
       const w = container.clientWidth;
@@ -463,9 +564,8 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
       }
       rendererRef.current = null;
     };
-  }, []);
+  }, [cubeSize]);
 
-  // Update OrbitControls lock status & touch-action
   useEffect(() => {
     if (controlsRef.current) {
       controlsRef.current.enabled = !isOrbitLocked;
@@ -475,28 +575,24 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     }
   }, [isOrbitLocked]);
 
-  // Helper: Immediately complete active animation and snap cubelets to exact integer coordinates
   const finishAnimation = (anim: ActiveAnimation) => {
     const cubeGroup = cubeGroupRef.current;
     if (!cubeGroup) return;
 
     anim.pivot.setRotationFromAxisAngle(anim.axis, anim.targetAngle);
 
-    // Reattach each mesh to main group and round positions to avoid floating point drift
     anim.meshes.forEach((mesh) => {
       cubeGroup.attach(mesh);
-      mesh.position.x = Math.round(mesh.position.x);
-      mesh.position.y = Math.round(mesh.position.y);
-      mesh.position.z = Math.round(mesh.position.z);
+      mesh.position.x = snapCoord(mesh.position.x);
+      mesh.position.y = snapCoord(mesh.position.y);
+      mesh.position.z = snapCoord(mesh.position.z);
       mesh.quaternion.normalize();
     });
 
     cubeGroup.remove(anim.pivot);
   };
 
-  // Helper: Instantaneous mathematical reset & replay to target move index (0 drift)
   const snapCubeToStep = (targetIdx: number) => {
-    // If an animation is active, finish it immediately
     if (activeAnimationRef.current) {
       finishAnimation(activeAnimationRef.current);
       activeAnimationRef.current = null;
@@ -506,17 +602,15 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     const cubelets = cubeletsRef.current;
     if (!cubeGroup || !cubelets.length) return;
 
-    // Reset all 26 cubelets to initial positions and identity quaternions
     cubelets.forEach(({ mesh, initialPos }) => {
       mesh.position.copy(initialPos);
       mesh.quaternion.identity();
     });
 
-    // Replay moves 0 .. targetIdx - 1 instantaneously
     for (let i = 0; i < targetIdx; i++) {
       const moveObj = allMoves[i];
       if (!moveObj) continue;
-      const parsed = parseMoveToRotation(moveObj.move, false);
+      const parsed = parseMoveToRotation(moveObj.move, false, cubeSize, spacing);
       if (!parsed) continue;
 
       const q = new THREE.Quaternion().setFromAxisAngle(parsed.axis, parsed.angleRad);
@@ -524,9 +618,9 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
       cubelets.forEach(({ mesh }) => {
         if (parsed.filter(mesh.position)) {
           mesh.position.applyQuaternion(q);
-          mesh.position.x = Math.round(mesh.position.x);
-          mesh.position.y = Math.round(mesh.position.y);
-          mesh.position.z = Math.round(mesh.position.z);
+          mesh.position.x = snapCoord(mesh.position.x);
+          mesh.position.y = snapCoord(mesh.position.y);
+          mesh.position.z = snapCoord(mesh.position.z);
           mesh.quaternion.premultiply(q);
           mesh.quaternion.normalize();
         }
@@ -537,32 +631,32 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     onAnimationCompleteRef.current?.();
   };
 
-  // Update cubelet sticker colors if initialCubeState changes dynamically
   useEffect(() => {
     if (!cubeletsRef.current.length) return;
-    cubeletsRef.current.forEach(({ mesh, initialPos }) => {
-      const x = Math.round(initialPos.x);
-      const y = Math.round(initialPos.y);
-      const z = Math.round(initialPos.z);
+    cubeletsRef.current.forEach(({ mesh, ix, iy, iz }) => {
       const mats = mesh.material as THREE.MeshStandardMaterial[];
       if (Array.isArray(mats)) {
-        if (x === 1) mats[0].color.setHex(getCubeletFaceColor('R', x, y, z, initialCubeState));
-        if (x === -1) mats[1].color.setHex(getCubeletFaceColor('L', x, y, z, initialCubeState));
-        if (y === 1) mats[2].color.setHex(getCubeletFaceColor('U', x, y, z, initialCubeState));
-        if (y === -1) mats[3].color.setHex(getCubeletFaceColor('D', x, y, z, initialCubeState));
-        if (z === 1) mats[4].color.setHex(getCubeletFaceColor('F', x, y, z, initialCubeState));
-        if (z === -1) mats[5].color.setHex(getCubeletFaceColor('B', x, y, z, initialCubeState));
+        if (ix === cubeSize - 1)
+          mats[0].color.setHex(getCubeletFaceColor('R', ix, iy, iz, cubeSize, initialCubeState));
+        if (ix === 0)
+          mats[1].color.setHex(getCubeletFaceColor('L', ix, iy, iz, cubeSize, initialCubeState));
+        if (iy === cubeSize - 1)
+          mats[2].color.setHex(getCubeletFaceColor('U', ix, iy, iz, cubeSize, initialCubeState));
+        if (iy === 0)
+          mats[3].color.setHex(getCubeletFaceColor('D', ix, iy, iz, cubeSize, initialCubeState));
+        if (iz === cubeSize - 1)
+          mats[4].color.setHex(getCubeletFaceColor('F', ix, iy, iz, cubeSize, initialCubeState));
+        if (iz === 0)
+          mats[5].color.setHex(getCubeletFaceColor('B', ix, iy, iz, cubeSize, initialCubeState));
       }
     });
     snapCubeToStep(effectiveMoveIndex);
-  }, [initialCubeState]);
+  }, [initialCubeState, cubeSize]);
 
-  // 2. Handle Move Index Changes (Smooth animation on single step, instant snap on jump/reset)
   useEffect(() => {
     const prevIdx = lastExecutedIndexRef.current;
     if (effectiveMoveIndex === prevIdx) return;
 
-    // Finish any currently running animation immediately before handling next step
     if (activeAnimationRef.current) {
       finishAnimation(activeAnimationRef.current);
       activeAnimationRef.current = null;
@@ -573,35 +667,11 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     const cubelets = cubeletsRef.current;
     const duration = getAnimationDuration(playbackSpeed);
 
-    // Case A: Normal single forward step (+1) -> Animate move at prevIdx
     if (diff === 1 && cubeGroup && cubelets.length) {
       const moveToExecute = allMoves[prevIdx];
-      const parsed = moveToExecute ? parseMoveToRotation(moveToExecute.move, false) : null;
-
-      if (parsed) {
-        const activeMeshes = cubelets.map((c) => c.mesh).filter((m) => parsed.filter(m.position));
-        const pivot = new THREE.Group();
-        cubeGroup.add(pivot);
-        activeMeshes.forEach((mesh) => pivot.attach(mesh));
-
-        lastExecutedIndexRef.current = effectiveMoveIndex;
-        activeAnimationRef.current = {
-          pivot,
-          meshes: activeMeshes,
-          axis: parsed.axis,
-          targetAngle: parsed.angleRad,
-          startTime: performance.now(),
-          duration, // Dynamically scaled by playbackSpeed (380ms, 180ms, 110ms)
-          resolve: () => {},
-        };
-        return;
-      }
-    }
-
-    // Case B: Normal single backward step (-1) -> Animate reverse of move at effectiveMoveIndex
-    if (diff === -1 && cubeGroup && cubelets.length) {
-      const moveReversed = allMoves[effectiveMoveIndex];
-      const parsed = moveReversed ? parseMoveToRotation(moveReversed.move, true) : null;
+      const parsed = moveToExecute
+        ? parseMoveToRotation(moveToExecute.move, false, cubeSize, spacing)
+        : null;
 
       if (parsed) {
         const activeMeshes = cubelets.map((c) => c.mesh).filter((m) => parsed.filter(m.position));
@@ -623,18 +693,40 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
       }
     }
 
-    // Case C: Multi-step jump, stage select, or reset (|<) -> Instant snap with 0 drift
+    if (diff === -1 && cubeGroup && cubelets.length) {
+      const moveReversed = allMoves[effectiveMoveIndex];
+      const parsed = moveReversed
+        ? parseMoveToRotation(moveReversed.move, true, cubeSize, spacing)
+        : null;
+
+      if (parsed) {
+        const activeMeshes = cubelets.map((c) => c.mesh).filter((m) => parsed.filter(m.position));
+        const pivot = new THREE.Group();
+        cubeGroup.add(pivot);
+        activeMeshes.forEach((mesh) => pivot.attach(mesh));
+
+        lastExecutedIndexRef.current = effectiveMoveIndex;
+        activeAnimationRef.current = {
+          pivot,
+          meshes: activeMeshes,
+          axis: parsed.axis,
+          targetAngle: parsed.angleRad,
+          startTime: performance.now(),
+          duration,
+          resolve: () => {},
+        };
+        return;
+      }
+    }
+
     snapCubeToStep(effectiveMoveIndex);
-  }, [effectiveMoveIndex, allMoves, playbackSpeed]);
+  }, [effectiveMoveIndex, allMoves, playbackSpeed, cubeSize]);
 
-
-  // 3. Camera Angle Presets (Zero-singularity, aligned orthogonal and isometric perspectives)
   useEffect(() => {
     const camera = cameraRef.current;
     const controls = controlsRef.current;
     if (!camera || !controls) return;
 
-    // Hide ground shadow plane when viewing from underneath (Bottom)
     if (shadowMeshRef.current) {
       shadowMeshRef.current.visible = cameraPreset !== 'Bottom';
     }
@@ -663,12 +755,9 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     <div
       className={`relative w-full ${heightClassName} shrink-0 rounded-xl bg-gradient-to-b from-[#FAFAFA] to-[#F1F3F5] border border-[#EAECEF] flex items-center justify-center overflow-hidden shadow-inner select-none`}
     >
-      {/* Background Precision Spatial Grid */}
       <div className="absolute inset-0 opacity-[0.06] bg-[radial-gradient(#111111_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
 
-      {/* UNIFIED TOP HUD BAR (Clean, non-overlapping, fully responsive) */}
       <div className="absolute top-2.5 inset-x-2.5 z-10 flex items-center justify-between gap-2 pointer-events-none">
-        {/* Left: Move & Action */}
         <div className="flex items-center gap-1.5 shrink-0 max-w-[58%]">
           <div className="bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] shadow-2xs flex items-center gap-1.5 font-mono text-[10.5px] min-w-0">
             {isSolved ? (
@@ -681,14 +770,13 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
                 <span className="text-neutral-500 text-[10px] hidden sm:inline font-sans font-medium truncate">
                   {(allMoves[effectiveMoveIndex] as any)?.holdTip ||
                     (allMoves[effectiveMoveIndex] as any)?.explanation ||
-                    `Lát cắt ${slice}`}
+                    `${cubeSize}x${cubeSize}x${cubeSize} · Lát cắt ${slice}`}
                 </span>
               </>
             )}
           </div>
         </div>
 
-        {/* Center: Stage Hint Pill (properly constrained to avoid overlapping) */}
         {activeStageHint && !compact && (
           <div className="flex-1 max-w-[45%] min-w-0 flex justify-center">
             <div className="w-auto max-w-full bg-neutral-900/90 text-white backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-medium shadow-md flex items-center gap-1.5 border border-white/10">
@@ -698,16 +786,14 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
           </div>
         )}
 
-        {/* Right: Sync Badge or Stage Hint in compact mode */}
         <div className="bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] text-[9.5px] font-mono text-neutral-600 flex items-center gap-1 shadow-2xs shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span className="truncate max-w-[110px]">
-            {compact && activeStageHint ? activeStageHint : 'SYNC'}
+            {compact && activeStageHint ? activeStageHint : `${cubeSize}x${cubeSize} SYNC`}
           </span>
         </div>
       </div>
 
-      {/* Face Orientation Legend (Tucked neatly below the HUD on the left) */}
       {!compact && (
         <div className="absolute top-11 left-2.5 flex items-center gap-1.5 z-10 pointer-events-none">
           <div className="bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] text-[9px] font-mono text-neutral-700 shadow-2xs flex items-center gap-1">
@@ -721,10 +807,8 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
         </div>
       )}
 
-      {/* Three.js Canvas Container */}
       <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
-      {/* Kinetic Emerald Rotation Arrow overlay OR Solved Success Badge */}
       {isSolved ? (
         <div className="absolute right-3 bottom-2.5 pointer-events-none z-10 flex items-center gap-1.5">
           <span className="bg-emerald-600 text-white font-mono text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md flex items-center gap-1">
@@ -738,7 +822,11 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
               {currentMove || slice}
             </span>
             <span className="text-[10px] font-mono text-neutral-400">
-              {currentMove?.includes('2') || turnAngle === '180.0°' ? '180°' : currentMove?.includes("'") ? '-90°' : '90°'}
+              {currentMove?.slice(1).includes('2') || turnAngle === '180.0°'
+                ? '180°'
+                : currentMove?.includes("'")
+                ? '-90°'
+                : '90°'}
             </span>
           </div>
         </div>

@@ -18,6 +18,16 @@ import {
 import { sound } from '../../../utils/audio';
 import { CustomAlgorithmData } from '../../../components/solver/Step3SolveInteractive';
 import { MoveTapeItem } from '../components/ExecutionTape';
+import { CubeSize } from '../../../types/cubing';
+import {
+  getMultiCubeSolution,
+  DEMO_SCRAMBLE_2X2,
+  DEMO_SCRAMBLE_4X4,
+} from '../../../solver/multiCubeSolver';
+import {
+  getPreExecutionCubeNetState,
+  applyScrambleToParametricCubeNet,
+} from '../../../core/simulator';
 
 interface UseStep3SolutionProps {
   scannedCubeState?: CubeNetState | null;
@@ -27,6 +37,7 @@ interface UseStep3SolutionProps {
   cfopLookMode: '2-look' | '1-look';
   onUpdateScannedCube?: (newState: CubeNetState) => void;
   onSetDemoScramble?: (scramble: string | null) => void;
+  cubeSize?: CubeSize;
 }
 
 export function useStep3Solution({
@@ -37,6 +48,7 @@ export function useStep3Solution({
   cfopLookMode,
   onUpdateScannedCube,
   onSetDemoScramble,
+  cubeSize = 3,
 }: UseStep3SolutionProps) {
   const [currentStageIdx, setCurrentStageIdx] = useState(0);
   const [currentMoveGlobalIdx, setCurrentMoveGlobalIdx] = useState(0);
@@ -84,6 +96,11 @@ export function useStep3Solution({
       };
     }
 
+    if (cubeSize === 2 || cubeSize === 4) {
+      const multiSol = getMultiCubeSolution(cubeSize, activeLevel, demoScramble, scannedCubeState);
+      if (multiSol) return multiSol;
+    }
+
     if (scannedCubeState) {
       const currentLevelToSolve = activeLevel === 'auto-solve' ? 'level-2' : activeLevel;
       return getSolutionForLevel(currentLevelToSolve, demoScramble || undefined, scannedCubeState, cfopLookMode);
@@ -92,40 +109,72 @@ export function useStep3Solution({
     const fallbackScramble = demoScramble || DEMO_SCRAMBLES[activeLevel] || CFOP_DEMO_SCRAMBLE;
     const initialCube = applyScramble(fallbackScramble);
     return getSolutionForLevel(activeLevel, fallbackScramble, initialCube, cfopLookMode);
-  }, [activeLevel, scannedCubeState, demoScramble, customAlgorithm, cfopLookMode]);
+  }, [activeLevel, scannedCubeState, demoScramble, customAlgorithm, cfopLookMode, cubeSize]);
 
   const baseCubeState: CubeNetState = useMemo(() => {
     if (customAlgorithm) {
+      if (cubeSize === 2 || cubeSize === 4) {
+        return getPreExecutionCubeNetState(customAlgorithm.notation, cubeSize);
+      }
       const sanitized = customAlgorithm.notation.replace(/[()[\]]/g, '').trim().replace(/\s+/g, ' ');
       return applyScramble(invertMoves(sanitized));
     }
+    if (cubeSize === 2 || cubeSize === 4) {
+      const targetScramble =
+        demoScramble || (cubeSize === 2 ? DEMO_SCRAMBLE_2X2 : DEMO_SCRAMBLE_4X4);
+      return applyScrambleToParametricCubeNet(targetScramble, cubeSize);
+    }
     if (scannedCubeState) {
-      return rotateWhiteToBottom(scannedCubeState);
+      return scannedCubeState.U?.[4] === 'white'
+        ? rotateWhiteToBottom(scannedCubeState)
+        : scannedCubeState;
     }
     const targetScramble = demoScramble || DEMO_SCRAMBLES[activeLevel] || CFOP_DEMO_SCRAMBLE;
-    return rotateWhiteToBottom(applyScramble(targetScramble));
-  }, [customAlgorithm, scannedCubeState, demoScramble, activeLevel]);
+    return applyScramble(targetScramble);
+  }, [customAlgorithm, scannedCubeState, demoScramble, activeLevel, cubeSize]);
+
+  const safeStages: SolutionStage[] = useMemo(() => {
+    if (Array.isArray(solutionData?.stages)) return solutionData.stages;
+    if (Array.isArray(solutionData)) return solutionData as unknown as SolutionStage[];
+    return [];
+  }, [solutionData]);
+
+  const normalizedSolutionData: SolutionData = useMemo(
+    () => ({
+      totalMoves:
+        solutionData?.totalMoves ??
+        safeStages.reduce((sum, stg) => sum + (stg?.moves?.length || 0), 0),
+      estTime: solutionData?.estTime || '~15.0s',
+      currentStageIndex: solutionData?.currentStageIndex ?? 0,
+      ...(Array.isArray(solutionData) ? {} : solutionData),
+      stages: safeStages,
+    }),
+    [solutionData, safeStages],
+  );
 
   const allMoves = useMemo(() => {
     const list: MoveTapeItem[] = [];
-    solutionData.stages.forEach((stg) => {
-      stg.moves.forEach((m) => list.push(m));
+    safeStages.forEach((stg) => {
+      (stg?.moves || []).forEach((m) => list.push(m));
     });
     return list;
-  }, [solutionData]);
+  }, [safeStages]);
 
   const currentStage: SolutionStage = useMemo(() => {
-    if (!solutionData.stages || solutionData.stages.length === 0) {
+    if (safeStages.length === 0) {
       return {
         id: 'solved-stage',
         stageNumber: 1,
         titleVi: 'Khối Đã Giải Hoàn Tất',
+        titleEn: '100% Solved',
         subtitle: '100% Solved',
+        status: 'done',
+        movesCount: 0,
         moves: [],
       };
     }
-    return solutionData.stages[currentStageIdx] || solutionData.stages[0];
-  }, [solutionData, currentStageIdx]);
+    return safeStages[currentStageIdx] || safeStages[0];
+  }, [safeStages, currentStageIdx]);
 
   const currentMove: MoveTapeItem =
     allMoves[Math.min(currentMoveGlobalIdx, Math.max(0, allMoves.length - 1))] || {
@@ -166,12 +215,17 @@ export function useStep3Solution({
   }, []);
 
   const handleResetToDemo = useCallback(() => {
-    const targetScramble = DEMO_SCRAMBLES[activeLevel] || CFOP_DEMO_SCRAMBLE;
+    const targetScramble =
+      cubeSize === 2
+        ? DEMO_SCRAMBLE_2X2
+        : cubeSize === 4
+        ? DEMO_SCRAMBLE_4X4
+        : DEMO_SCRAMBLES[activeLevel] || CFOP_DEMO_SCRAMBLE;
     const demoCube = applyScramble(targetScramble);
     onUpdateScannedCube?.(demoCube);
     onSetDemoScramble?.(targetScramble);
     handleResetToBeginning();
-  }, [activeLevel, onUpdateScannedCube, onSetDemoScramble, handleResetToBeginning]);
+  }, [activeLevel, cubeSize, onUpdateScannedCube, onSetDemoScramble, handleResetToBeginning]);
 
   const handleResetToSolved = useCallback(() => {
     onUpdateScannedCube?.(SOLVED_CUBE);
@@ -190,9 +244,9 @@ export function useStep3Solution({
   }, [allMoves]);
 
   const handleMarkStageComplete = useCallback(() => {
-    const currentIdx = solutionData.stages.findIndex((s) => s.id === currentStage.id);
-    if (currentIdx < solutionData.stages.length - 1) {
-      handleSelectStage(solutionData.stages[currentIdx + 1]);
+    const currentIdx = safeStages.findIndex((s) => s.id === currentStage.id);
+    if (currentIdx < safeStages.length - 1) {
+      handleSelectStage(safeStages[currentIdx + 1]);
     } else {
       setCurrentMoveGlobalIdx(allMoves.length);
       if (isActuallySolved) {
@@ -201,20 +255,20 @@ export function useStep3Solution({
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 } });
       }
     }
-  }, [solutionData.stages, currentStage.id, handleSelectStage, allMoves.length, isActuallySolved]);
+  }, [safeStages, currentStage.id, handleSelectStage, allMoves.length, isActuallySolved]);
 
   // Stage synchronization with current move index
   useEffect(() => {
     if (allMoves.length === 0) return;
     const currentMv = allMoves[currentMoveGlobalIdx];
     if (!currentMv) return;
-    const stageIdx = solutionData.stages.findIndex((stg) =>
-      stg.moves.some((m) => m.num === currentMv.num),
+    const stageIdx = safeStages.findIndex((stg) =>
+      (stg?.moves || []).some((m) => m.num === currentMv.num),
     );
     if (stageIdx !== -1 && stageIdx !== currentStageIdx) {
       setCurrentStageIdx(stageIdx);
     }
-  }, [currentMoveGlobalIdx, allMoves, solutionData.stages, currentStageIdx]);
+  }, [currentMoveGlobalIdx, allMoves, safeStages, currentStageIdx]);
 
   // Auto-play interval
   useEffect(() => {
@@ -262,7 +316,7 @@ export function useStep3Solution({
   }, [handleNextMove, handlePrevMove]);
 
   return {
-    solutionData,
+    solutionData: normalizedSolutionData,
     baseCubeState,
     allMoves,
     currentStage,

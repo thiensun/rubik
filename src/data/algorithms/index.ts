@@ -5,6 +5,8 @@ import { OLL_ALGS } from './ollAlgs';
 import { PLL_ALGS } from './pllAlgs';
 import { ROUX_ALGS } from './rouxAlgs';
 import { COLL_ALGS, ZBLL_ALGS } from './zbllHierarchy';
+import { CUBE_2X2_ALGS } from './cube2x2Algs';
+import { CUBE_4X4_ALGS } from './cube4x4Algs';
 
 export * from './beginnerAlgs';
 export * from './f2lAlgs';
@@ -12,6 +14,8 @@ export * from './ollAlgs';
 export * from './pllAlgs';
 export * from './rouxAlgs';
 export * from './zbllHierarchy';
+export * from './cube2x2Algs';
+export * from './cube4x4Algs';
 
 const ALL_DB_ALGS: AlgorithmEntry[] = [
   ...BEGINNER_ALGS,
@@ -21,6 +25,8 @@ const ALL_DB_ALGS: AlgorithmEntry[] = [
   ...ROUX_ALGS,
   ...COLL_ALGS,
   ...ZBLL_ALGS,
+  ...CUBE_2X2_ALGS,
+  ...CUBE_4X4_ALGS,
 ];
 
 function stripMoves(str: string): string {

@@ -154,6 +154,9 @@ describe('CubeMaster AI v2.4 - Trigger Highlighting Parser (triggerParser.ts)', 
     expect(frontInsert2?.tag).toBe('Front Insert');
     expect(frontInsert1?.color).toBe('#4F46E5');
     expect(frontInsert1?.bgColor).toBe('#E0E7FF');
+
+    const wideParity = matchTriggerMoves('(Rw U2 Rw)');
+    expect(wideParity?.tag).toBe('Wide Parity');
   });
 
   it('parses complex formulas with multiple triggers and extracts unique trigger badges', () => {
@@ -166,7 +169,7 @@ describe('CubeMaster AI v2.4 - Trigger Highlighting Parser (triggerParser.ts)', 
 
     const unique = extractUniqueTriggers(yPerm);
     expect(unique.map((u) => u.tag)).toEqual(['Sexy Move', 'Sledgehammer']);
-    expect(Object.keys(TRIGGER_CATALOG)).toHaveLength(8);
+    expect(Object.keys(TRIGGER_CATALOG)).toHaveLength(9);
   });
 });
 

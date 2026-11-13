@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Bluetooth, SlidersHorizontal, User } from 'lucide-react';
+import { CubeSize } from '../core/types';
 
 export type ActiveTab = 'solve-learn' | 'scramble-timer' | 'algorithms';
 
@@ -7,14 +8,24 @@ interface HeaderProps {
   activeTab: ActiveTab;
   onTabChange: (tab: ActiveTab) => void;
   onOpenSettings: () => void;
+  cubeSize?: CubeSize;
+  onCubeSizeChange?: (size: CubeSize) => void;
   isTimerRunning?: boolean;
   className?: string;
 }
+
+const CUBE_SIZES: { size: CubeSize; label: string }[] = [
+  { size: 2, label: '2x2' },
+  { size: 3, label: '3x3' },
+  { size: 4, label: '4x4' },
+];
 
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onTabChange,
   onOpenSettings,
+  cubeSize = 3,
+  onCubeSizeChange,
   isTimerRunning = false,
   className = '',
 }) => {
@@ -25,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
       } ${className}`}
     >
       <div className="max-w-[1440px] h-14 mx-auto px-3 sm:px-6 flex items-center justify-between gap-1 sm:gap-2">
-        {/* Brand Logo & Version */}
+        {/* Brand Logo & Version + Cube Size Switcher */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <div className="flex items-center gap-1.5 sm:gap-2">
             <div className="w-6 h-6 rounded-md bg-mono-950 text-white flex items-center justify-center shadow-sm">
@@ -35,9 +46,34 @@ export const Header: React.FC<HeaderProps> = ({
               CubeMaster<span className="hidden sm:inline"> AI</span>
             </span>
           </div>
-          <span className="inline-block px-1.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight bg-mono-100 text-mono-500 border border-mono-200/50">
+          <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[11px] font-mono font-medium tracking-tight bg-mono-100 text-mono-500 border border-mono-200/50">
             v2.4
           </span>
+
+          {/* Monochrome Segmented Cube Size Switcher: [ 2x2 | 3x3 | 4x4 ] */}
+          <div
+            role="group"
+            aria-label="Cube Size Switcher"
+            className="bg-[#F1F5F9] p-1 rounded-xl border border-[#EAECEF] flex items-center gap-0.5 ml-0.5 sm:ml-1"
+          >
+            {CUBE_SIZES.map((item) => {
+              const isActive = cubeSize === item.size;
+              return (
+                <button
+                  key={item.size}
+                  type="button"
+                  onClick={() => onCubeSizeChange?.(item.size)}
+                  className={`font-mono text-xs px-2 sm:px-2.5 py-1 rounded-lg transition-all cursor-pointer select-none ${
+                    isActive
+                      ? 'bg-[#111111] text-white font-bold shadow-xs'
+                      : 'text-[#64748B] hover:text-[#111111] font-medium'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Segmented Navigation Pills - Visible on Desktop/Tablet (>= lg), cleanly replaced by Bottom Navigation Bar on Mobile (< lg) */}
@@ -82,7 +118,6 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Right Controls: Smart Cube Monochrome Indicator, Settings */}
         {/* Preserves mobile hiding test: hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-mono-100/70 */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-
           {/* Smart Cube Sync Badge */}
           <button
             type="button"

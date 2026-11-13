@@ -13,9 +13,9 @@ import { AuditLogModal } from './components/history/AuditLogModal';
 import { SettingsModal, ColorSchemePresetKey } from './components/SettingsModal';
 import { ScrollToTopButton } from './components/ScrollToTopButton';
 import { PWAInstallBanner } from './components/common/PWAInstallBanner';
-import { SolveRecord, PenaltyType } from './types/cubing';
+import { SolveRecord, PenaltyType, CubeSize } from './types/cubing';
 import { SEED_SOLVES, computeSessionStats } from './utils/cubingStats';
-import { applyScrambleForNet, generateWCAScramble, CubeNetState } from './utils/cubeState';
+import { applyScrambleForNet, generateScrambleForSize, CubeNetState } from './utils/cubeState';
 import { sound } from './utils/audio';
 import confetti from 'canvas-confetti';
 import { CustomAlgorithmData } from './components/solver/Step3SolveInteractive';
@@ -28,6 +28,7 @@ export const App: React.FC = () => {
   // Navigation - default to 'scramble-timer' to showcase the redesigned tab
   const [activeTab, setActiveTab] = useState<ActiveTab>('scramble-timer');
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
+  const [cubeSize, setCubeSize] = useState<CubeSize>(3);
 
   // Custom Algorithm loaded for 3D exploration
   const [customAlgorithmFor3D, setCustomAlgorithmFor3D] = useState<CustomAlgorithmData | null>(null);
@@ -35,6 +36,14 @@ export const App: React.FC = () => {
   // Scramble State
   const [scramble, setScramble] = useState<string>(DEFAULT_SCRAMBLE);
   const [cubeNetState, setCubeNetState] = useState<CubeNetState>(() => applyScrambleForNet(DEFAULT_SCRAMBLE));
+
+  const handleCubeSizeChange = useCallback((newSize: CubeSize) => {
+    setCubeSize(newSize);
+    const nextScramble = generateScrambleForSize(newSize);
+    setScramble(nextScramble);
+    setCubeNetState(applyScrambleForNet(nextScramble));
+    sound.playTick();
+  }, []);
 
   // Solve History from LocalStorage or Seed Data
   const [solves, setSolves] = useState<SolveRecord[]>(() => {
@@ -101,11 +110,11 @@ export const App: React.FC = () => {
 
   // Generate Next Scramble
   const handleNextScramble = useCallback(() => {
-    const next = generateWCAScramble(21);
+    const next = generateScrambleForSize(cubeSize);
     setScramble(next);
     setCubeNetState(applyScrambleForNet(next));
     sound.playTick();
-  }, []);
+  }, [cubeSize]);
 
   // Global Alt+N Hotkey for Next Scramble
   useEffect(() => {
@@ -155,7 +164,7 @@ export const App: React.FC = () => {
     }
 
     // Prepare next scramble automatically
-    const nextScramble = generateWCAScramble(21);
+    const nextScramble = generateScrambleForSize(cubeSize);
     setScramble(nextScramble);
     setCubeNetState(applyScrambleForNet(nextScramble));
   };
@@ -194,7 +203,7 @@ export const App: React.FC = () => {
     }
 
     // Refresh scramble for next solve
-    const nextScramble = generateWCAScramble(21);
+    const nextScramble = generateScrambleForSize(cubeSize);
     setScramble(nextScramble);
     setCubeNetState(applyScrambleForNet(nextScramble));
   };
@@ -291,6 +300,8 @@ export const App: React.FC = () => {
         }}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         isTimerRunning={isTimerRunning}
+        cubeSize={cubeSize}
+        onCubeSizeChange={handleCubeSizeChange}
       />
 
       {/* Main Content Area */}
@@ -306,6 +317,7 @@ export const App: React.FC = () => {
               customAlgorithm={customAlgorithmFor3D}
               onClearCustomAlgorithm={() => setCustomAlgorithmFor3D(null)}
               colorScheme={activeColorScheme}
+              cubeSize={cubeSize}
             />
           </div>
         )}
@@ -328,6 +340,7 @@ export const App: React.FC = () => {
               onToggleInspection={() => setInspectionEnabled(!inspectionEnabled)}
               displayTimeMs={solves.length > 0 ? solves[0].timeMs : 8420}
               onTimerRunningChange={setIsTimerRunning}
+              cubeSize={cubeSize}
             />
 
             {/* Apple-style Refined Bottom Dock & Session Split Grid */}
@@ -368,6 +381,7 @@ export const App: React.FC = () => {
               onBackToTimer={() => setActiveTab('scramble-timer')}
               onLoadInto3D={handleLoadAlgorithmInto3D}
               colorScheme={activeColorScheme}
+              cubeSize={cubeSize}
             />
           </div>
         )}

@@ -8,7 +8,8 @@ export type TriggerTag =
   | 'Fast Flick'
   | 'Left Sexy'
   | 'Left Inv Sexy'
-  | 'Front Insert';
+  | 'Front Insert'
+  | 'Wide Parity';
 
 export interface TriggerMetadata {
   tag: TriggerTag;
@@ -92,6 +93,14 @@ export const TRIGGER_CATALOG: Record<TriggerTag, TriggerMetadata> = {
     borderColor: '#A5B4FC',
     descriptionVN: 'Tổ hợp chèn mặt trước (Front Slot Insert) hoàn tất cặp góc-cạnh tầng 2.',
   },
+  'Wide Parity': {
+    tag: 'Wide Parity',
+    pattern: '(Rw U2 Rw)',
+    color: '#4338CA',
+    bgColor: '#E0E7FF',
+    borderColor: '#A5B4FC',
+    descriptionVN: 'Tổ hợp Wide Parity Trigger (Rw U2 Rw) đặc trưng trong OLL Parity 4x4x4.',
+  },
 };
 
 function normalizeInnerMoves(inner: string): string {
@@ -129,6 +138,11 @@ export function matchTriggerMoves(innerMoves: string): TriggerMetadata | undefin
     case "F' U' F":
     case "F U F'":
       return TRIGGER_CATALOG['Front Insert'];
+    case 'Rw U2 Rw':
+    case "Rw U2 Rw'":
+    case "Rw' U2 Rw":
+    case "Rw' U2 Rw'":
+      return TRIGGER_CATALOG['Wide Parity'];
     default:
       return undefined;
   }

@@ -3,6 +3,7 @@ import { sound } from '../../utils/audio';
 import { haptic } from '../../utils/haptics';
 import { CubeNetState } from '../../utils/cubeState';
 import { parseTimeInput } from '../../utils/cubingStats';
+import { CubeSize } from '../../types/cubing';
 import { ScrambleHeader } from './ScrambleHeader';
 
 interface ZenTimerStageProps {
@@ -19,6 +20,7 @@ interface ZenTimerStageProps {
   onToggleInspection: () => void;
   displayTimeMs: number;
   onTimerRunningChange?: (isRunning: boolean) => void;
+  cubeSize?: CubeSize;
 }
 
 export type TimerState = 'idle' | 'holding' | 'ready' | 'running' | 'inspection' | 'stopped';
@@ -48,6 +50,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
   onToggleInspection,
   displayTimeMs,
   onTimerRunningChange,
+  cubeSize = 3,
 }) => {
   const [timerState, setTimerState] = useState<TimerState>('idle');
   const [currentMs, setCurrentMs] = useState<number>(displayTimeMs);
@@ -387,6 +390,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
           });
         }}
         isTimerRunning={timerState === 'running'}
+        cubeSize={cubeSize}
       />
 
       {/* Entire Area Below Scramble Card: Responsive Touch-Down Surface & Grand Digits */}

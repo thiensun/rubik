@@ -1,6 +1,12 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { AlgorithmEntry } from '../../../data/algorithms';
 import { CubeNetState, applyScramble, invertMoves } from '../../../utils/cubeState';
+import {
+  getPreExecutionCubeNetState,
+  applyScrambleToParametricCubeNet,
+  invertAlg,
+} from '../../../core/simulator';
+import { CubeSize } from '../../../types/cubing';
 import { sound } from '../../../utils/audio';
 import { DrillPoolType } from '../components/DrillModeModal';
 import { MasteryStatus } from '../components/AlgCardGrid';
@@ -12,6 +18,7 @@ export function useAlgTrainer(
   baseLevelAlgs: AlgorithmEntry[],
   allDatabaseAlgs: AlgorithmEntry[],
   masteryMap: Record<string, MasteryStatus>,
+  cubeSize: CubeSize = 3,
 ) {
   const [selectedTrainerAlg, setSelectedTrainerAlg] = useState<AlgorithmEntry>(initialAlg);
   const [trainerMoveIdx, setTrainerMoveIdx] = useState<number>(0);
@@ -39,13 +46,19 @@ export function useAlgTrainer(
 
   // Initial inverse state for 3D Trainer
   const trainerInitialCubeState = useMemo<CubeNetState>(() => {
+    if (cubeSize === 2 || cubeSize === 4) {
+      if (selectedTrainerAlg.setupAlg && selectedTrainerAlg.setupAlg.trim()) {
+        return applyScrambleToParametricCubeNet(selectedTrainerAlg.setupAlg, cubeSize);
+      }
+      return getPreExecutionCubeNetState(selectedTrainerAlg.mainAlg, cubeSize);
+    }
     if (selectedTrainerAlg.setupAlg && selectedTrainerAlg.setupAlg.trim()) {
       return applyScramble(selectedTrainerAlg.setupAlg);
     }
     const cleanFormula = selectedTrainerAlg.mainAlg.replace(/[()[\]]/g, '').trim().replace(/\s+/g, ' ');
     const inverse = invertMoves(cleanFormula);
     return applyScramble(inverse);
-  }, [selectedTrainerAlg]);
+  }, [selectedTrainerAlg, cubeSize]);
 
   // Trainer auto-play interval
   useEffect(() => {
@@ -96,11 +109,16 @@ export function useAlgTrainer(
   // Drill Cube State
   const drillCubeState = useMemo<CubeNetState>(() => {
     if (!drillCase) return applyScramble('');
+    if (cubeSize === 2 || cubeSize === 4) {
+      const inverse = invertAlg(drillCase.mainAlg);
+      const scramble = drillPreAuf ? `${inverse} ${drillPreAuf}` : inverse;
+      return applyScrambleToParametricCubeNet(scramble, cubeSize);
+    }
     const cleanFormula = drillCase.mainAlg.replace(/[()[\]]/g, '').trim().replace(/\s+/g, ' ');
     const inverse = invertMoves(cleanFormula);
     const scramble = drillPreAuf ? `${inverse} ${drillPreAuf}` : inverse;
     return applyScramble(scramble);
-  }, [drillCase, drillPreAuf]);
+  }, [drillCase, drillPreAuf, cubeSize]);
 
   const optimalPreAufMove = useMemo(() => {
     if (!drillPreAuf) return 'None (0°)';

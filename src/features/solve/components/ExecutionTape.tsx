@@ -8,6 +8,7 @@ import {
   Check,
 } from 'lucide-react';
 import { SolutionSubStep } from '../../../utils/solutionStages';
+import { isWideOrSliceMove } from '../../../core/simulator';
 
 export interface MoveTapeItem {
   move: string;
@@ -188,6 +189,7 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
                 activeSubStep.movesCount > 0 &&
                 m.num >= activeSubStep.startMoveNum &&
                 m.num <= activeSubStep.endMoveNum;
+              const isWideOrSlice = isWideOrSliceMove(m.move);
 
               return (
                 <div
@@ -200,10 +202,16 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
                       : isAllDone
                       ? 'bg-emerald-50 text-emerald-800 border-2 border-emerald-400 font-bold'
                       : isInActiveSubStep
-                      ? 'bg-white text-neutral-900 border-2 border-emerald-500 shadow-2xs'
+                      ? `bg-white text-neutral-900 shadow-2xs ${
+                          isWideOrSlice ? 'border-2 border-double border-neutral-400' : 'border-2 border-emerald-500'
+                        }`
                       : activeSubStep && activeSubStep.movesCount > 0
-                      ? 'bg-white/60 text-neutral-400 border border-[#EAECEF] opacity-60 hover:opacity-100 hover:border-neutral-400'
-                      : 'bg-white text-neutral-800 border border-[#EAECEF] hover:border-neutral-400'
+                      ? `bg-white/60 text-neutral-400 opacity-60 hover:opacity-100 hover:border-neutral-400 ${
+                          isWideOrSlice ? 'border-2 border-double border-neutral-400' : 'border border-[#EAECEF]'
+                        }`
+                      : `bg-white text-neutral-800 hover:border-neutral-400 ${
+                          isWideOrSlice ? 'border-2 border-double border-neutral-400' : 'border border-[#EAECEF]'
+                        }`
                   }`}
                 >
                   <span className="font-bold text-base leading-none">{m.move}</span>

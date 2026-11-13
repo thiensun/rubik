@@ -4,6 +4,7 @@ import { AlgorithmEntry } from '../../../data/algorithms';
 import { CubeNetState } from '../../../utils/cubeState';
 import { ThreeCubeViewer } from '../../../components/solver/ThreeCubeViewer';
 import { CustomAlgorithmData } from '../../../components/solver/Step3SolveInteractive';
+import { CubeSize } from '../../../types/cubing';
 import { sound } from '../../../utils/audio';
 import { DrillModeModal, DrillPoolType } from './DrillModeModal';
 import { AlgTrainerPlayback } from './AlgTrainerPlayback';
@@ -38,6 +39,7 @@ interface AlgTrainerStudioProps {
   drillStartRef: React.MutableRefObject<number>;
   pickNextDrillCase: () => void;
   optimalPreAufMove: string;
+  cubeSize?: CubeSize;
 }
 
 export const AlgTrainerStudio: React.FC<AlgTrainerStudioProps> = ({
@@ -68,6 +70,7 @@ export const AlgTrainerStudio: React.FC<AlgTrainerStudioProps> = ({
   drillStartRef,
   pickNextDrillCase,
   optimalPreAufMove,
+  cubeSize = 3,
 }) => {
   const renderStudioBody = () => (
     !isDrillMode ? (
@@ -123,6 +126,7 @@ export const AlgTrainerStudio: React.FC<AlgTrainerStudioProps> = ({
           playbackSpeed={trainerSpeed}
           heightClassName="h-[200px] xl:h-[220px]"
           compact={true}
+          cubeSize={cubeSize}
         />
 
         {/* Playback Controls & Formula Scrubber */}

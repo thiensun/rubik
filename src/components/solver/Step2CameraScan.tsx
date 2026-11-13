@@ -20,7 +20,9 @@ import {
 import { CubeColor, CubeNetState, CUBE_HEX_COLORS, applyScramble, applyScrambleForNet, SOLVED_CUBE, SCRAMBLE_SOLVED_CUBE } from '../../utils/cubeState';
 import { validateCubeState, CubeValidationResult } from '../../utils/cubeValidator';
 import { CFOP_DEMO_SCRAMBLE, DEMO_SCRAMBLES } from '../../utils/solutionStages';
-import { SolverLevelId } from '../../types/cubing';
+import { DEMO_SCRAMBLE_2X2, DEMO_SCRAMBLE_4X4 } from '../../solver/multiCubeSolver';
+import { createSolvedParametricCube, applyParametricAlg } from '../../core/simulator';
+import { SolverLevelId, CubeSize } from '../../types/cubing';
 import {
   classifyRubikColor,
   sample9TilesFromCanvas,
@@ -36,6 +38,7 @@ interface Step2CameraScanProps {
   onUpdateScannedCube?: (cubeState: CubeNetState) => void;
   demoScramble?: string | null;
   onSetDemoScramble?: (scramble: string | null) => void;
+  cubeSize?: CubeSize;
 }
 
 type FaceKey = 'U' | 'F' | 'R' | 'B' | 'L' | 'D';
@@ -76,8 +79,22 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   onUpdateScannedCube,
   demoScramble,
   onSetDemoScramble,
+  cubeSize = 3,
 }) => {
-  const DEMO_SCRAMBLE = DEMO_SCRAMBLES[selectedLevel] || CFOP_DEMO_SCRAMBLE;
+  const stickersPerFace = cubeSize * cubeSize;
+  const totalStickers = stickersPerFace * 6;
+  const gridDimClass =
+    cubeSize === 2
+      ? 'grid-cols-2 grid-rows-2'
+      : cubeSize === 4
+      ? 'grid-cols-4 grid-rows-4'
+      : 'grid-cols-3 grid-rows-3';
+  const DEMO_SCRAMBLE =
+    cubeSize === 2
+      ? DEMO_SCRAMBLE_2X2
+      : cubeSize === 4
+      ? DEMO_SCRAMBLE_4X4
+      : DEMO_SCRAMBLES[selectedLevel] || CFOP_DEMO_SCRAMBLE;
   const [copiedDemo, setCopiedDemo] = useState(false);
   // Current active face index: default to 0 (Up - White Center)
   const [activeFaceIdx, setActiveFaceIdx] = useState<number>(0);
@@ -252,7 +269,9 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
       video.setAttribute('playsinline', 'true');
       video.setAttribute('muted', 'true');
       video.setAttribute('autoplay', 'true');
-      video.srcObject = activeStream;
+      if (video.srcObject !== activeStream) {
+        video.srcObject = activeStream;
+      }
 
       const playPromise = video.play();
       if (playPromise !== undefined) {
@@ -262,7 +281,9 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
             setStreamResolution(`${video.videoWidth || 1280}x${video.videoHeight || 720} @ 60 FPS`);
           })
           .catch((err) => {
-            console.warn('Auto play failed, waiting for user gesture:', err);
+            if (err?.name !== 'AbortError') {
+              console.warn('Auto play failed, waiting for user gesture:', err);
+            }
           });
       }
     }
@@ -395,9 +416,10 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
               const matchCount = history.filter((fp) => fp === currentFingerprint).length;
               const isStable = history.length >= 3 && matchCount >= history.length - 1;
 
-              // Check if center tile matches current target face center
+              // Check if center tile matches current target face center (or sequential stability for 2x2/4x4 even cubes)
               const centerDetected = sampled[4].color;
-              const matchesCenter = centerDetected === activeFaceMeta.centerColor;
+              const matchesCenter =
+                cubeSize === 3 ? centerDetected === activeFaceMeta.centerColor : true;
               setCenterAligned(matchesCenter && isStable);
             }
           }
@@ -443,7 +465,28 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
     };
   }, [cameraStatus, cameraFacing, activeFaceIdx, activeFaceMeta.centerColor]);
 
-  // Count verified colors across 54 facelets
+  // Helper to get the N×N displayed stickers for a face
+  const getDisplayedFaceStickers = useCallback(
+    (faceKey: FaceKey): CubeColor[] => {
+      const baseStickers = cubeNetData[faceKey] || [];
+      return Array.from({ length: stickersPerFace }, (_, idx) => {
+        if (baseStickers.length === stickersPerFace) return baseStickers[idx];
+        if (cubeSize === 3) return baseStickers[idx] || 'white';
+        if (cubeSize === 2) {
+          const map2 = [0, 2, 6, 8];
+          return baseStickers[map2[idx] ?? 4] || 'white';
+        }
+        const r = Math.floor(idx / 4);
+        const c = idx % 4;
+        const r3 = r === 0 ? 0 : r === 3 ? 2 : 1;
+        const c3 = c === 0 ? 0 : c === 3 ? 2 : 1;
+        return baseStickers[r3 * 3 + c3] || 'white';
+      });
+    },
+    [cubeNetData, stickersPerFace, cubeSize],
+  );
+
+  // Count verified colors across N×N×6 facelets (24 for 2x2, 54 for 3x3, 96 for 4x4)
   const colorCounts: Record<CubeColor, number> = {
     white: 0,
     yellow: 0,
@@ -454,24 +497,25 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   };
 
   (Object.keys(cubeNetData) as FaceKey[]).forEach((face) => {
+    const faceStickers = getDisplayedFaceStickers(face);
     if (verifiedFaces[face]) {
-      cubeNetData[face].forEach((c) => {
+      faceStickers.forEach((c) => {
         if (c in colorCounts) colorCounts[c]++;
       });
-    } else {
+    } else if (cubeSize === 3) {
       const center = cubeNetData[face][4];
       if (center in colorCounts) colorCounts[center]++;
     }
   });
 
   const verifiedCount = (Object.keys(verifiedFaces) as FaceKey[]).reduce((acc, f) => {
-    return acc + (verifiedFaces[f] ? 9 : 0);
+    return acc + (verifiedFaces[f] ? stickersPerFace : 0);
   }, 0);
 
   const remainingFaces = 6 - Object.values(verifiedFaces).filter(Boolean).length;
   const allCompleted = Object.values(verifiedFaces).every(Boolean);
 
-  // Live Rubik's cube 54-sticker state & mathematical parity validation
+  // Live Rubik's cube N×N×6 state & mathematical parity validation
   const currentCubeNetState: CubeNetState = {
     U: cubeNetData.U as any,
     D: cubeNetData.D as any,
@@ -480,7 +524,25 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
     L: cubeNetData.L as any,
     R: cubeNetData.R as any,
   };
-  const validationResult: CubeValidationResult = validateCubeState(currentCubeNetState);
+  const validationResult: CubeValidationResult =
+    cubeSize === 3
+      ? validateCubeState(currentCubeNetState)
+      : (() => {
+          const errs: string[] = [];
+          const colors: CubeColor[] = ['white', 'yellow', 'green', 'blue', 'red', 'orange'];
+          for (const col of colors) {
+            if (colorCounts[col] !== stickersPerFace) {
+              errs.push(
+                `Khối ${cubeSize}x${cubeSize} yêu cầu đúng ${stickersPerFace} ô mỗi màu (Màu ${col.toUpperCase()} đang có ${colorCounts[col]}/${stickersPerFace}).`,
+              );
+            }
+          }
+          return {
+            isValid: errs.length === 0,
+            errors: errs,
+            colorCounts,
+          };
+        })();
 
   // Capture Current Face action
   const handleCaptureFace = useCallback(() => {
@@ -550,6 +612,37 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
   // Load Demo Scrambled Cube (Alt+D)
   const handleLoadDemo = useCallback(() => {
     sound.playPBChord();
+    if (cubeSize === 2 || cubeSize === 4) {
+      const solvedNet = createSolvedParametricCube(cubeSize, {
+        U: 'white',
+        D: 'yellow',
+        F: 'green',
+        B: 'blue',
+        L: 'orange',
+        R: 'red',
+      });
+      const paramDemo = applyParametricAlg(solvedNet, DEMO_SCRAMBLE, cubeSize);
+      setCubeNetData({
+        U: [...paramDemo.U],
+        F: [...paramDemo.F],
+        R: [...paramDemo.R],
+        B: [...paramDemo.B],
+        L: [...paramDemo.L],
+        D: [...paramDemo.D],
+      });
+      setVerifiedFaces({
+        U: true,
+        F: true,
+        R: true,
+        B: true,
+        L: true,
+        D: true,
+      });
+      onUpdateScannedCube?.(paramDemo as unknown as CubeNetState);
+      onSetDemoScramble?.(DEMO_SCRAMBLE);
+      return;
+    }
+
     const demoState = applyScrambleForNet(DEMO_SCRAMBLE);
     setCubeNetData({
       U: [...demoState.U],
@@ -571,7 +664,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
       onUpdateScannedCube(demoState);
     }
     onSetDemoScramble?.(DEMO_SCRAMBLE);
-  }, [DEMO_SCRAMBLE, onUpdateScannedCube, onSetDemoScramble]);
+  }, [cubeSize, DEMO_SCRAMBLE, onUpdateScannedCube, onSetDemoScramble]);
 
   // Reset all 54 stickers to clean solved state
   const handleResetAllToSolved = useCallback(() => {
@@ -637,20 +730,20 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
       L: [...cubeNetData.L] as any,
       R: [...cubeNetData.R] as any,
     };
-    const validation = validateCubeState(netState);
-    if (!validation.isValid) return;
+    if (!validationResult.isValid) return;
 
-    // Clear stale demoScramble from prop and localStorage so solver receives genuine camera state
-    onSetDemoScramble?.(null);
-    try {
-      localStorage.removeItem('cubemaster_demo_scramble');
-    } catch {}
+    if (!demoScramble) {
+      onSetDemoScramble?.(null);
+      try {
+        localStorage.removeItem('cubemaster_demo_scramble');
+      } catch {}
+    }
 
     if (onUpdateScannedCube) {
       onUpdateScannedCube(netState);
     }
     onProceedToStep3();
-  }, [cubeNetData, onSetDemoScramble, onUpdateScannedCube, onProceedToStep3]);
+  }, [cubeNetData, validationResult.isValid, demoScramble, onSetDemoScramble, onUpdateScannedCube, onProceedToStep3]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -704,11 +797,23 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
     });
   };
 
-  // Render a 3x3 face box in the 2D Net (Old design with square aspect ratio)
+  // Render an NxN face box in the 2D Net
   const renderNetFace = (faceKey: FaceKey, label: string) => {
     const isActive = activeFaceMeta.key === faceKey;
     const isVerified = verifiedFaces[faceKey];
-    const stickers = cubeNetData[faceKey];
+    const baseStickers = cubeNetData[faceKey];
+    const stickers = Array.from({ length: stickersPerFace }, (_, idx) => {
+      if (cubeSize === 3) return baseStickers[idx];
+      if (cubeSize === 2) {
+        const map2 = [0, 2, 6, 8];
+        return baseStickers[map2[idx] ?? 4];
+      }
+      const r = Math.floor(idx / 4);
+      const c = idx % 4;
+      const r3 = r === 0 ? 0 : r === 3 ? 2 : 1;
+      const c3 = c === 0 ? 0 : c === 3 ? 2 : 1;
+      return baseStickers[r3 * 3 + c3];
+    });
 
     return (
       <div
@@ -727,10 +832,10 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
           {isVerified && <Check className="w-2.5 h-2.5 text-emerald-600 stroke-[3] ml-0.5 shrink-0" />}
         </div>
 
-        {/* 3x3 Stickers Grid - Giữ nguyên thiết kế cũ, tỷ lệ vuông chuẩn 1:1 */}
-        <div className="w-full aspect-square grid grid-cols-3 grid-rows-3 gap-[2px] p-[2px] bg-neutral-200/80 rounded-md">
+        {/* NxN Stickers Grid (grid-cols-3 grid-rows-3 default) */}
+        <div className={`w-full aspect-square grid ${gridDimClass} gap-[2px] p-[2px] bg-neutral-200/80 rounded-md`}>
           {stickers.map((col, idx) => {
-            const isCenter = idx === 4;
+            const isCenter = cubeSize === 3 && idx === 4;
             const colorHex = isVerified || isCenter ? CUBE_HEX_COLORS[col] : '#DFE5ED';
             const isWhite = col === 'white' && (isVerified || isCenter);
 
@@ -739,7 +844,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
                 key={idx}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleStickerOverride(faceKey, idx);
+                  handleStickerOverride(faceKey, idx % 9);
                 }}
                 className="w-full h-full aspect-square rounded-[2px] transition-transform hover:scale-110 flex items-center justify-center relative cursor-pointer"
                 style={{
@@ -774,7 +879,13 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
                 </span>
                 <span className="text-neutral-300 hidden sm:inline">|</span>
                 <span className="font-mono text-[10.5px] sm:text-[11px] font-bold text-neutral-900 uppercase tracking-wider">
-                  Mặt {activeFaceIdx + 1}/6: {activeFaceMeta.name} ({activeFaceMeta.centerColor.toUpperCase()})
+                  {cubeSize === 3
+                    ? `Mặt ${activeFaceIdx + 1}/6: ${activeFaceMeta.name} (${activeFaceMeta.centerColor.toUpperCase()})`
+                    : `Mặt ${activeFaceIdx + 1}/6: ${
+                        activeFaceMeta.key === 'F'
+                          ? 'Trước (F) -> Xoay sang Phải (R)...'
+                          : `${activeFaceMeta.name} (${activeFaceMeta.key})`
+                      }`}
                 </span>
               </div>
               <h2 className="font-bold text-base sm:text-lg text-neutral-900 tracking-tight">
@@ -980,7 +1091,15 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
               <div className="z-20 pointer-events-none shrink-0 my-1 transition-opacity duration-200">
                 <div className="flex items-center gap-2 px-3.5 py-1 rounded-full border border-white/20 bg-neutral-900/80 text-white shadow-lg backdrop-blur-md text-xs font-medium">
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: activeFaceMeta.centerHex }} />
-                  <span>Căn mặt {activeFaceMeta.centerColor === 'green' ? 'Xanh Lá' : activeFaceMeta.centerColor === 'red' ? 'Đỏ' : activeFaceMeta.centerColor === 'blue' ? 'Xanh Dương' : activeFaceMeta.centerColor === 'orange' ? 'Cam' : activeFaceMeta.centerColor === 'white' ? 'Trắng' : 'Vàng'} vào khung hình</span>
+                  <span>
+                    {cubeSize === 3
+                      ? `Căn mặt ${activeFaceMeta.centerColor === 'green' ? 'Xanh Lá' : activeFaceMeta.centerColor === 'red' ? 'Đỏ' : activeFaceMeta.centerColor === 'blue' ? 'Xanh Dương' : activeFaceMeta.centerColor === 'orange' ? 'Cam' : activeFaceMeta.centerColor === 'white' ? 'Trắng' : 'Vàng'} vào khung hình`
+                      : `Mặt ${activeFaceIdx + 1}/6: ${activeFaceMeta.vietnameseName.split(' (')[0]} (${activeFaceMeta.key}) -> ${
+                          FACES_ORDER[activeFaceIdx + 1]
+                            ? `Xoay sang ${FACES_ORDER[activeFaceIdx + 1].vietnameseName.split(' (')[0]} (${FACES_ORDER[activeFaceIdx + 1].key})...`
+                            : 'Hoàn tất 6 mặt!'
+                        }`}
+                  </span>
                 </div>
               </div>
             )}
@@ -997,17 +1116,18 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
               <div className="absolute inset-x-2 top-1/2 h-[1px] bg-cyan-400/25 pointer-events-none" />
               <div className="absolute inset-y-2 left-1/2 w-[1px] bg-cyan-400/25 pointer-events-none" />
 
-              {/* 9 Live Detection Reticle Tiles */}
-              <div className="grid grid-cols-3 grid-rows-3 gap-1.5 sm:gap-2.5 w-full h-full aspect-square">
-                {liveDetected.map((detected, idx) => {
-                  const isCenter = idx === 4;
+              {/* NxN Live Detection Reticle Tiles (grid-cols-3 grid-rows-3 default) */}
+              <div className={`grid ${gridDimClass} gap-1.5 sm:gap-2 w-full h-full aspect-square`}>
+                {Array.from({ length: stickersPerFace }, (_, idx) => {
+                  const detected = liveDetected[idx % liveDetected.length] || liveDetected[0];
+                  const isCenter = cubeSize === 3 && idx === 4;
                   const targetCenterColor = activeFaceMeta.centerColor;
                   const isCenterMatch = isCenter && detected.color === targetCenterColor;
 
                   return (
                     <div
                       key={idx}
-                      onClick={() => handleStickerOverride(activeFaceMeta.key, idx)}
+                      onClick={() => handleStickerOverride(activeFaceMeta.key, idx % 9)}
                       className={`relative rounded-xl border-2 transition-all flex flex-col items-center justify-between p-1 sm:p-1.5 text-white cursor-pointer backdrop-blur-[0.5px] hover:bg-black/30 aspect-square w-full h-full ${
                         isCenter
                           ? isCenterMatch
@@ -1178,7 +1298,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
                 <div className="flex items-center gap-2">
                   <Grid className="w-4 h-4 text-neutral-600" />
                   <span className="font-mono text-[11px] font-bold text-neutral-900 uppercase tracking-wider">
-                    SCANNED 2D NET · 54 FACELETS
+                    SCANNED 2D NET · {totalStickers} FACELETS
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -1266,7 +1386,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
                 </span>
               </div>
               <span className="text-[10px] font-mono text-neutral-400">
-                54 Max
+                {totalStickers} Max
               </span>
             </div>
 
@@ -1275,7 +1395,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
               {SWATCH_CONFIG.map((s) => {
                 const isSelected = selectedBrush === s.color;
                 const count = colorCounts[s.color] || 0;
-                const isFull = count === 9;
+                const isFull = count === stickersPerFace;
 
                 return (
                   <div
@@ -1296,7 +1416,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
                         isFull ? 'text-emerald-700' : 'text-neutral-500'
                       }`}
                     >
-                      {count}/9
+                      {count}/{stickersPerFace}
                     </span>
                   </div>
                 );
@@ -1319,7 +1439,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
                   </span>
                 </div>
                 <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded">
-                  54/54 Nhãn Dán Chuẩn
+                  {totalStickers}/{totalStickers} Nhãn Dán Chuẩn
                 </span>
               </div>
             ) : (
@@ -1332,7 +1452,7 @@ export const Step2CameraScan: React.FC<Step2CameraScanProps> = ({
                     </span>
                   </div>
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-200/70 text-amber-900">
-                    {verifiedCount}/54 Đã Quét
+                    {verifiedCount}/{totalStickers} Đã Quét
                   </span>
                 </div>
                 <p className="text-[11px] text-amber-800 leading-relaxed mt-1 border-t border-amber-200/60 pt-1">

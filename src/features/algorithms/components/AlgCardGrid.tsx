@@ -163,7 +163,6 @@ export const AlgCardGrid: React.FC<AlgCardGridProps> = ({
                     }}
                     className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#111111] hover:bg-neutral-800 text-white font-mono text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
                   >
-                    <Play className="w-3.5 h-3.5 fill-current text-white" />
                     <span>▶ Xem 3D</span>
                   </button>
                 </div>

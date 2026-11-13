@@ -7,6 +7,9 @@ import { DynamicCaseDiagram } from '../../../components/DynamicCaseDiagram';
 import { ColorScheme } from '../../../engine/algSimulator';
 import { parseFormulaTriggers, extractUniqueTriggers } from '../../../engine/triggerParser';
 import { matchAlgorithmDatabaseForStage } from '../../../data/algorithms';
+import { CubeSize } from '../../../types/cubing';
+import { OrtegaPBLVisualizer } from './OrtegaPBLVisualizer';
+import { ReductionStageVisualizer } from './ReductionStageVisualizer';
 
 interface ActiveStageCardProps {
   stage: SolutionStage;
@@ -18,6 +21,9 @@ interface ActiveStageCardProps {
   copiedFormula: boolean;
   onCopyFormula: (formula: string) => void;
   onJumpToSubStep: (subIdx: number, startMoveNum?: number) => void;
+  cubeSize?: CubeSize;
+  activeLevel?: string;
+  onJumpToParity?: (parityType: 'oll' | 'pll') => void;
 }
 
 export const ActiveStageCard: React.FC<ActiveStageCardProps> = ({
@@ -30,6 +36,9 @@ export const ActiveStageCard: React.FC<ActiveStageCardProps> = ({
   copiedFormula,
   onCopyFormula,
   onJumpToSubStep,
+  cubeSize = 3,
+  activeLevel = 'level-1',
+  onJumpToParity,
 }) => {
   const matchedDbAlg = !customAlgorithm
     ? matchAlgorithmDatabaseForStage(
@@ -97,6 +106,7 @@ export const ActiveStageCard: React.FC<ActiveStageCardProps> = ({
                   category={customAlgorithm.category}
                   colorScheme={colorScheme}
                   size={96}
+                  cubeSize={cubeSize}
                 />
               ) : matchedDbAlg ? (
                 <DynamicCaseDiagram
@@ -107,6 +117,7 @@ export const ActiveStageCard: React.FC<ActiveStageCardProps> = ({
                   colorScheme={colorScheme}
                   size={96}
                   customArrows={matchedDbAlg.arrows}
+                  cubeSize={cubeSize}
                 />
               ) : (
                 <SpeedcubeCaseDiagram
@@ -190,6 +201,23 @@ export const ActiveStageCard: React.FC<ActiveStageCardProps> = ({
               )}
             </div>
           </div>
+
+          {/* Adaptive Stage Visualizer for 2x2x2 (OrtegaPBLVisualizer) & 4x4x4 (ReductionStageVisualizer) */}
+          {cubeSize === 2 && !customAlgorithm && (
+            <OrtegaPBLVisualizer
+              stageNumber={stage.stageNumber}
+              caseName={stage.caseDetails.caseName}
+              formula={displayFormula}
+            />
+          )}
+
+          {cubeSize === 4 && !customAlgorithm && (
+            <ReductionStageVisualizer
+              stageNumber={stage.stageNumber}
+              activeLevel={activeLevel}
+              onJumpToParity={onJumpToParity}
+            />
+          )}
         </div>
       )}
 

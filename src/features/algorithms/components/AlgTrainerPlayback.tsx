@@ -1,6 +1,7 @@
 import React from 'react';
 import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 import { sound } from '../../../utils/audio';
+import { isWideOrSliceMove } from '../../../core/simulator';
 
 interface AlgTrainerPlaybackProps {
   trainerMoveIdx: number;
@@ -132,6 +133,7 @@ export const AlgTrainerPlayback: React.FC<AlgTrainerPlaybackProps> = ({
           {trainerMoves.map((m, idx) => {
             const isDone = idx < trainerMoveIdx;
             const isCurrent = idx === trainerMoveIdx;
+            const isWideOrSlice = isWideOrSliceMove(m.move);
             return (
               <button
                 key={idx}
@@ -145,8 +147,12 @@ export const AlgTrainerPlayback: React.FC<AlgTrainerPlaybackProps> = ({
                   isCurrent
                     ? 'bg-[#111111] text-white ring-1 ring-emerald-500 scale-105'
                     : isDone
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-white text-neutral-700 border border-[#EAECEF] hover:border-neutral-400'
+                    ? `bg-emerald-50 text-emerald-700 ${
+                        isWideOrSlice ? 'border-2 border-double border-emerald-400' : 'border border-emerald-200'
+                      }`
+                    : `bg-white text-neutral-700 hover:border-neutral-400 ${
+                        isWideOrSlice ? 'border-2 border-double border-neutral-400' : 'border border-[#EAECEF]'
+                      }`
                 }`}
               >
                 {m.move}

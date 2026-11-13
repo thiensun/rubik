@@ -37,7 +37,7 @@ export const CubeViewport3D: React.FC<CubeViewport3DProps> = ({
   isSolved,
   playbackSpeed,
   onAnimationComplete,
-  heightClassName = 'h-[38vh] sm:h-[40vh] lg:h-[250px]',
+  heightClassName = 'h-[350px] sm:h-[400px] lg:h-[500px] w-full',
   onSwipeLeft,
   onSwipeRight,
   onTap,
@@ -82,7 +82,7 @@ export const CubeViewport3D: React.FC<CubeViewport3DProps> = ({
     <div
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="relative w-full rounded-2xl overflow-hidden bg-neutral-900 border border-neutral-800 shadow-inner flex flex-col justify-center items-center touch-manipulation"
+      className="relative w-full rounded-2xl overflow-hidden bg-white flex flex-col justify-center items-center touch-none"
     >
       <button
         type="button"
@@ -90,10 +90,10 @@ export const CubeViewport3D: React.FC<CubeViewport3DProps> = ({
           setIsOrbitLocked((prev) => !prev);
           haptic.tick();
         }}
-        className={`absolute top-2 right-2 z-20 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold flex items-center gap-1.5 backdrop-blur-md border transition-all cursor-pointer ${
+        className={`absolute top-3 right-3 z-20 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold flex items-center gap-1.5 backdrop-blur-md border transition-all cursor-pointer ${
           isOrbitLocked
-            ? 'bg-amber-500/90 text-white border-amber-400 shadow-sm'
-            : 'bg-black/60 hover:bg-black/80 text-white/90 border-white/20'
+            ? 'bg-[#111111] text-white border-[#111111] shadow-sm'
+            : 'bg-white/95 hover:bg-white text-[#111111] border-[#EAECEF] shadow-[0_2px_10px_rgba(0,0,0,0.02)]'
         }`}
         title={
           isOrbitLocked
@@ -108,7 +108,7 @@ export const CubeViewport3D: React.FC<CubeViewport3DProps> = ({
           </>
         ) : (
           <>
-            <Unlock className="w-2.5 h-2.5 text-emerald-400" />
+            <Unlock className="w-2.5 h-2.5 text-[#111111]" />
             <span>Xoay 3D</span>
           </>
         )}

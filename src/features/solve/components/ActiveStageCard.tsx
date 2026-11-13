@@ -65,19 +65,19 @@ export const ActiveStageCard: React.FC<ActiveStageCardProps> = ({
   const triggerBadges = extractUniqueTriggers(displayFormula);
 
   return (
-    <div className="p-4 rounded-xl bg-white border-2 border-neutral-900 shadow-sm flex flex-col gap-3 relative transition-all">
+    <div className="p-4 rounded-2xl bg-white border-[1.5px] border-[#111111] shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col gap-3 relative transition-all duration-200 ease-out">
       {/* Active Stage Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-[#111111] text-white font-mono flex items-center justify-center text-xs font-bold">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-6 h-6 rounded-full bg-[#111111] text-white font-mono flex items-center justify-center text-xs font-bold shrink-0">
             {stage.stageNumber.toString().padStart(2, '0')}
           </div>
-          <span className="text-xs font-extrabold text-neutral-900">
+          <span className="text-xs font-bold text-[#111111] tracking-tight truncate">
             {stage.titleVi}
           </span>
         </div>
-        <span className="px-2.5 py-0.5 rounded-full bg-[#111111] text-white font-mono text-[10px] font-bold tracking-tight">
-          ACTIVE STEP · Move {currentMoveNum}/{totalMoves}
+        <span className="px-2.5 py-0.5 rounded-lg bg-[#111111] text-white font-mono text-[10px] font-bold tabular-nums shrink-0">
+          Move {currentMoveNum}/{totalMoves}
         </span>
       </div>
 
@@ -235,26 +235,26 @@ export const ActiveStageCard: React.FC<ActiveStageCardProps> = ({
                   type="button"
                   key={sub.id}
                   onClick={() => onJumpToSubStep(subIdx, sub.startMoveNum)}
-                  className={`w-full p-2.5 rounded-lg border flex items-center justify-between gap-2 text-xs font-mono transition-all text-left cursor-pointer active:scale-[0.99] ${
+                  className={`w-full min-h-[40px] p-2.5 rounded-xl border flex items-center justify-between gap-2 text-xs font-mono transition-all duration-200 ease-out active:scale-[0.98] text-left cursor-pointer ${
                     isSubActive
-                      ? 'bg-[#111111] text-white border-[#111111] shadow-xs ring-1 ring-[#111111]'
-                      : 'bg-[#F8F9FA] text-neutral-800 border-[#EAECEF] hover:border-neutral-400 hover:bg-[#F3F4F6]'
+                      ? 'bg-[#111111] text-white border-[#111111]'
+                      : 'bg-[#F8F9FA] text-[#111111] border-[#EAECEF] hover:border-[#94A3B8] hover:bg-[#F1F5F9]'
                   }`}
                   title={`Nhấn để chọn và nhảy 3D Cube đến ${sub.labelVi}`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span
                       className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                        isSubActive ? 'bg-emerald-400' : 'bg-neutral-300'
+                        isSubActive ? 'bg-white' : 'bg-[#94A3B8]'
                       }`}
                     />
                     <span className="font-bold text-[11px] truncate">{sub.labelVi}</span>
                   </div>
                   <span
-                    className={`text-[11px] font-bold px-2 py-0.5 rounded shrink-0 ${
+                    className={`text-[11px] font-bold px-2 py-0.5 rounded-lg shrink-0 tabular-nums ${
                       isSubActive
-                        ? 'bg-white/15 text-emerald-300'
-                        : 'bg-white border border-[#EAECEF] text-neutral-900 shadow-2xs'
+                        ? 'bg-white/15 text-white'
+                        : 'bg-white border border-[#EAECEF] text-[#111111]'
                     }`}
                   >
                     {sub.formula} ({sub.movesCount}b)

@@ -65,38 +65,15 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
   const [cfopLookMode, setCfopLookMode] = useState<'2-look' | '1-look'>('2-look');
 
   const {
-    solutionData,
-    baseCubeState,
-    allMoves,
-    currentStage,
-    currentMove,
-    isActuallySolved,
-    currentMoveGlobalIdx,
-    setCurrentMoveGlobalIdx,
-    isPlaying,
-    setIsPlaying,
-    playbackSpeed,
-    setPlaybackSpeed,
-    isAllCompleted,
-    setIsAllCompleted,
-    activeSubStepIndex,
-    setActiveSubStepIndex,
-    handleNextMove,
-    handlePrevMove,
-    handleResetToBeginning,
-    handleResetToDemo: baseResetToDemo,
-    handleResetToSolved: baseResetToSolved,
-    handleSelectStage,
-    handleMarkStageComplete,
+    solutionData, baseCubeState, allMoves, currentStage, currentMove, isActuallySolved,
+    currentMoveGlobalIdx, setCurrentMoveGlobalIdx, isPlaying, setIsPlaying,
+    playbackSpeed, setPlaybackSpeed, isAllCompleted, setIsAllCompleted,
+    activeSubStepIndex, setActiveSubStepIndex, handleNextMove, handlePrevMove,
+    handleResetToBeginning, handleResetToDemo: baseResetToDemo,
+    handleResetToSolved: baseResetToSolved, handleSelectStage, handleMarkStageComplete,
   } = useStep3Solution({
-    scannedCubeState,
-    activeLevel,
-    demoScramble,
-    customAlgorithm,
-    cfopLookMode,
-    onUpdateScannedCube,
-    onSetDemoScramble,
-    cubeSize,
+    scannedCubeState, activeLevel, demoScramble, customAlgorithm,
+    cfopLookMode, onUpdateScannedCube, onSetDemoScramble, cubeSize,
   });
 
   const handleResetToDemo = () => { baseResetToDemo(); setIsResetMenuOpen(false); };
@@ -140,12 +117,12 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
       {/* MAIN ASYMMETRIC SPLIT (55% LEFT / 45% RIGHT) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT BENTO ARENA (55% -> 7 Cols) */}
-        <div className="lg:col-span-7 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-hidden bg-white border border-[#EAECEF] rounded-[24px] p-3.5 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col justify-between gap-2.5">
+        <div className="lg:col-span-7 bg-white border border-[#EAECEF] rounded-2xl p-3.5 sm:p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col gap-3">
           {/* Viewport Top Header */}
-          <div className="flex flex-wrap items-center justify-between pb-2 border-b border-[#EAECEF] gap-2 shrink-0">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-              <div className="px-3 py-1 rounded-full bg-[#111111] text-white font-mono text-xs font-bold tracking-tight flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          <div className="flex flex-wrap items-center justify-between pb-2.5 border-b border-[#EAECEF] gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="px-3 py-1.5 rounded-xl bg-[#111111] text-white font-mono text-xs font-bold tracking-tight tabular-nums flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-white" />
                 <span>
                   {currentMoveGlobalIdx >= allMoves.length && allMoves.length > 0
                     ? `Đã Giải Xong (${solutionData.totalMoves}/${solutionData.totalMoves})`
@@ -156,14 +133,12 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
               <button
                 type="button"
                 onClick={() => setIsResetMenuOpen((prev) => !prev)}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-mono font-medium border cursor-pointer transition-all hover:scale-105 ${
-                  demoScramble ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100' : scannedCubeState ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100' : 'bg-neutral-100 text-neutral-700 border-neutral-300 hover:bg-neutral-200'
-                }`}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-mono font-medium border bg-[#F1F5F9] text-[#111111] border-[#EAECEF] hover:border-[#94A3B8] cursor-pointer transition-all duration-200 ease-out active:scale-[0.98]"
                 title="Click để đổi hoặc reset màu khối Rubik"
               >
-                <span className={`w-1.5 h-1.5 rounded-full ${demoScramble ? 'bg-amber-500' : scannedCubeState ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-400'}`} />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#111111]" />
                 <span>{demoScramble ? 'Khối Mẫu (Demo)' : scannedCubeState ? 'Cube Đã Quét' : 'Cube Mặc Định'}</span>
-                <RotateCcw className="w-2.5 h-2.5 text-neutral-400 hover:text-neutral-700" />
+                <RotateCcw className="w-3 h-3 text-[#64748B]" />
               </button>
             </div>
 
@@ -173,62 +148,64 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsResetMenuOpen((prev) => !prev)}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-mono font-bold transition-all border cursor-pointer ${
-                    isResetMenuOpen ? 'bg-neutral-900 text-white border-neutral-900 shadow-sm' : 'bg-white text-neutral-700 border-[#EAECEF] hover:bg-neutral-50 hover:text-neutral-900 hover:border-neutral-300 shadow-2xs'
+                  className={`min-h-[36px] flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-mono font-bold transition-all duration-200 ease-out active:scale-[0.98] border cursor-pointer ${
+                    isResetMenuOpen
+                      ? 'bg-[#111111] text-white border-[#111111]'
+                      : 'bg-white text-[#64748B] border-[#EAECEF] hover:text-[#111111] hover:border-[#94A3B8]'
                   }`}
                   title="Đặt lại màu sắc khối Rubik (Mẫu Scramble, Khối Giải Sẵn hoặc Quét lại)"
                 >
-                  <RotateCcw className="w-3 h-3 text-red-500" />
+                  <RotateCcw className="w-3 h-3 stroke-[1.75]" />
                   <span>Reset Màu</span>
-                  <ChevronDown className={`w-3 h-3 text-neutral-400 transition-transform duration-150 ${isResetMenuOpen ? 'rotate-180 text-white' : ''}`} />
+                  <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isResetMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isResetMenuOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsResetMenuOpen(false)} />
-                    <div className="absolute left-0 top-full mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-xl border border-neutral-200 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
-                      <div className="px-3.5 py-2 text-[10px] font-bold text-neutral-400 uppercase tracking-wider border-b border-neutral-100 flex items-center justify-between">
-                        <span>Khôi Phục Màu Rubik 3D</span>
-                        <span className="text-[9px] text-neutral-400 font-normal">WCA</span>
+                    <div className="absolute left-0 top-full mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-xl border border-[#EAECEF] py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
+                      <div className="px-3.5 py-2 text-[10px] font-mono font-bold text-[#64748B] uppercase tracking-wider border-b border-[#EAECEF] flex items-center justify-between">
+                        <span>Khôi Phục Màu 3D</span>
+                        <span className="text-[9px] text-[#94A3B8]">WCA</span>
                       </div>
                       <button
                         type="button"
                         onClick={handleResetToDemo}
-                        className="w-full text-left px-3.5 py-2.5 text-xs text-neutral-700 hover:bg-amber-50/60 flex items-start gap-2.5 transition-colors group cursor-pointer"
+                        className="w-full text-left px-3.5 py-2.5 text-xs text-[#111111] hover:bg-[#F8F9FA] flex items-start gap-2.5 transition-all duration-200 ease-out cursor-pointer"
                       >
-                        <span className="p-1.5 rounded-lg bg-amber-100 text-amber-700 mt-0.5 group-hover:scale-105 transition-transform">
-                          <Sparkles className="w-3.5 h-3.5" />
+                        <span className="p-1.5 rounded-xl bg-[#F1F5F9] text-[#111111] mt-0.5">
+                          <Sparkles className="w-3.5 h-3.5 stroke-[1.75]" />
                         </span>
                         <div className="flex-1 min-w-0">
-                          <div className="font-bold text-neutral-900 group-hover:text-amber-900">Khối Mẫu Demo (WCA)</div>
-                          <div className="text-[11px] text-neutral-500 line-clamp-1">Nạp lại 54 màu chuẩn từ Demo Scramble</div>
+                          <div className="font-semibold text-[#111111]">Khối Mẫu Demo (WCA)</div>
+                          <div className="text-[11px] text-[#64748B] line-clamp-1">Nạp 54 màu từ Demo Scramble</div>
                         </div>
                       </button>
                       <button
                         type="button"
                         onClick={handleResetToSolved}
-                        className="w-full text-left px-3.5 py-2.5 text-xs text-neutral-700 hover:bg-emerald-50/60 flex items-start gap-2.5 transition-colors group cursor-pointer"
+                        className="w-full text-left px-3.5 py-2.5 text-xs text-[#111111] hover:bg-[#F8F9FA] flex items-start gap-2.5 transition-all duration-200 ease-out cursor-pointer"
                       >
-                        <span className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700 mt-0.5 group-hover:scale-105 transition-transform">
-                          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                        <span className="p-1.5 rounded-xl bg-[#F1F5F9] text-[#111111] mt-0.5">
+                          <Check className="w-3.5 h-3.5 stroke-[2]" />
                         </span>
                         <div className="flex-1 min-w-0">
-                          <div className="font-bold text-neutral-900 group-hover:text-emerald-900">Khối Đã Giải (Solved Cube)</div>
-                          <div className="text-[11px] text-neutral-500 line-clamp-1">6 mặt 6 màu chuẩn hoàn chỉnh</div>
+                          <div className="font-semibold text-[#111111]">Khối Đã Giải (Solved)</div>
+                          <div className="text-[11px] text-[#64748B] line-clamp-1">6 mặt chuẩn hoàn chỉnh</div>
                         </div>
                       </button>
-                      <div className="border-t border-neutral-100 my-1" />
+                      <div className="border-t border-[#EAECEF] my-1" />
                       <button
                         type="button"
                         onClick={() => { setIsResetMenuOpen(false); onBackToScan(); }}
-                        className="w-full text-left px-3.5 py-2.5 text-xs text-neutral-700 hover:bg-neutral-50 flex items-start gap-2.5 transition-colors group cursor-pointer"
+                        className="w-full text-left px-3.5 py-2.5 text-xs text-[#111111] hover:bg-[#F8F9FA] flex items-start gap-2.5 transition-all duration-200 ease-out cursor-pointer"
                       >
-                        <span className="p-1.5 rounded-lg bg-neutral-100 text-neutral-700 mt-0.5 group-hover:scale-105 transition-transform">
-                          <Camera className="w-3.5 h-3.5" />
+                        <span className="p-1.5 rounded-xl bg-[#F1F5F9] text-[#111111] mt-0.5">
+                          <Camera className="w-3.5 h-3.5 stroke-[1.75]" />
                         </span>
                         <div className="flex-1 min-w-0">
-                          <div className="font-bold text-neutral-900">Quét Lại Bằng Camera</div>
-                          <div className="text-[11px] text-neutral-500 line-clamp-1">Quay lại Bước 2 quét hoặc chỉnh màu tay</div>
+                          <div className="font-semibold text-[#111111]">Quét Lại Bằng Camera</div>
+                          <div className="text-[11px] text-[#64748B] line-clamp-1">Quay lại Bước 2 quét hoặc chỉnh tay</div>
                         </div>
                       </button>
                     </div>
@@ -237,18 +214,19 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
               </div>
 
               {/* Camera Angle Controls */}
-              <div className="flex flex-wrap gap-1.5 justify-center items-center bg-[#F3F4F6] p-1 rounded-2xl sm:rounded-full border border-[#EAECEF]">
+              <div className="flex flex-wrap gap-1.5 justify-center items-center bg-[#F3F4F6] p-1 rounded-xl border border-[#EAECEF]">
                 {[
                   { key: 'Iso', label: 'Phối Cảnh' },
-                  { key: 'Bottom', label: 'Mặt Đáy (Cross)' },
-                  { key: 'Top', label: 'Mặt Đỉnh (Vàng)' },
-                  { key: 'Front', label: 'Mặt Trước (F)' },
+                  { key: 'Bottom', label: 'Đáy' },
+                  { key: 'Top', label: 'Đỉnh' },
+                  { key: 'Front', label: 'Trước' },
                 ].map((item) => (
                   <button
                     key={item.key}
+                    type="button"
                     onClick={() => setCameraAngle(item.key as any)}
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold transition-all cursor-pointer ${
-                      cameraAngle === item.key ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-900'
+                    className={`px-2.5 py-1 rounded-lg text-[10.5px] font-mono font-semibold transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer ${
+                      cameraAngle === item.key ? 'bg-[#111111] text-white' : 'text-[#64748B] hover:text-[#111111]'
                     }`}
                     title={`Chuyển góc camera sang ${item.label}`}
                   >
@@ -284,7 +262,7 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
 
           {/* EXECUTION TAPE & PINNED PLAYBACK CONTROLS */}
           {/* Preserves bounded desktop scroll constraint: max-h-36 sm:max-h-48 overflow-y-auto */}
-          <div className="w-full">
+          <div className="w-full flex flex-col gap-3">
             <ExecutionTape
               currentMoveGlobalIdx={currentMoveGlobalIdx}
               allMovesLength={allMoves.length}

@@ -7,67 +7,47 @@ interface MetricCardsProps {
 }
 
 export const MetricCards: React.FC<MetricCardsProps> = ({ stats }) => {
+  const cards = [
+    {
+      label: 'PB (Best)',
+      value: formatTime(stats.bestTime),
+      sub: stats.bestSolveId ? `Solve #${stats.bestSolveId}` : '--',
+    },
+    {
+      label: 'Ao5',
+      value: formatTime(stats.ao5),
+      sub: stats.ao5Best ? `PB: ${formatTime(stats.ao5Best)}` : '--',
+    },
+    {
+      label: 'Ao12',
+      value: formatTime(stats.ao12),
+      sub: stats.ao12Best ? `PB: ${formatTime(stats.ao12Best)}` : '--',
+    },
+    {
+      label: 'Solves',
+      value: String(stats.totalSolves),
+      sub: stats.totalSolves > 0 ? `${stats.validSolvesCount} valid` : '--',
+    },
+  ];
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      {/* 1. Best Time (PB) */}
-      <div className="border border-[#EAECEF] bg-white rounded-2xl p-3 sm:p-4 text-center flex flex-col items-center justify-center gap-1 shadow-xs transition-all">
-        <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-500 font-medium">
-          PB (Best)
-        </span>
-        <div className="flex items-baseline gap-1 mt-0.5">
-          <span className="font-mono text-2xl sm:text-3xl font-bold text-[#111111] tabular-nums">
-            {formatTime(stats.bestTime)}
+      {cards.map((c) => (
+        <div
+          key={c.label}
+          className="bg-white border border-[#EAECEF] rounded-2xl p-3.5 sm:p-4 text-center flex flex-col items-center justify-center gap-1 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-200 ease-out"
+        >
+          <span className="text-[11px] font-mono uppercase tracking-wider text-[#64748B] font-semibold">
+            {c.label}
+          </span>
+          <span className="font-mono text-2xl sm:text-3xl font-bold text-[#111111] tabular-nums tracking-tight mt-0.5">
+            {c.value}
+          </span>
+          <span className="text-[11px] font-mono text-[#94A3B8] tabular-nums">
+            {c.sub}
           </span>
         </div>
-        <span className="text-[11px] font-mono text-neutral-400">
-          {stats.bestSolveId ? `Lần giải #${stats.bestSolveId}` : '--'}
-        </span>
-      </div>
-
-      {/* 2. Current Ao5 */}
-      <div className="border border-[#EAECEF] bg-white rounded-2xl p-3 sm:p-4 text-center flex flex-col items-center justify-center gap-1 shadow-xs transition-all">
-        <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-500 font-medium">
-          Ao5
-        </span>
-        <div className="flex items-baseline gap-1 mt-0.5">
-          <span className="font-mono text-2xl sm:text-3xl font-bold text-[#111111] tabular-nums">
-            {formatTime(stats.ao5)}
-          </span>
-        </div>
-        <span className="text-[11px] font-mono text-neutral-400">
-          {stats.ao5Best ? `PB: ${formatTime(stats.ao5Best)}` : '--'}
-        </span>
-      </div>
-
-      {/* 3. Current Ao12 */}
-      <div className="border border-[#EAECEF] bg-white rounded-2xl p-3 sm:p-4 text-center flex flex-col items-center justify-center gap-1 shadow-xs transition-all">
-        <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-500 font-medium">
-          Ao12
-        </span>
-        <div className="flex items-baseline gap-1 mt-0.5">
-          <span className="font-mono text-2xl sm:text-3xl font-bold text-[#111111] tabular-nums">
-            {formatTime(stats.ao12)}
-          </span>
-        </div>
-        <span className="text-[11px] font-mono text-neutral-400">
-          {stats.ao12Best ? `PB: ${formatTime(stats.ao12Best)}` : '--'}
-        </span>
-      </div>
-
-      {/* 4. Total Solves */}
-      <div className="border border-[#EAECEF] bg-white rounded-2xl p-3 sm:p-4 text-center flex flex-col items-center justify-center gap-1 shadow-xs transition-all">
-        <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-500 font-medium">
-          Solves
-        </span>
-        <div className="flex items-baseline gap-1 mt-0.5">
-          <span className="font-mono text-2xl sm:text-3xl font-bold text-[#111111] tabular-nums">
-            {stats.totalSolves}
-          </span>
-        </div>
-        <span className="text-[11px] font-mono text-neutral-400">
-          {stats.totalSolves > 0 ? `${stats.validSolvesCount} hợp lệ` : '--'}
-        </span>
-      </div>
+      ))}
     </div>
   );
 };

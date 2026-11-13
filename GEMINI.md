@@ -89,29 +89,36 @@ Người dùng cầm khối Rubik nhìn thẳng vào mặt trước và xoay the
 
 ---
 
-## 6. Design System & Vibe Coding Governance
+## 6. Design System & Vibe Coding Governance (Monochrome Editorial Bento)
 
-### 6.1. Visual DNA (Zen Stage & Precision HUD)
-- **Page Background**: `#F8F9FA`
-- **Bento Cards**: `#FFFFFF` với `border: 1px solid #EAECEF`, `border-radius: 20px` hoặc `24px`, shadow tinh tế (`shadow-sm` hoặc `shadow-[0_2px_12px_rgba(0,0,0,0.02)]`).
-- **Primary Buttons**: Matte black `#111111` với chữ trắng, hover `#262626` / `#222222`, bo góc `rounded-xl`.
-- **Accent Badges**:
-  - **Amber Glow** (`#D97706` / bg `#FEF3C7` / `#FEF6EE`): Triggers, holding notes, inspection status, pill 2-Look.
-  - **Emerald Green** (`#059669` / bg `#D1FAE5` / `#ECFDF3`): Solved, active, WCA verified, Mastered.
-  - **Slate/Muted**: `#64748B` / bg `#F1F5F9` / `#F8F9FA`.
+### 6.1. Visual DNA (Apple-Inspired Editorial Tech & Zen Stage)
+- **Page Background & Primary Text**: `#F8F9FA` (canvas) với `#111111` (chữ chính) và `selection:bg-[#111111] selection:text-white`.
+- **Bento Cards**: `#FFFFFF` với `border: 1px solid #EAECEF`, `rounded-2xl`, shadow tinh tế `shadow-[0_2px_10px_rgba(0,0,0,0.02)]` (class `.bento-card`).
+- **Strictly Monochrome UI**:
+  - **Primary / Active States**: Matte black `#111111` với chữ trắng `#FFFFFF` (nút chính, segmented pill đang chọn, badge bước hiện tại).
+  - **Secondary / Neutral States**: `#F1F5F9` (surface phụ), `#64748B` (nhãn phụ), `#94A3B8` (muted/placeholder).
+  - **Color Discipline**: Tuyệt đối hạn chế màu sặc sỡ trên UI chrome; chỉ giữ màu rực rỡ cho **sticker khối Rubik 2D/3D**.
 - **Typography**:
-  - **UI text**: `Inter`, system sans-serif.
-  - **Scramble, Notation, Algs, Timers, Keycaps**: Bắt buộc dùng `JetBrains Mono` strictly.
+  - **UI text**: `Inter` / `Plus Jakarta Sans` với `tracking-tight` cho tiêu đề.
+  - **Scramble, Notation, Algs, Timers, Keycaps**: Bắt buộc dùng `JetBrains Mono` kết hợp `tabular-nums`.
+- **Touch & Micro-interactions**:
+  - Vùng chạm mobile tối thiểu `min-h-[44px]` cho các nút thao tác chính/điều hướng.
+  - Hiệu ứng chuyển động thống nhất: `transition-all duration-200 ease-out active:scale-[0.98]`.
+  - Icon Lucide mảnh (`strokeWidth={1.5}`–`1.75`); không lặp icon ký tự Unicode (ví dụ `▶`) bên cạnh SVG icon `<Play />`.
 
-### 6.2. Layout & Viewport Invariants (Bất Biến Bắt Buộc - DO NOT BREAK)
-- **Bố cục 2 cột chia đôi (`Step 3` & `Algorithms`)**:
-  - Container lưới cha (`grid grid-cols-1 lg:grid-cols-12`) **BẮT BUỘC PHẢI CÓ** `items-start` để chống kéo dãn chiều dọc vô hạn theo danh sách bên cạnh.
-  - Cột sticky studio (trái/phải) phải bị chặn trần viewport `h-[calc(100vh-2rem)]` (hoặc `max-h-[760px]`) kết hợp `overflow-hidden` / `overflow-y-auto`.
-  - **Thanh điều khiển Playback (`Play [Space]`, `<`, `>`) BẮT BUỘC** luôn nằm ngay sát dưới khung 3D Canvas, không bao giờ được đẩy tụt xuống dưới các khối nội dung dài như formula scrubber hoặc fingertrick HUD.
-- **Mobile Viewport (< 1024px)**:
-  - Thanh dock nổi dưới đáy phải dùng thẻ Bento kính mờ sáng: `bg-white/95 backdrop-blur-md border border-[#EAECEF]` kèm nút matte black `#111111`.
-  - Thêm khoảng đệm đáy `pb-24 lg:pb-8` cho các danh sách cuộn để dock nổi không che mất phần tử cuối cùng.
-  - Trên mobile ở Step 3, cụm 3D viewport và playback controls ghim thành mobile top dock với `sticky top-14 lg:static z-30 bg-white/95 backdrop-blur-md` để thẻ các stage bên dưới không cuộn đè lên nút điều khiển.
+### 6.2. Header, Navigation & Layout Invariants (Bất Biến Bắt Buộc - DO NOT BREAK)
+- **Header & Mobile Bottom Dock**:
+  - **Top Header**: Glassmorphism `bg-[#F8F9FA]/85 backdrop-blur-md border-b border-[#EAECEF]`, chỉ giữ logo 9 chấm + `CubeMaster AI`, bộ chuyển `[ 2x2 | 3x3 | 4x4 ]` đơn sắc, và nút Settings tối giản.
+  - **Mobile Bottom Dock (< 1024px)**: `bg-white/95 backdrop-blur-md border-t border-[#EAECEF]`, dấu chấm active `#111111`, kèm khoảng đệm đáy `pb-24 lg:pb-8` cho các danh sách cuộn.
+- **Step 3 (`Solve & Learn`) & 3D Viewport**:
+  - **Grid Split**: `grid grid-cols-1 lg:grid-cols-12 gap-5 items-start` với cột trái 3D Stage `lg:col-span-7` và cột phải Roadmap `lg:col-span-5`.
+  - **Luồng xếp chồng chuẩn (No Scroll Overlap)**: Cột trái dùng `flex flex-col gap-3` thông thường (không dùng `sticky` hay `max-h` cắt xén quanh thanh playback) để **3D Stage → Playback Controls (`Lùi`, `Chạy Space`, `Tiến`) → Speed Selector → Execution Tape** luôn hiển thị đầy đủ, không bị che khuất khi cuộn.
+  - **3D Stage (`CubeViewport3D` & `ThreeCubeViewer`)**:
+    - Chiều cao tiêu chuẩn: `h-[350px] sm:h-[400px] lg:h-[500px] w-full`, nền trắng `bg-white` hòa vào thẻ Bento, hỗ trợ vuốt xoay `touch-none`.
+    - Camera `PerspectiveCamera(fov: 36)` đặt tại `(4.1, 3.4, 4.1)` (`Iso`), `cubeGroup.scale.setScalar(1.18)`, lõi cầu đen `#111111` + viền cạnh `EdgesGeometry` `#111111` tạo độ tương phản sắc nét.
+    - Micro-HUD gắn gọn ở 4 góc ngoài (`top-3 left-3`, `top-3 right-3`, `bottom-3 left-3`, `bottom-3 right-3`), không đè lên khối 3D.
+- **Algorithms Tab**:
+  - Tách riêng thanh cuộn ngang Category Filter Bar (có edge fade + nút `‹`/`›`) và hàng Status Filter Bar (`whitespace-nowrap`); ô tìm kiếm responsive (`w-full sm:w-72 min-w-0`).
 
 ### 6.3. Component Size Guardrails (Quy Chuẩn Kích Thước Component)
 - **Ngưỡng giới hạn**: Không component React đơn lẻ nào được vượt quá 350 dòng code (`LOC <= 350`).

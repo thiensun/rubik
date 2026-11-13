@@ -57,7 +57,6 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
 }) => {
   const activeMoveRef = useRef<HTMLDivElement | null>(null);
 
-  // Smoothly center the active move badge in the single-row horizontal tape scroller
   useEffect(() => {
     if (activeMoveRef.current) {
       activeMoveRef.current.scrollIntoView({
@@ -70,35 +69,35 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* PINNED PLAYBACK CONTROLS (Right beneath 3D Canvas) */}
-      <div className="bg-white rounded-2xl border border-[#EAECEF] p-2.5 sm:p-3 shadow-xs shrink-0 flex flex-col gap-2">
-        {/* Row 1 (Primary Action Row - Full Width) */}
-        <div className="grid grid-cols-[auto_1fr_auto] gap-2 items-center w-full">
-          {/* Left: Compact step-back button with rewind */}
-          <div className="flex items-center gap-1">
-            <button
-              disabled={currentMoveGlobalIdx === 0}
-              onClick={onRewind}
-              className="h-11 px-2.5 rounded-xl bg-[#F8F9FA] border border-[#EAECEF] hover:bg-neutral-200 text-neutral-700 transition-colors disabled:opacity-30 disabled:hover:bg-[#F8F9FA] flex items-center justify-center cursor-pointer active:scale-95"
-              title="Về Nước Đầu Tiên [Home]"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-            <button
-              disabled={currentMoveGlobalIdx === 0}
-              onClick={onPrevMove}
-              className="h-11 px-3 sm:px-3.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 text-xs font-semibold transition-all shadow-2xs flex items-center gap-1 disabled:opacity-30 whitespace-nowrap cursor-pointer active:scale-95"
-              title="Lùi 1 Nước [Mũi tên trái]"
-            >
-              <SkipBack className="w-3.5 h-3.5 shrink-0" />
-              <span>Lùi</span>
-            </button>
-          </div>
-
-          {/* Center: Prominent matte black button */}
+      {/* PINNED PLAYBACK CONTROLS IN WHITE BENTO CONTAINER */}
+      <div className="bg-white rounded-2xl border border-[#EAECEF] p-3 shadow-[0_2px_10px_rgba(0,0,0,0.02)] shrink-0 flex flex-col gap-2.5">
+        {/* Row 1 (Evenly Spaced Playback Controls) */}
+        <div className="flex items-center justify-between gap-2 w-full">
           <button
+            type="button"
+            disabled={currentMoveGlobalIdx === 0}
+            onClick={onRewind}
+            className="min-h-[44px] min-w-[44px] px-3 rounded-xl bg-[#F1F5F9] border border-[#EAECEF] hover:bg-[#EAECEF] text-[#111111] transition-all duration-200 ease-out active:scale-[0.98] disabled:opacity-30 flex items-center justify-center cursor-pointer"
+            title="Về Nước Đầu Tiên [Home]"
+          >
+            <RotateCcw className="w-4 h-4 stroke-[1.75]" />
+          </button>
+
+          <button
+            type="button"
+            disabled={currentMoveGlobalIdx === 0}
+            onClick={onPrevMove}
+            className="min-h-[44px] px-3.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F1F5F9] text-[#111111] text-xs font-semibold transition-all duration-200 ease-out active:scale-[0.98] flex items-center justify-center gap-1.5 disabled:opacity-30 whitespace-nowrap cursor-pointer"
+            title="Lùi 1 Nước [Mũi tên trái]"
+          >
+            <SkipBack className="w-3.5 h-3.5 shrink-0 stroke-[1.75]" />
+            <span>Lùi</span>
+          </button>
+
+          <button
+            type="button"
             onClick={onTogglePlay}
-            className="w-full h-11 bg-[#111111] hover:bg-neutral-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+            className="flex-1 min-h-[44px] px-4 bg-[#111111] hover:bg-neutral-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer"
           >
             {isPlaying ? (
               <Pause className="w-4 h-4 fill-current shrink-0" />
@@ -115,30 +114,30 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
             <span className="hidden sm:inline-block keycap-dark ml-0.5 text-[10px]">Space</span>
           </button>
 
-          {/* Right: Compact step-forward button */}
           <button
+            type="button"
             disabled={currentMoveGlobalIdx >= allMovesLength}
             onClick={onNextMove}
-            className="h-11 px-3 sm:px-4 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F3F4F6] text-neutral-800 text-xs font-semibold transition-all shadow-2xs flex items-center gap-1 disabled:opacity-30 whitespace-nowrap cursor-pointer active:scale-95"
+            className="min-h-[44px] px-3.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F1F5F9] text-[#111111] text-xs font-semibold transition-all duration-200 ease-out active:scale-[0.98] flex items-center justify-center gap-1.5 disabled:opacity-30 whitespace-nowrap cursor-pointer"
             title="Tiến 1 Nước [Mũi tên phải]"
           >
             <span>{currentMoveGlobalIdx >= allMovesLength ? 'Xong' : 'Tiến'}</span>
-            <SkipForward className="w-3.5 h-3.5 shrink-0" />
+            <SkipForward className="w-3.5 h-3.5 shrink-0 stroke-[1.75]" />
           </button>
         </div>
 
-        {/* Row 2 (Secondary Controls Row) */}
-        <div className="flex items-center justify-between w-full pt-1.5 border-t border-[#F2F4F7]">
-          {/* Left: Compact speed pill group */}
-          <div className="flex items-center bg-[#F3F4F6] p-0.5 rounded-xl border border-[#EAECEF] text-[11px] font-mono">
+        {/* Row 2 (Secondary Speed & Step Counter) */}
+        <div className="flex items-center justify-between w-full pt-2 border-t border-[#EAECEF]">
+          <div className="flex items-center bg-[#F1F5F9] p-1 rounded-xl border border-[#EAECEF] font-mono">
             {(['0.5x', '1.0x', '2.0x'] as const).map((spd) => (
               <button
                 key={spd}
+                type="button"
                 onClick={() => setPlaybackSpeed(spd)}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer text-xs ${
+                className={`px-2.5 py-1 rounded-lg transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer text-xs tabular-nums ${
                   playbackSpeed === spd
-                    ? 'bg-white text-neutral-900 font-bold shadow-2xs'
-                    : 'text-neutral-500 hover:text-neutral-800'
+                    ? 'bg-[#111111] text-white font-bold'
+                    : 'text-[#64748B] hover:text-[#111111]'
                 }`}
               >
                 {spd}
@@ -146,39 +145,28 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
             ))}
           </div>
 
-          {/* Right: Move counter badge & Reset icon */}
-          <div className="flex items-center gap-2 font-mono text-[11px]">
-            <span className="px-2.5 py-1 rounded-lg bg-[#F8F9FA] border border-[#EAECEF] font-bold text-neutral-700">
-              {currentMoveGlobalIdx >= allMovesLength && allMovesLength > 0
-                ? 'Hoàn Thành ✓'
-                : `Bước ${Math.min(currentMoveGlobalIdx + 1, allMovesLength || 1)} / ${allMovesLength || 0}`}
-            </span>
-            <button
-              onClick={onRewind}
-              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-[#F3F4F6] transition-colors cursor-pointer"
-              title="Đặt lại về nước ban đầu"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          <span className="px-3 py-1 rounded-xl bg-[#F8F9FA] border border-[#EAECEF] font-mono text-[11px] font-semibold text-[#111111] tabular-nums">
+            {currentMoveGlobalIdx >= allMovesLength && allMovesLength > 0
+              ? 'Hoàn Thành ✓'
+              : `Bước ${Math.min(currentMoveGlobalIdx + 1, allMovesLength || 1)} / ${allMovesLength || 0}`}
+          </span>
         </div>
       </div>
 
-      {/* SCROLLABLE ALGORITHMIC EXECUTION TAPE */}
-      <div className="bg-[#F8F9FA] rounded-2xl border border-[#EAECEF] p-3 sm:p-3.5 flex-1 min-h-0 flex flex-col justify-between gap-2 overflow-hidden">
-        <div className="flex items-center justify-between pb-1 border-b border-[#EAECEF]/60 text-[10.5px] font-mono text-neutral-400 font-semibold uppercase tracking-wider shrink-0">
-          <span>ALGORITHMIC EXECUTION TAPE</span>
-          <span className="text-neutral-600 font-bold truncate max-w-[55%]">
+      {/* SCROLLABLE EXECUTION TAPE */}
+      <div className="bg-white rounded-2xl border border-[#EAECEF] p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col gap-2 overflow-hidden">
+        <div className="flex items-center justify-between pb-1.5 border-b border-[#EAECEF] text-[10.5px] font-mono text-[#64748B] font-semibold uppercase tracking-wider">
+          <span>EXECUTION TAPE</span>
+          <span className="text-[#111111] font-bold truncate max-w-[58%]">
             {activeSubStep ? activeSubStep.labelVi : stageTitle}
           </span>
         </div>
 
-        {/* Tape Reel (Single-row horizontal scroller on mobile with ample height) */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2.5 px-1 w-full">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1.5 px-0.5 w-full">
           {tapeMoves.length === 0 ? (
-            <div className="py-2 px-3 text-xs font-mono font-bold text-emerald-800 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
-              <span>Khối Rubik của bạn đã ở trạng thái hoàn thành 100%! (0 Moves)</span>
+            <div className="py-2 px-3 text-xs font-mono font-semibold text-[#111111] bg-[#F1F5F9] rounded-xl border border-[#EAECEF] flex items-center gap-2">
+              <Check className="w-4 h-4 stroke-[2.5]" />
+              <span>Khối Rubik đã hoàn thành (0 Moves)</span>
             </div>
           ) : (
             tapeMoves.map((m) => {
@@ -196,37 +184,29 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
                   key={m.num}
                   ref={isCurrentTarget ? activeMoveRef : null}
                   onClick={() => onSelectMove(m.num)}
-                  className={`font-mono shrink-0 min-w-[52px] h-[58px] px-2 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all ${
+                  className={`font-mono shrink-0 min-w-[52px] h-[56px] px-2 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] tabular-nums ${
                     isCurrentTarget
-                      ? 'bg-[#111111] text-white shadow-sm scale-105 ring-2 ring-emerald-500'
+                      ? 'bg-[#111111] text-white shadow-sm'
                       : isAllDone
-                      ? 'bg-emerald-50 text-emerald-800 border-2 border-emerald-400 font-bold'
+                      ? 'bg-[#F1F5F9] text-[#111111] border border-[#111111]/30 font-semibold'
                       : isInActiveSubStep
-                      ? `bg-white text-neutral-900 shadow-2xs ${
-                          isWideOrSlice ? 'border-2 border-double border-neutral-400' : 'border-2 border-emerald-500'
+                      ? `bg-white text-[#111111] ${
+                          isWideOrSlice ? 'border-2 border-double border-[#64748B]' : 'border-[1.5px] border-[#111111]'
                         }`
                       : activeSubStep && activeSubStep.movesCount > 0
-                      ? `bg-white/60 text-neutral-400 opacity-60 hover:opacity-100 hover:border-neutral-400 ${
-                          isWideOrSlice ? 'border-2 border-double border-neutral-400' : 'border border-[#EAECEF]'
-                        }`
-                      : `bg-white text-neutral-800 hover:border-neutral-400 ${
-                          isWideOrSlice ? 'border-2 border-double border-neutral-400' : 'border border-[#EAECEF]'
+                      ? 'bg-[#F8F9FA] text-[#94A3B8] border border-[#EAECEF] hover:text-[#111111]'
+                      : `bg-white text-[#111111] hover:border-[#94A3B8] ${
+                          isWideOrSlice ? 'border-2 border-double border-[#64748B]' : 'border border-[#EAECEF]'
                         }`
                   }`}
                 >
                   <span className="font-bold text-base leading-none">{m.move}</span>
                   <span
-                    className={`text-[9px] mt-1 tracking-tight font-mono ${
-                      isCurrentTarget
-                        ? 'text-emerald-400 font-bold'
-                        : isAllDone
-                        ? 'text-emerald-600 font-bold'
-                        : isInActiveSubStep
-                        ? 'text-emerald-600 font-bold'
-                        : 'text-neutral-400'
+                    className={`text-[9px] mt-1 font-mono ${
+                      isCurrentTarget ? 'text-white/75' : 'text-[#94A3B8]'
                     }`}
                   >
-                    {isAllDone ? 'ĐÃ GIẢI' : isCurrentTarget ? 'ACTIVE' : `#${m.num}`}
+                    {isAllDone ? 'DONE' : isCurrentTarget ? 'NOW' : `#${m.num}`}
                   </span>
                 </div>
               );
@@ -234,21 +214,13 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
           )}
         </div>
 
-        {/* Clear Vietnamese Explanation & Sub-metrics */}
-        <div className="pt-1.5 border-t border-[#EAECEF] flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 shrink-0">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-            <span className="text-[11px] font-semibold text-neutral-900 truncate">
-              {currentMove.textVi}{' '}
-              <span className="text-neutral-400 font-normal">
-                ({currentMove.holdTip})
-              </span>
-            </span>
-          </div>
-
-          <div className="font-mono text-[10.5px] text-neutral-500 shrink-0">
-            Góc xoay: <span className="font-bold text-neutral-900">{currentMove.angle}</span> ·
-            Lát cắt: <span className="font-bold text-neutral-900">{currentMove.slice}</span>
+        <div className="pt-1.5 border-t border-[#EAECEF] flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px]">
+          <span className="font-semibold text-[#111111] truncate">
+            {currentMove.textVi}{' '}
+            <span className="text-[#64748B] font-normal">({currentMove.holdTip})</span>
+          </span>
+          <div className="font-mono text-[10.5px] text-[#64748B] shrink-0 tabular-nums">
+            <span className="font-semibold text-[#111111]">{currentMove.angle}</span> · {currentMove.slice}
           </div>
         </div>
       </div>

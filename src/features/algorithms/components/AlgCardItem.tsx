@@ -36,26 +36,21 @@ export const AlgCardItem = React.memo<AlgCardItemProps>(({
   const uniqueTriggers = useMemo(() => extractUniqueTriggers(alg.mainAlg), [alg.mainAlg]);
 
   const formulaNode = (
-    <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs leading-relaxed">
+    <div className="flex flex-wrap items-center gap-1.5 font-mono tabular-nums text-xs leading-relaxed">
       {segments.map((seg, idx) =>
         seg.type === 'trigger' && seg.trigger ? (
           <span
             key={idx}
-            style={{
-              color: seg.trigger.color,
-              backgroundColor: seg.trigger.bgColor,
-              borderColor: seg.trigger.borderColor,
-            }}
             title={`${seg.trigger.tag}: ${seg.trigger.pattern} — ${seg.trigger.descriptionVN}`}
-            className="px-2 py-0.5 rounded-lg border font-extrabold cursor-help transition-transform hover:scale-105 inline-flex items-center gap-1 shadow-2xs"
+            className="px-2 py-0.5 rounded-lg border border-[#EAECEF] bg-white text-[#111111] font-bold cursor-help inline-flex items-center gap-1"
           >
             <span>{seg.rawText}</span>
-            <span className="text-[9px] uppercase tracking-tight opacity-85 font-bold">
+            <span className="text-[9px] uppercase tracking-tight text-[#64748B] font-semibold">
               [{seg.trigger.tag}]
             </span>
           </span>
         ) : (
-          <span key={idx} className="font-bold text-neutral-900 px-0.5">
+          <span key={idx} className="font-bold text-[#111111] px-0.5">
             {seg.rawText}
           </span>
         ),
@@ -71,10 +66,10 @@ export const AlgCardItem = React.memo<AlgCardItemProps>(({
           onOpenMobileSheet();
         }
       }}
-      className={`bg-white rounded-[24px] p-3.5 sm:p-5 flex flex-col justify-between gap-3 sm:gap-4 cursor-pointer transition-all ${
+      className={`bg-white rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-3 sm:gap-4 cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] shadow-[0_2px_10px_rgba(0,0,0,0.02)] ${
         isSelectedInTrainer
-          ? 'border-2 border-[#111111] shadow-[0_8px_24px_rgba(0,0,0,0.06)]'
-          : 'border border-[#EAECEF] shadow-[0_2px_12px_rgba(0,0,0,0.02)] hover:border-neutral-300'
+          ? 'border-[1.5px] border-[#111111]'
+          : 'border border-[#EAECEF] hover:border-[#94A3B8]'
       }`}
     >
       {/* 1. MOBILE COMPACT ROW LAYOUT (< sm) */}
@@ -92,18 +87,18 @@ export const AlgCardItem = React.memo<AlgCardItemProps>(({
           />
         </div>
 
-        <div className="flex-1 min-w-0 flex flex-col gap-1">
-          <div className="flex items-center justify-between gap-1">
-            <div className="flex items-center gap-1.5 truncate">
-              <span className="font-mono text-xs font-black text-neutral-900 truncate">
+        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+          <div className="flex items-center justify-between gap-1.5">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="font-sans text-xs font-bold tracking-tight text-[#111111] truncate">
                 {alg.name}
               </span>
-              <span className="px-1.5 py-0.2 rounded bg-[#F1F3F5] text-neutral-800 font-mono text-[9px] font-bold">
+              <span className="px-1.5 py-0.5 rounded bg-[#F1F5F9] text-[#64748B] font-mono text-[9px] font-semibold shrink-0">
                 {alg.category}
               </span>
               {alg.isTwoLook && (
-                <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-mono text-[9px] font-extrabold">
-                  ★ 2L
+                <span className="px-1.5 py-0.5 rounded bg-[#111111] text-white font-mono text-[9px] font-bold shrink-0">
+                  2L
                 </span>
               )}
             </div>
@@ -114,19 +109,19 @@ export const AlgCardItem = React.memo<AlgCardItemProps>(({
                 e.stopPropagation();
                 onCycleMastery(alg.id);
               }}
-              className={`shrink-0 px-2 py-0.5 rounded-full font-mono text-[9px] font-bold border transition-all cursor-pointer ${
+              className={`shrink-0 px-2 py-0.5 rounded-lg font-mono text-[10px] font-bold border transition-all duration-200 ease-out cursor-pointer ${
                 status === 'mastered'
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                  ? 'bg-[#111111] text-white border-[#111111]'
                   : status === 'learning'
-                  ? 'bg-amber-50 text-amber-800 border-amber-300'
-                  : 'bg-[#F8F9FA] text-neutral-500 border-[#EAECEF]'
+                  ? 'bg-[#F1F5F9] text-[#111111] border-[#EAECEF]'
+                  : 'bg-white text-[#64748B] border-[#EAECEF]'
               }`}
             >
               {status === 'mastered' ? '✓' : status === 'learning' ? '●' : '○'}
             </button>
           </div>
 
-          <div className="font-mono text-xs text-neutral-800 font-bold leading-snug break-words">
+          <div className="font-mono text-xs text-[#111111] font-bold leading-snug break-words">
             {formulaNode}
           </div>
 
@@ -138,7 +133,7 @@ export const AlgCardItem = React.memo<AlgCardItemProps>(({
                 onSelectAlgForTrainer(alg);
                 onOpenMobileSheet();
               }}
-              className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#111111] hover:bg-neutral-800 text-white font-mono text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
+              className="min-h-[44px] px-4 py-2 rounded-xl bg-[#111111] hover:bg-neutral-800 text-white font-mono text-xs font-bold transition-all duration-200 ease-out active:scale-[0.98] flex items-center gap-1.5 cursor-pointer"
             >
               <span>▶ Xem 3D</span>
             </button>
@@ -149,25 +144,27 @@ export const AlgCardItem = React.memo<AlgCardItemProps>(({
       {/* 2. DESKTOP & TABLET COMPREHENSIVE CARD (>= sm) */}
       <div className="hidden sm:flex flex-col justify-between gap-4 h-full">
         <div className="flex items-start gap-4">
-          <DynamicCaseDiagram
-            id={alg.id}
-            mainAlg={alg.mainAlg}
-            setupAlg={alg.setupAlg}
-            category={alg.category}
-            subGroup={alg.subGroup}
-            colorScheme={colorScheme}
-            size={86}
-            customArrows={alg.arrows}
-          />
+          <div className="shrink-0 bg-[#F8F9FA] rounded-xl border border-[#EAECEF] p-1.5">
+            <DynamicCaseDiagram
+              id={alg.id}
+              mainAlg={alg.mainAlg}
+              setupAlg={alg.setupAlg}
+              category={alg.category}
+              subGroup={alg.subGroup}
+              colorScheme={colorScheme}
+              size={84}
+              customArrows={alg.arrows}
+            />
+          </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1">
+            <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
               <div className="flex items-center gap-1.5">
-                <span className="px-2 py-0.5 rounded-md bg-[#F1F3F5] text-neutral-800 font-mono text-[10px] font-bold uppercase">
+                <span className="px-2 py-0.5 rounded-lg bg-[#F1F5F9] text-[#64748B] font-mono text-[10px] font-bold uppercase">
                   {alg.category}
                 </span>
                 {alg.isTwoLook && (
-                  <span className="px-2 py-0.5 rounded-md bg-[#111111] text-white font-mono text-[10px] font-extrabold">
+                  <span className="px-2 py-0.5 rounded-lg bg-[#111111] text-white font-mono text-[10px] font-bold">
                     2-LOOK
                   </span>
                 )}
@@ -179,12 +176,12 @@ export const AlgCardItem = React.memo<AlgCardItemProps>(({
                   e.stopPropagation();
                   onCycleMastery(alg.id);
                 }}
-                className={`px-2.5 py-1 rounded-full font-mono text-[10px] font-bold border transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold border transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer ${
                   status === 'mastered'
                     ? 'bg-[#111111] text-white border-[#111111]'
                     : status === 'learning'
-                    ? 'bg-[#F1F5F9] text-neutral-800 border-[#D0D5DD]'
-                    : 'bg-white text-neutral-500 border-[#EAECEF] hover:text-neutral-800'
+                    ? 'bg-[#F1F5F9] text-[#111111] border-[#EAECEF]'
+                    : 'bg-white text-[#64748B] border-[#EAECEF] hover:text-[#111111]'
                 }`}
                 title="Nhấn để chuyển trạng thái: Chưa học -> Đang tập -> Đã thuộc"
               >
@@ -196,10 +193,10 @@ export const AlgCardItem = React.memo<AlgCardItemProps>(({
               </button>
             </div>
 
-            <h3 className="text-sm font-extrabold text-neutral-900 leading-snug">
+            <h3 className="text-sm font-bold tracking-tight text-[#111111] leading-snug">
               {alg.name}
             </h3>
-            <p className="text-[11px] text-neutral-500 mt-1 leading-relaxed line-clamp-2">
+            <p className="text-[11px] text-[#64748B] mt-1 leading-relaxed line-clamp-2">
               {alg.recognitionVN}
             </p>
           </div>
@@ -210,13 +207,8 @@ export const AlgCardItem = React.memo<AlgCardItemProps>(({
             {uniqueTriggers.map((t) => (
               <span
                 key={t.tag}
-                style={{
-                  color: t.color,
-                  backgroundColor: t.bgColor,
-                  borderColor: t.borderColor,
-                }}
                 title={`${t.tag}: ${t.pattern}`}
-                className="text-[9.5px] font-mono font-bold px-1.5 py-0.2 rounded border"
+                className="text-[9.5px] font-mono font-semibold px-1.5 py-0.5 rounded-md border border-[#EAECEF] bg-white text-[#64748B]"
               >
                 {t.tag}
               </span>
@@ -227,11 +219,11 @@ export const AlgCardItem = React.memo<AlgCardItemProps>(({
                 e.stopPropagation();
                 onCopyFormula(alg.id, alg.mainAlg);
               }}
-              className="p-1 rounded-lg hover:bg-white text-neutral-400 hover:text-neutral-900 transition-colors cursor-pointer"
+              className="p-1 rounded-lg hover:bg-white text-[#64748B] hover:text-[#111111] transition-colors cursor-pointer"
               title="Sao chép công thức"
             >
               {isCopied ? (
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <Check className="w-3.5 h-3.5 text-[#111111]" />
               ) : (
                 <Copy className="w-3.5 h-3.5" />
               )}
@@ -241,9 +233,9 @@ export const AlgCardItem = React.memo<AlgCardItemProps>(({
           {formulaNode}
         </div>
 
-        <div className="pt-2.5 border-t border-[#F1F3F5] flex flex-col gap-2.5">
-          <div className="bg-[#F8F9FA] border border-[#EAECEF] rounded-xl px-3 py-2.5 h-auto text-xs text-neutral-600 leading-relaxed">
-            <strong className="text-neutral-900 font-semibold">Fingertrick:</strong>{' '}
+        <div className="pt-2.5 border-t border-[#EAECEF] flex flex-col gap-2.5">
+          <div className="bg-[#F8F9FA] border border-[#EAECEF] rounded-xl px-3 py-2 text-xs text-[#64748B] leading-relaxed">
+            <strong className="text-[#111111] font-semibold">Fingertrick:</strong>{' '}
             {alg.fingertrickVN}
           </div>
 
@@ -266,10 +258,10 @@ export const AlgCardItem = React.memo<AlgCardItemProps>(({
                   });
                 }
               }}
-              className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#111111] hover:bg-neutral-800 text-white font-mono text-[11px] font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+              className="min-h-[44px] px-4 py-2 rounded-xl bg-[#111111] hover:bg-neutral-800 text-white font-mono text-xs font-bold transition-all duration-200 ease-out active:scale-[0.98] flex items-center gap-1.5 cursor-pointer"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
-              <span>Nạp vào Khối 3D</span>
+              <span>Xem 3D</span>
             </button>
           </div>
         </div>

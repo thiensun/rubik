@@ -65,12 +65,12 @@ export const ScrollablePillBar: React.FC<ScrollablePillBarProps> = ({
 
       {canScrollLeft && (
         <>
-          <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#F8F9FA] via-[#F8F9FA]/80 to-transparent pointer-events-none z-10 rounded-l-2xl" />
+          <div className="absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-[#F8F9FA] via-[#F8F9FA]/85 to-transparent pointer-events-none z-10 rounded-l-2xl" />
           <button
             type="button"
             onClick={() => scrollRef.current?.scrollBy({ left: -220, behavior: 'smooth' })}
             aria-label="Cuộn sang trái"
-            className="absolute left-1.5 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white border border-[#EAECEF] text-[#111111] shadow-sm flex items-center justify-center hover:bg-neutral-100 transition-all cursor-pointer font-mono text-sm leading-none"
+            className="absolute left-1.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white border border-[#EAECEF] text-[#111111] shadow-[0_2px_10px_rgba(0,0,0,0.04)] flex items-center justify-center hover:bg-[#F1F5F9] transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer font-mono text-sm leading-none"
           >
             ‹
           </button>
@@ -79,12 +79,12 @@ export const ScrollablePillBar: React.FC<ScrollablePillBarProps> = ({
 
       {canScrollRight && (
         <>
-          <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#F8F9FA] via-[#F8F9FA]/80 to-transparent pointer-events-none z-10 rounded-r-2xl" />
+          <div className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-[#F8F9FA] via-[#F8F9FA]/85 to-transparent pointer-events-none z-10 rounded-r-2xl" />
           <button
             type="button"
             onClick={() => scrollRef.current?.scrollBy({ left: 220, behavior: 'smooth' })}
             aria-label="Cuộn sang phải"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white border border-[#EAECEF] text-[#111111] shadow-sm flex items-center justify-center hover:bg-neutral-100 transition-all cursor-pointer font-mono text-sm leading-none"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white border border-[#EAECEF] text-[#111111] shadow-[0_2px_10px_rgba(0,0,0,0.04)] flex items-center justify-center hover:bg-[#F1F5F9] transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer font-mono text-sm leading-none"
           >
             ›
           </button>

@@ -78,12 +78,12 @@ export const AuditLogModal: React.FC<AuditLogModalProps> = ({ isOpen, onClose, s
                     </td>
                     <td className="py-2.5">
                       <span
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${
                           s.penalty === 'dnf'
-                            ? 'bg-red-100 text-red-700'
+                            ? 'bg-[#111111] text-white'
                             : s.penalty === '+2'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-emerald-100 text-emerald-700'
+                            ? 'bg-[#EAECEF] text-[#111111]'
+                            : 'bg-[#F1F5F9] text-[#64748B]'
                         }`}
                       >
                         {s.penalty === 'none' ? 'OK' : s.penalty.toUpperCase()}

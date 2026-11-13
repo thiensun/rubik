@@ -314,7 +314,7 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
   isSolved = false,
   playbackSpeed = '1.0x',
   onAnimationComplete,
-  heightClassName = 'h-[320px] sm:h-[360px]',
+  heightClassName = 'h-[350px] sm:h-[400px] lg:h-[500px] w-full',
   compact = false,
   isOrbitLocked = false,
 }) => {
@@ -350,8 +350,8 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
 
     const scene = new THREE.Scene();
 
-    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
-    camera.position.set(5.2, 4.2, 6.2);
+    const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 100);
+    camera.position.set(4.1, 3.4, 4.1);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -366,8 +366,8 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.enablePan = false;
-    controls.minDistance = 4.5;
-    controls.maxDistance = 12;
+    controls.minDistance = 3.5;
+    controls.maxDistance = 10;
     controls.enabled = !isOrbitLocked;
     controlsRef.current = controls;
 
@@ -387,10 +387,18 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     scene.add(dirLight3);
 
     const cubeGroup = new THREE.Group();
+    cubeGroup.scale.setScalar(1.18);
     scene.add(cubeGroup);
     cubeGroupRef.current = cubeGroup;
 
+    const coreGeo = new THREE.SphereGeometry(1.38, 24, 24);
+    const coreMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+    const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+    cubeGroup.add(coreMesh);
+
     const geometry = new THREE.BoxGeometry(cubieScale, cubieScale, cubieScale);
+    const edgesGeo = new THREE.EdgesGeometry(geometry);
+    const edgeMat = new THREE.LineBasicMaterial({ color: 0x111111 });
     const cubelets: CubeletInitialState[] = [];
 
     for (let ix = 0; ix < cubeSize; ix++) {
@@ -415,53 +423,73 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
               color:
                 ix === cubeSize - 1
                   ? getCubeletFaceColor('R', ix, iy, iz, cubeSize, initialCubeState)
-                  : 0x111317,
+                  : 0x111111,
               roughness: 0.25,
               metalness: 0.05,
+              polygonOffset: true,
+              polygonOffsetFactor: 1,
+              polygonOffsetUnits: 1,
             }),
             new THREE.MeshStandardMaterial({
               color:
                 ix === 0
                   ? getCubeletFaceColor('L', ix, iy, iz, cubeSize, initialCubeState)
-                  : 0x111317,
+                  : 0x111111,
               roughness: 0.25,
               metalness: 0.05,
+              polygonOffset: true,
+              polygonOffsetFactor: 1,
+              polygonOffsetUnits: 1,
             }),
             new THREE.MeshStandardMaterial({
               color:
                 iy === cubeSize - 1
                   ? getCubeletFaceColor('U', ix, iy, iz, cubeSize, initialCubeState)
-                  : 0x111317,
+                  : 0x111111,
               roughness: 0.25,
               metalness: 0.05,
+              polygonOffset: true,
+              polygonOffsetFactor: 1,
+              polygonOffsetUnits: 1,
             }),
             new THREE.MeshStandardMaterial({
               color:
                 iy === 0
                   ? getCubeletFaceColor('D', ix, iy, iz, cubeSize, initialCubeState)
-                  : 0x111317,
+                  : 0x111111,
               roughness: 0.25,
               metalness: 0.05,
+              polygonOffset: true,
+              polygonOffsetFactor: 1,
+              polygonOffsetUnits: 1,
             }),
             new THREE.MeshStandardMaterial({
               color:
                 iz === cubeSize - 1
                   ? getCubeletFaceColor('F', ix, iy, iz, cubeSize, initialCubeState)
-                  : 0x111317,
+                  : 0x111111,
               roughness: 0.25,
               metalness: 0.05,
+              polygonOffset: true,
+              polygonOffsetFactor: 1,
+              polygonOffsetUnits: 1,
             }),
             new THREE.MeshStandardMaterial({
               color:
                 iz === 0
                   ? getCubeletFaceColor('B', ix, iy, iz, cubeSize, initialCubeState)
-                  : 0x111317,
+                  : 0x111111,
               roughness: 0.25,
               metalness: 0.05,
+              polygonOffset: true,
+              polygonOffsetFactor: 1,
+              polygonOffsetUnits: 1,
             }),
           ];
 
           const mesh = new THREE.Mesh(geometry, materials);
+          const edgeLines = new THREE.LineSegments(edgesGeo, edgeMat);
+          mesh.add(edgeLines);
           const initialPos = new THREE.Vector3(gx * spacing, gy * spacing, gz * spacing);
           mesh.position.copy(initialPos);
           mesh.castShadow = true;
@@ -495,7 +523,7 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
     });
     const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
     shadowMesh.rotation.x = -Math.PI / 2;
-    shadowMesh.position.y = -2.1;
+    shadowMesh.position.y = -2.35;
     scene.add(shadowMesh);
     shadowMeshRef.current = shadowMesh;
 
@@ -553,6 +581,10 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
         }
       });
       geometry.dispose();
+      coreGeo.dispose();
+      coreMat.dispose();
+      edgesGeo.dispose();
+      edgeMat.dispose();
       shadowGeo.dispose();
       shadowTex.dispose();
       shadowMat.dispose();
@@ -733,17 +765,17 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
 
     switch (cameraPreset) {
       case 'Top':
-        camera.position.set(0, 8.2, 0.4);
+        camera.position.set(0, 5.8, 0.4);
         break;
       case 'Bottom':
-        camera.position.set(0, -8.2, 0.4);
+        camera.position.set(0, -5.8, 0.4);
         break;
       case 'Front':
-        camera.position.set(0, 0, 8.2);
+        camera.position.set(0, 0, 5.8);
         break;
       case 'Iso':
       default:
-        camera.position.set(5.2, 4.2, 6.2);
+        camera.position.set(4.1, 3.4, 4.1);
         break;
     }
     controls.target.set(0, 0, 0);
@@ -753,75 +785,69 @@ export const ThreeCubeViewer: React.FC<ThreeCubeViewerProps> = ({
 
   return (
     <div
-      className={`relative w-full ${heightClassName} shrink-0 rounded-xl bg-gradient-to-b from-[#FAFAFA] to-[#F1F3F5] border border-[#EAECEF] flex items-center justify-center overflow-hidden shadow-inner select-none`}
+      className={`relative w-full ${heightClassName} shrink-0 rounded-2xl bg-white flex items-center justify-center overflow-hidden select-none touch-none`}
     >
-      <div className="absolute inset-0 opacity-[0.06] bg-[radial-gradient(#111111_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
-
-      <div className="absolute top-2.5 inset-x-2.5 z-10 flex items-center justify-between gap-2 pointer-events-none">
-        <div className="flex items-center gap-1.5 shrink-0 max-w-[58%]">
-          <div className="bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] shadow-2xs flex items-center gap-1.5 font-mono text-[10.5px] min-w-0">
-            {isSolved ? (
-              <span className="text-emerald-600 font-bold">SOLVED ✓</span>
-            ) : (
-              <>
-                <span className="font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded text-[10.5px] border border-emerald-200 shrink-0">
-                  {currentMove || slice}
-                </span>
-                <span className="text-neutral-500 text-[10px] hidden sm:inline font-sans font-medium truncate">
-                  {(allMoves[effectiveMoveIndex] as any)?.holdTip ||
-                    (allMoves[effectiveMoveIndex] as any)?.explanation ||
-                    `${cubeSize}x${cubeSize}x${cubeSize} · Lát cắt ${slice}`}
-                </span>
-              </>
-            )}
-          </div>
+      <div className="absolute top-3 left-3 z-10 flex flex-wrap items-center gap-1.5 pointer-events-none max-w-[calc(100%-7.5rem)]">
+        <div className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full border border-[#EAECEF] shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-1.5 font-mono text-[10.5px] min-w-0">
+          {isSolved ? (
+            <span className="text-[#111111] font-bold">SOLVED ✓</span>
+          ) : (
+            <>
+              <span className="font-black text-white bg-[#111111] px-1.5 py-0.2 rounded text-[10.5px] shrink-0">
+                {currentMove || slice}
+              </span>
+              <span className="text-[#111111] text-[10px] hidden sm:inline font-sans font-medium truncate">
+                {(allMoves[effectiveMoveIndex] as any)?.holdTip ||
+                  (allMoves[effectiveMoveIndex] as any)?.explanation ||
+                  `${cubeSize}x${cubeSize}x${cubeSize} · Lát cắt ${slice}`}
+              </span>
+            </>
+          )}
         </div>
 
         {activeStageHint && !compact && (
-          <div className="flex-1 max-w-[45%] min-w-0 flex justify-center">
-            <div className="w-auto max-w-full bg-neutral-900/90 text-white backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-medium shadow-md flex items-center gap-1.5 border border-white/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
-              <span className="truncate">{activeStageHint}</span>
-            </div>
+          <div className="bg-[#111111] text-white px-2.5 py-1 rounded-full text-[10px] font-medium shadow-sm flex items-center gap-1.5 border border-[#111111] min-w-0 max-w-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+            <span className="truncate">{activeStageHint}</span>
           </div>
         )}
-
-        <div className="bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] text-[9.5px] font-mono text-neutral-600 flex items-center gap-1 shadow-2xs shrink-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="truncate max-w-[110px]">
-            {compact && activeStageHint ? activeStageHint : `${cubeSize}x${cubeSize} SYNC`}
-          </span>
-        </div>
       </div>
 
+      {compact && activeStageHint && (
+        <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full border border-[#EAECEF] text-[9.5px] font-mono text-[#111111] flex items-center gap-1 shadow-[0_2px_10px_rgba(0,0,0,0.02)] z-10 pointer-events-none">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#111111] shrink-0" />
+          <span className="truncate max-w-[110px]">{activeStageHint}</span>
+        </div>
+      )}
+
       {!compact && (
-        <div className="absolute top-11 left-2.5 flex items-center gap-1.5 z-10 pointer-events-none">
-          <div className="bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] text-[9px] font-mono text-neutral-700 shadow-2xs flex items-center gap-1">
+        <div className="absolute bottom-3 left-3 flex items-center gap-1.5 z-10 pointer-events-none">
+          <div className="bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] text-[9px] font-mono text-[#111111] shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
             <span>U: VÀNG</span>
           </div>
-          <div className="bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] text-[9px] font-mono text-neutral-700 shadow-2xs flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-white border border-neutral-400 shrink-0" />
+          <div className="bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#EAECEF] text-[9px] font-mono text-[#111111] shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-white border border-[#111111] shrink-0" />
             <span>D: TRẮNG</span>
           </div>
         </div>
       )}
 
-      <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+      <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing touch-none" />
 
       {isSolved ? (
-        <div className="absolute right-3 bottom-2.5 pointer-events-none z-10 flex items-center gap-1.5">
-          <span className="bg-emerald-600 text-white font-mono text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md flex items-center gap-1">
+        <div className="absolute right-3 bottom-3 pointer-events-none z-10 flex items-center gap-1.5">
+          <span className="bg-[#111111] text-white font-mono text-[10px] font-bold px-2.5 py-1 rounded-xl shadow-sm border border-[#111111] flex items-center gap-1">
             <span>100% SOLVED ✓</span>
           </span>
         </div>
       ) : (
-        <div className="absolute right-2.5 bottom-2.5 pointer-events-none z-10 flex items-center gap-1">
-          <div className="bg-[#111111]/95 backdrop-blur-md text-white px-2.5 py-1 rounded-xl shadow-lg border border-white/10 flex items-center gap-1.5 text-center">
-            <span className="text-xs font-mono font-black text-emerald-400">
+        <div className="absolute right-3 bottom-3 pointer-events-none z-10 flex items-center gap-1">
+          <div className="bg-[#111111] text-white px-2.5 py-1 rounded-xl shadow-sm border border-[#111111] flex items-center gap-1.5 text-center">
+            <span className="text-xs font-mono font-black text-white">
               {currentMove || slice}
             </span>
-            <span className="text-[10px] font-mono text-neutral-400">
+            <span className="text-[10px] font-mono text-white/75">
               {currentMove?.slice(1).includes('2') || turnAngle === '180.0°'
                 ? '180°'
                 : currentMove?.includes("'")

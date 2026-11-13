@@ -20,12 +20,18 @@
   }
 
   body {
-    background-color: #fafafa;
-    color: #18181b;
+    background-color: #F8F9FA;
+    color: #111111;
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
     overscroll-behavior: none;
+  }
+}
+
+@layer components {
+  .bento-card {
+    @apply bg-white border border-[#EAECEF] rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)];
   }
 }
 

@@ -35,8 +35,10 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   return (
     <nav
       aria-label="Mobile Navigation"
-      className={`fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-t border-[#EAECEF] py-2 px-6 flex justify-around items-center safe-area-bottom lg:hidden transition-all duration-300 ${
-        isTimerRunning ? 'opacity-0 pointer-events-none translate-y-6' : 'opacity-100 translate-y-0 shadow-[0_-4px_20px_rgba(0,0,0,0.04)]'
+      className={`fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-[#EAECEF] py-2 px-6 flex justify-around items-center safe-area-bottom lg:hidden transition-all duration-200 ease-out ${
+        isTimerRunning
+          ? 'opacity-0 pointer-events-none translate-y-6'
+          : 'opacity-100 translate-y-0 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]'
       }`}
     >
       {tabs.map((tab) => {
@@ -51,33 +53,33 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               haptic.tick();
               onTabChange(tab.id);
             }}
-            className={`min-h-[44px] min-w-[70px] flex flex-col items-center justify-center gap-1 transition-all select-none cursor-pointer group ${
-              isActive ? 'text-[#111111]' : 'text-neutral-400 hover:text-neutral-700'
+            className={`min-h-[44px] min-w-[76px] flex flex-col items-center justify-center gap-1 transition-all duration-200 ease-out active:scale-[0.98] select-none cursor-pointer group ${
+              isActive ? 'text-[#111111]' : 'text-[#94A3B8] hover:text-[#111111]'
             }`}
           >
-            <div className="relative">
-              <Icon
-                className={`w-5 h-5 transition-transform duration-200 ${
-                  isActive ? 'scale-110 stroke-[2.4]' : 'scale-100 stroke-[1.8] group-hover:scale-105'
-                }`}
-              />
-            </div>
+            <Icon
+              strokeWidth={1.5}
+              className={`w-5 h-5 transition-transform duration-200 ease-out ${
+                isActive ? 'scale-105' : 'scale-100 group-hover:scale-105'
+              }`}
+            />
             <span
               className={`text-[11px] font-sans tracking-tight leading-none ${
-                isActive ? 'font-bold text-[#111111]' : 'font-medium'
+                isActive ? 'font-semibold text-[#111111]' : 'font-medium'
               }`}
             >
               {tab.label}
             </span>
-            {isActive ? (
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mt-0.5" />
-            ) : (
-              <span className="w-1.5 h-1.5 rounded-full bg-transparent mt-0.5" />
-            )}
+            <span
+              className={`w-1.5 h-1.5 rounded-full mt-0.5 transition-opacity duration-200 ${
+                isActive ? 'bg-[#111111] opacity-100' : 'bg-transparent opacity-0'
+              }`}
+            />
           </button>
         );
       })}
     </nav>
   );
 };
+
 export default BottomNavBar;

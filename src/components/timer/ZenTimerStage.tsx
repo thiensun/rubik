@@ -255,11 +255,11 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
           setTimerState(inspectionEnabled && inspectionIntervalRef.current ? 'inspection' : 'idle');
         }
       }}
-      className="w-full relative flex flex-col items-center justify-between min-h-[65vh] sm:min-h-[72vh] md:min-h-[75vh] pt-4 sm:pt-6 pb-6 sm:pb-8 px-3 sm:px-8 select-none touch-manipulation bg-white rounded-[24px] border border-[#EAECEF] shadow-sm transition-all overflow-hidden"
+      className="w-full relative flex flex-col items-center justify-between min-h-[65vh] sm:min-h-[72vh] md:min-h-[75vh] pt-4 sm:pt-6 pb-6 sm:pb-8 px-3 sm:px-8 select-none touch-manipulation bg-white rounded-2xl border border-[#EAECEF] shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-200 ease-out overflow-hidden"
     >
       <div
         id="halo-glow"
-        className={`absolute inset-0 transition-opacity duration-300 pointer-events-none rounded-[24px] ${
+        className={`absolute inset-0 transition-opacity duration-300 pointer-events-none rounded-2xl ${
           timerState === 'holding'
             ? 'bg-amber-500/10 opacity-100'
             : timerState === 'ready'

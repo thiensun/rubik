@@ -338,7 +338,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="bg-mono-50 font-sans text-mono-900 antialiased min-h-screen flex flex-col justify-between selection:bg-mono-900 selection:text-white">
+    <div className="bg-[#F8F9FA] font-sans text-[#111111] antialiased min-h-screen flex flex-col justify-between selection:bg-[#111111] selection:text-white">
       {/* 1. Global Navigation Header */}
       <Header
         activeTab={activeTab}

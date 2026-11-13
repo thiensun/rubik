@@ -194,15 +194,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                     <div className="flex items-center gap-2 shrink-0">
                       <span
-                        className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                        className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-lg ${
                           isSelected
-                            ? 'bg-emerald-500 text-black'
-                            : 'bg-white text-neutral-500 border border-[#EAECEF]'
+                            ? 'bg-white/15 text-white'
+                            : 'bg-white text-[#64748B] border border-[#EAECEF]'
                         }`}
                       >
                         {opt.badge}
                       </span>
-                      {isSelected && <Check className="w-4 h-4 text-emerald-400 stroke-[3]" />}
+                      {isSelected && <Check className="w-4 h-4 text-white stroke-[2.5]" />}
                     </div>
                   </button>
                 );
@@ -278,7 +278,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <div className="flex justify-between py-1">
               <span>WCA Rule Compliance:</span>
-              <span className="font-bold text-emerald-600">Article 4 &amp; 5 Verified</span>
+              <span className="font-bold text-[#111111]">Article 4 &amp; 5 Verified</span>
             </div>
           </div>
         </div>

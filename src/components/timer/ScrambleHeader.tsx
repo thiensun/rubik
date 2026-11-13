@@ -81,7 +81,7 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
         aria-label="Timer Training Mode"
         onClick={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
-        className="flex items-center gap-1 p-1 rounded-xl bg-[#F8F9FA] border border-[#EAECEF] max-w-full overflow-x-auto no-scrollbar"
+        className="flex items-center justify-start sm:justify-center gap-1 p-1 rounded-xl bg-[#F1F5F9] border border-[#EAECEF] max-w-full overflow-x-auto no-scrollbar"
       >
         {availableModes.map((m) => {
           const isActive = timerMode === m.id;
@@ -95,10 +95,10 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
                 e.stopPropagation();
                 onTimerModeChange?.(m.id);
               }}
-              className={`whitespace-nowrap shrink-0 rounded-lg px-3 py-1.5 font-mono text-xs font-semibold transition-all cursor-pointer touch-manipulation ${
+              className={`min-h-[36px] whitespace-nowrap shrink-0 rounded-lg px-3 py-1.5 font-mono text-xs font-semibold transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer touch-manipulation ${
                 isActive
-                  ? 'bg-[#111111] text-white shadow-2xs'
-                  : 'text-neutral-500 hover:text-neutral-800'
+                  ? 'bg-[#111111] text-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]'
+                  : 'text-[#64748B] hover:text-[#111111]'
               }`}
             >
               {m.label}
@@ -108,17 +108,17 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
       </div>
 
       {/* Crisp JetBrains Mono Scramble Display */}
-      <div className="w-full px-2">
+      <div className="w-full px-2 py-1">
         <p
           id="current-scramble"
-          className="font-mono text-sm sm:text-xl md:text-2xl leading-snug sm:leading-relaxed tracking-normal text-[#111111] font-semibold break-words select-all text-center max-h-20 sm:max-h-none overflow-y-auto"
+          className="font-mono tabular-nums text-sm sm:text-xl md:text-2xl leading-snug sm:leading-relaxed tracking-tight text-[#111111] font-semibold break-words select-all text-center max-h-20 sm:max-h-none overflow-y-auto"
         >
           {scramble}
         </p>
       </div>
 
       {/* Minimalist Icon Actions Toolbar */}
-      <div className="flex items-center justify-center gap-1.5 pt-0.5 relative">
+      <div className="flex flex-wrap items-center justify-center gap-1.5 pt-0.5 relative">
         {/* Next Scramble */}
         <button
           type="button"
@@ -128,10 +128,10 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
             e.stopPropagation();
             onNextScramble();
           }}
-          className="w-8 h-8 rounded-xl bg-neutral-100 hover:bg-[#111111] hover:text-white text-neutral-700 flex items-center justify-center transition-all active:scale-95 border border-[#EAECEF] cursor-pointer"
+          className="min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] rounded-xl bg-[#F1F5F9] hover:bg-[#111111] hover:text-white text-[#111111] flex items-center justify-center transition-all duration-200 ease-out active:scale-[0.98] border border-[#EAECEF] cursor-pointer"
           title="Scramble kế tiếp"
         >
-          <RotateCw className="w-3.5 h-3.5" />
+          <RotateCw className="w-4 h-4 stroke-[1.75]" />
         </button>
 
         {/* Copy Scramble */}
@@ -140,13 +140,13 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
           id="copy-scramble-btn"
           aria-label="Copy Scramble"
           onClick={handleCopy}
-          className="w-8 h-8 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 flex items-center justify-center transition-all active:scale-95 border border-[#EAECEF] cursor-pointer"
+          className="min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] rounded-xl bg-[#F1F5F9] hover:bg-[#EAECEF] text-[#111111] flex items-center justify-center transition-all duration-200 ease-out active:scale-[0.98] border border-[#EAECEF] cursor-pointer"
           title={copied ? 'Đã sao chép!' : 'Sao chép scramble'}
         >
           {copied ? (
-            <Check className="w-3.5 h-3.5 text-emerald-600" />
+            <Check className="w-4 h-4 text-[#111111] stroke-[2]" />
           ) : (
-            <Copy className="w-3.5 h-3.5" />
+            <Copy className="w-4 h-4 stroke-[1.75]" />
           )}
         </button>
 
@@ -159,14 +159,14 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
             e.stopPropagation();
             onToggleInspection();
           }}
-          className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all active:scale-95 border cursor-pointer ${
+          className={`min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] rounded-xl flex items-center justify-center transition-all duration-200 ease-out active:scale-[0.98] border cursor-pointer ${
             inspectionEnabled
               ? 'bg-[#111111] text-white border-[#111111]'
-              : 'bg-neutral-100 text-neutral-400 hover:text-neutral-700 border-[#EAECEF]'
+              : 'bg-[#F1F5F9] text-[#64748B] hover:text-[#111111] border-[#EAECEF]'
           }`}
           title={inspectionEnabled ? 'Quan sát 15s (Đang bật)' : 'Quan sát 15s (Đang tắt)'}
         >
-          <TimerIcon className="w-3.5 h-3.5" />
+          <TimerIcon className="w-4 h-4 stroke-[1.75]" />
         </button>
 
         {/* Manual Input Toggle */}
@@ -178,17 +178,17 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
             e.stopPropagation();
             onToggleManualInput();
           }}
-          className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all active:scale-95 border cursor-pointer ${
+          className={`min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] rounded-xl flex items-center justify-center transition-all duration-200 ease-out active:scale-[0.98] border cursor-pointer ${
             isManualInputActive
               ? 'bg-[#111111] text-white border-[#111111]'
-              : 'bg-neutral-100 text-neutral-600 hover:text-[#111111] hover:bg-neutral-200 border-[#EAECEF]'
+              : 'bg-[#F1F5F9] text-[#64748B] hover:text-[#111111] hover:bg-[#EAECEF] border-[#EAECEF]'
           }`}
           title="Nhập thời gian thủ công"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-4 h-4 stroke-[1.75]" />
         </button>
 
-        <div className="h-3.5 w-px bg-neutral-200 mx-1" />
+        <div className="h-4 w-px bg-[#EAECEF] mx-1 hidden sm:block" />
 
         {/* 2D Net Toggle */}
         <div className="relative">
@@ -201,10 +201,10 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
               e.stopPropagation();
               setIsNetOpen((prev) => !prev);
             }}
-            className="inline-flex items-center gap-1.5 px-2.5 h-8 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-mono font-medium border border-[#EAECEF] transition-all active:scale-95 cursor-pointer"
+            className="min-h-[44px] sm:min-h-[36px] inline-flex items-center gap-1.5 px-3 rounded-xl bg-[#F1F5F9] hover:bg-[#EAECEF] text-[#111111] text-xs font-mono font-medium border border-[#EAECEF] transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer"
             title="Xem trước sơ đồ 2D Net"
           >
-            <LayoutGrid className="w-3.5 h-3.5" />
+            <LayoutGrid className="w-3.5 h-3.5 stroke-[1.75]" />
             <span className="text-[11px]">2D Net</span>
           </button>
 
@@ -217,7 +217,7 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
               className="flex absolute right-1/2 sm:right-0 translate-x-1/2 sm:translate-x-0 top-full mt-2 z-40 bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-[#EAECEF] shadow-xl flex-col items-center transition-all"
             >
               <div className="flex items-center justify-between w-full pb-1.5 mb-1.5 border-b border-[#EAECEF] gap-4">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-500 font-bold whitespace-nowrap">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748B] font-bold whitespace-nowrap">
                   2D Scramble Net
                 </span>
                 <button
@@ -227,7 +227,7 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
                     e.stopPropagation();
                     setIsNetOpen(false);
                   }}
-                  className="text-neutral-400 hover:text-neutral-800 transition-colors cursor-pointer"
+                  className="text-[#64748B] hover:text-[#111111] transition-colors cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -247,10 +247,10 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
             e.stopPropagation();
             onToggleSplitMode?.();
           }}
-          className={`mt-1 px-3 py-1 rounded-xl font-mono text-xs font-semibold border transition-all active:scale-95 touch-manipulation cursor-pointer ${
+          className={`mt-1 min-h-[38px] px-3.5 py-1.5 rounded-xl font-mono text-xs font-semibold border transition-all duration-200 ease-out active:scale-[0.98] touch-manipulation cursor-pointer ${
             isSplitMode
-              ? 'bg-[#111111] text-white border-[#111111] shadow-2xs'
-              : 'bg-neutral-100 text-neutral-700 border-[#EAECEF] hover:border-neutral-300'
+              ? 'bg-[#111111] text-white border-[#111111]'
+              : 'bg-[#F1F5F9] text-[#64748B] border-[#EAECEF] hover:text-[#111111] hover:border-[#94A3B8]'
           }`}
         >
           {isSplitMode

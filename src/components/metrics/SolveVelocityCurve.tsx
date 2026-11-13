@@ -20,16 +20,16 @@ export const SolveVelocityCurve: React.FC<SolveVelocityCurveProps> = ({ solves }
 
   if (chronological.length < 2) {
     return (
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-mono-200/70 shadow-apple flex flex-col gap-3">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#EAECEF] shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-[18px] h-[18px] text-mono-700" />
-            <h3 className="text-xs font-mono uppercase tracking-wider font-semibold text-mono-800">
+            <TrendingUp className="w-[18px] h-[18px] text-[#64748B] stroke-[1.75]" />
+            <h3 className="text-xs font-mono uppercase tracking-wider font-semibold text-[#111111]">
               Solve Velocity Curve
             </h3>
           </div>
         </div>
-        <div className="h-28 flex items-center justify-center text-xs text-mono-400 font-mono">
+        <div className="h-28 flex items-center justify-center text-xs text-[#94A3B8] font-mono">
           Complete at least 2 solves to generate velocity curve
         </div>
       </div>
@@ -110,21 +110,21 @@ export const SolveVelocityCurve: React.FC<SolveVelocityCurveProps> = ({ solves }
   const startPoint = points[0];
 
   return (
-    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-mono-200/70 shadow-apple flex flex-col gap-3">
+    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#EAECEF] shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col gap-3">
       {/* Header and Legend */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <TrendingUp className="w-[18px] h-[18px] text-mono-700" />
-          <h3 className="text-xs font-mono uppercase tracking-wider font-semibold text-mono-800">
+          <TrendingUp className="w-[18px] h-[18px] text-[#64748B] stroke-[1.75]" />
+          <h3 className="text-xs font-mono uppercase tracking-wider font-semibold text-[#111111]">
             Solve Velocity Curve
           </h3>
         </div>
-        <div className="flex items-center gap-3 text-[11px] font-mono text-mono-500">
+        <div className="flex items-center gap-3 text-[11px] font-mono text-[#64748B]">
           <span className="inline-flex items-center gap-1.5">
-            <span className="w-2 h-0.5 bg-mono-950 rounded-full" /> Raw Solves
+            <span className="w-2 h-0.5 bg-[#111111] rounded-full" /> Raw Solves
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="w-2 h-0.5 bg-mono-400 rounded-full" /> Ao5 Trend
+            <span className="w-2 h-0.5 bg-[#94A3B8] rounded-full" /> Ao5 Trend
           </span>
         </div>
       </div>

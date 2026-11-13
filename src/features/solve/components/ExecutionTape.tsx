@@ -68,16 +68,16 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
   }, [currentMoveGlobalIdx]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 w-full min-w-0">
       {/* PINNED PLAYBACK CONTROLS IN WHITE BENTO CONTAINER */}
-      <div className="bg-white rounded-2xl border border-[#EAECEF] p-3 shadow-[0_2px_10px_rgba(0,0,0,0.02)] shrink-0 flex flex-col gap-2.5">
+      <div className="bg-white rounded-2xl border border-[#EAECEF] p-2.5 sm:p-3 shadow-[0_2px_10px_rgba(0,0,0,0.02)] shrink-0 flex flex-col gap-2.5 min-w-0">
         {/* Row 1 (Evenly Spaced Playback Controls) */}
-        <div className="flex items-center justify-between gap-2 w-full">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2 w-full min-w-0">
           <button
             type="button"
             disabled={currentMoveGlobalIdx === 0}
             onClick={onRewind}
-            className="min-h-[44px] min-w-[44px] px-3 rounded-xl bg-[#F1F5F9] border border-[#EAECEF] hover:bg-[#EAECEF] text-[#111111] transition-all duration-200 ease-out active:scale-[0.98] disabled:opacity-30 flex items-center justify-center cursor-pointer"
+            className="min-h-[44px] min-w-[44px] px-2.5 sm:px-3 shrink-0 rounded-xl bg-[#F1F5F9] border border-[#EAECEF] hover:bg-[#EAECEF] text-[#111111] transition-all duration-200 ease-out active:scale-[0.98] disabled:opacity-30 flex items-center justify-center cursor-pointer"
             title="Về Nước Đầu Tiên [Home]"
           >
             <RotateCcw className="w-4 h-4 stroke-[1.75]" />
@@ -87,7 +87,7 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
             type="button"
             disabled={currentMoveGlobalIdx === 0}
             onClick={onPrevMove}
-            className="min-h-[44px] px-3.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F1F5F9] text-[#111111] text-xs font-semibold transition-all duration-200 ease-out active:scale-[0.98] flex items-center justify-center gap-1.5 disabled:opacity-30 whitespace-nowrap cursor-pointer"
+            className="min-h-[44px] px-2.5 sm:px-3.5 shrink-0 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F1F5F9] text-[#111111] text-xs font-semibold transition-all duration-200 ease-out active:scale-[0.98] flex items-center justify-center gap-1 sm:gap-1.5 disabled:opacity-30 whitespace-nowrap cursor-pointer"
             title="Lùi 1 Nước [Mũi tên trái]"
           >
             <SkipBack className="w-3.5 h-3.5 shrink-0 stroke-[1.75]" />
@@ -97,7 +97,7 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
           <button
             type="button"
             onClick={onTogglePlay}
-            className="flex-1 min-h-[44px] px-4 bg-[#111111] hover:bg-neutral-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer"
+            className="flex-1 min-w-0 min-h-[44px] px-3 sm:px-4 bg-[#111111] hover:bg-neutral-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer"
           >
             {isPlaying ? (
               <Pause className="w-4 h-4 fill-current shrink-0" />
@@ -111,14 +111,14 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
                 ? 'Phát Lại'
                 : 'Chạy'}
             </span>
-            <span className="hidden sm:inline-block keycap-dark ml-0.5 text-[10px]">Space</span>
+            <span className="hidden sm:inline-flex keycap-dark ml-0.5 text-[10px]">Space</span>
           </button>
 
           <button
             type="button"
             disabled={currentMoveGlobalIdx >= allMovesLength}
             onClick={onNextMove}
-            className="min-h-[44px] px-3.5 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F1F5F9] text-[#111111] text-xs font-semibold transition-all duration-200 ease-out active:scale-[0.98] flex items-center justify-center gap-1.5 disabled:opacity-30 whitespace-nowrap cursor-pointer"
+            className="min-h-[44px] px-2.5 sm:px-3.5 shrink-0 rounded-xl bg-white border border-[#EAECEF] hover:bg-[#F1F5F9] text-[#111111] text-xs font-semibold transition-all duration-200 ease-out active:scale-[0.98] flex items-center justify-center gap-1 sm:gap-1.5 disabled:opacity-30 whitespace-nowrap cursor-pointer"
             title="Tiến 1 Nước [Mũi tên phải]"
           >
             <span>{currentMoveGlobalIdx >= allMovesLength ? 'Xong' : 'Tiến'}</span>
@@ -127,14 +127,14 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
         </div>
 
         {/* Row 2 (Secondary Speed & Step Counter) */}
-        <div className="flex items-center justify-between w-full pt-2 border-t border-[#EAECEF]">
-          <div className="flex items-center bg-[#F1F5F9] p-1 rounded-xl border border-[#EAECEF] font-mono">
+        <div className="flex items-center justify-between gap-2 w-full pt-2 border-t border-[#EAECEF] min-w-0">
+          <div className="flex items-center bg-[#F1F5F9] p-1 rounded-xl border border-[#EAECEF] font-mono shrink-0">
             {(['0.5x', '1.0x', '2.0x'] as const).map((spd) => (
               <button
                 key={spd}
                 type="button"
                 onClick={() => setPlaybackSpeed(spd)}
-                className={`px-2.5 py-1 rounded-lg transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer text-xs tabular-nums ${
+                className={`px-2 sm:px-2.5 py-1 rounded-lg transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer text-xs tabular-nums ${
                   playbackSpeed === spd
                     ? 'bg-[#111111] text-white font-bold'
                     : 'text-[#64748B] hover:text-[#111111]'
@@ -145,7 +145,7 @@ export const ExecutionTape: React.FC<ExecutionTapeProps> = ({
             ))}
           </div>
 
-          <span className="px-3 py-1 rounded-xl bg-[#F8F9FA] border border-[#EAECEF] font-mono text-[11px] font-semibold text-[#111111] tabular-nums">
+          <span className="px-2.5 sm:px-3 py-1 rounded-xl bg-[#F8F9FA] border border-[#EAECEF] font-mono text-[11px] font-semibold text-[#111111] tabular-nums whitespace-nowrap shrink-0">
             {currentMoveGlobalIdx >= allMovesLength && allMovesLength > 0
               ? 'Hoàn Thành ✓'
               : `Bước ${Math.min(currentMoveGlobalIdx + 1, allMovesLength || 1)} / ${allMovesLength || 0}`}

@@ -111,13 +111,12 @@ export const Step3SolveInteractive: React.FC<Step3SolveInteractiveProps> = ({
         currentStage={currentStage}
         onClearCustomAlgorithm={onClearCustomAlgorithm}
         onClearAnalyzedSolve={onClearAnalyzedSolve}
-        onBackToScan={onBackToScan}
       />
 
       {/* MAIN ASYMMETRIC SPLIT (55% LEFT / 45% RIGHT) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT BENTO ARENA (55% -> 7 Cols) */}
-        <div className="lg:col-span-7 bg-white border border-[#EAECEF] rounded-2xl p-3.5 sm:p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col gap-3">
+        <div className="lg:col-span-7 min-w-0 bg-white border border-[#EAECEF] rounded-2xl p-3.5 sm:p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col gap-3">
           {/* Viewport Top Header */}
           <div className="flex flex-wrap items-center justify-between pb-2.5 border-b border-[#EAECEF] gap-2 shrink-0">
             <div className="flex flex-wrap items-center gap-2">

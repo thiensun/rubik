@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Download, FlipHorizontal, X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { LEVEL_LABELS, SolutionData, SolutionStage } from '../../../utils/solutionStages';
 import { CustomAlgorithmData } from '../../../components/solver/Step3SolveInteractive';
 import { SolveRecord } from '../../../types/cubing';
@@ -14,7 +14,6 @@ interface Step3SummaryBarProps {
   currentStage: SolutionStage;
   onClearCustomAlgorithm?: () => void;
   onClearAnalyzedSolve?: () => void;
-  onBackToScan: () => void;
 }
 
 export const Step3SummaryBar: React.FC<Step3SummaryBarProps> = ({
@@ -26,7 +25,6 @@ export const Step3SummaryBar: React.FC<Step3SummaryBarProps> = ({
   currentStage,
   onClearCustomAlgorithm,
   onClearAnalyzedSolve,
-  onBackToScan,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -49,7 +47,9 @@ export const Step3SummaryBar: React.FC<Step3SummaryBarProps> = ({
             <span>{customAlgorithm || analyzedSolve ? 'Đổi / Thoát ▾' : 'Đổi Cấp Độ ▾'}</span>
           </button>
           {isDropdownOpen && (
-            <div className="absolute top-full left-0 mt-1.5 w-64 sm:w-72 bg-white rounded-2xl border border-[#EAECEF] shadow-xl p-2 z-50 animate-fade-in">
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+              <div className="absolute top-full right-0 sm:left-0 sm:right-auto mt-1.5 w-64 sm:w-72 max-w-[calc(100vw-2.5rem)] bg-white rounded-2xl border border-[#EAECEF] shadow-xl p-2 z-50 animate-fade-in">
               {(customAlgorithm || analyzedSolve) && (
                 <button
                   type="button"
@@ -88,37 +88,18 @@ export const Step3SummaryBar: React.FC<Step3SummaryBarProps> = ({
                   )}
                 </button>
               ))}
-            </div>
+              </div>
+            </>
           )}
         </div>
       </div>
 
-      <div className="font-mono text-[11px] sm:text-xs text-[#64748B] tabular-nums flex flex-wrap items-center justify-center sm:justify-start gap-2">
+      <div className="font-mono text-[11px] sm:text-xs text-[#64748B] tabular-nums flex flex-wrap items-center justify-center sm:justify-end gap-2">
         <span><strong className="text-[#111111]">{solutionData.totalMoves}</strong> BƯỚC</span>
         <span className="text-[#94A3B8]">•</span>
         <span>GIAI ĐOẠN <strong className="text-[#111111]">{currentStage.stageNumber}/{solutionData.stages.length}</strong></span>
         <span className="text-[#94A3B8]">•</span>
         <strong className="text-[#111111]">{solutionData.estTime}</strong>
-      </div>
-
-      <div className="flex items-center justify-end gap-2 shrink-0">
-        <button
-          type="button"
-          onClick={onBackToScan}
-          className="min-h-[44px] sm:min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-mono font-medium text-[#64748B] hover:text-[#111111] hover:bg-[#F1F5F9] border border-[#EAECEF] transition-all duration-200 ease-out active:scale-[0.98] flex items-center gap-1.5 cursor-pointer"
-          title="Quét Lại (Alt+S)"
-        >
-          <FlipHorizontal className="w-3.5 h-3.5 stroke-[1.75]" />
-          <span>Quét Lại</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => window.alert('Exporting PDF Solution Guide...')}
-          className="min-h-[44px] sm:min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-mono font-semibold bg-[#111111] text-white hover:bg-neutral-800 transition-all duration-200 ease-out active:scale-[0.98] flex items-center gap-1.5 cursor-pointer"
-        >
-          <Download className="w-3.5 h-3.5 stroke-[1.75]" />
-          <span>Export PDF</span>
-        </button>
       </div>
     </section>
   );

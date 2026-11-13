@@ -3,6 +3,7 @@ import { RotateCw, Copy, Check, Timer as TimerIcon, LayoutGrid, X, Plus } from '
 import { CubeNet2D } from '../scramble/CubeNet2D';
 import { CubeNetState } from '../../utils/cubeState';
 import { CubeSize } from '../../types/cubing';
+import { TIMER_MODES_BY_SIZE, TimerMode } from './substepScrambler';
 
 interface ScrambleHeaderProps {
   scramble: string;
@@ -10,6 +11,10 @@ interface ScrambleHeaderProps {
   cubeNetState: CubeNetState;
   inspectionEnabled: boolean;
   onToggleInspection: () => void;
+  isSplitMode?: boolean;
+  onToggleSplitMode?: () => void;
+  timerMode?: TimerMode;
+  onTimerModeChange?: (mode: TimerMode) => void;
   isManualInputActive: boolean;
   onToggleManualInput: () => void;
   isTimerRunning: boolean;
@@ -22,6 +27,10 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
   cubeNetState,
   inspectionEnabled,
   onToggleInspection,
+  isSplitMode = false,
+  onToggleSplitMode,
+  timerMode = 'FULL',
+  onTimerModeChange,
   isManualInputActive,
   onToggleManualInput,
   isTimerRunning,
@@ -31,6 +40,7 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
   const [isNetOpen, setIsNetOpen] = useState(false);
   const netPopoverRef = useRef<HTMLDivElement | null>(null);
   const toggleNetBtnRef = useRef<HTMLButtonElement | null>(null);
+  const availableModes = TIMER_MODES_BY_SIZE[cubeSize] || TIMER_MODES_BY_SIZE[3];
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -65,6 +75,38 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
         isTimerRunning ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
     >
+      {/* Substep Mode Selector Pill Switcher */}
+      <div
+        role="tablist"
+        aria-label="Timer Training Mode"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        className="flex items-center gap-1 p-1 rounded-xl bg-[#F8F9FA] border border-[#EAECEF] max-w-full overflow-x-auto no-scrollbar"
+      >
+        {availableModes.map((m) => {
+          const isActive = timerMode === m.id;
+          return (
+            <button
+              key={m.id}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={(e) => {
+                e.stopPropagation();
+                onTimerModeChange?.(m.id);
+              }}
+              className={`whitespace-nowrap shrink-0 rounded-lg px-3 py-1.5 font-mono text-xs font-semibold transition-all cursor-pointer touch-manipulation ${
+                isActive
+                  ? 'bg-[#111111] text-white shadow-2xs'
+                  : 'text-neutral-500 hover:text-neutral-800'
+              }`}
+            >
+              {m.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Crisp JetBrains Mono Scramble Display */}
       <div className="w-full px-2">
         <p
@@ -195,6 +237,27 @@ export const ScrambleHeader: React.FC<ScrambleHeaderProps> = ({
           )}
         </div>
       </div>
+
+      {/* Minimalist CFOP Multi-Phase Split Mode Toggle (Full CFOP on 3x3 only) */}
+      {cubeSize === 3 && timerMode === 'FULL' && (
+        <button
+          type="button"
+          id="split-mode-toggle-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSplitMode?.();
+          }}
+          className={`mt-1 px-3 py-1 rounded-xl font-mono text-xs font-semibold border transition-all active:scale-95 touch-manipulation cursor-pointer ${
+            isSplitMode
+              ? 'bg-[#111111] text-white border-[#111111] shadow-2xs'
+              : 'bg-neutral-100 text-neutral-700 border-[#EAECEF] hover:border-neutral-300'
+          }`}
+        >
+          {isSplitMode
+            ? '[✓] Bấm giờ phân chặng (CFOP Splits)'
+            : '[ ] Bấm giờ phân chặng (CFOP Splits)'}
+        </button>
+      )}
     </div>
   );
 };

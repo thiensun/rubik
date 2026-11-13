@@ -1,48 +1,19 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useDeferredValue, useCallback } from 'react';
 import {
-  AlgorithmEntry,
-  BEGINNER_ALGS,
-  F2L_ALGS,
-  OLL_ALGS,
-  PLL_ALGS,
-  ROUX_ALGS,
-  ZBLL_HIERARCHY_TREE,
-  CUBE_2X2_ALGS,
-  LBL_2X2_ALGS,
-  ORTEGA_OLL_ALGS,
-  ORTEGA_PBL_ALGS,
-  CLL_2X2_ALGS,
-  CUBE_4X4_ALGS,
-  YAU_CROSS_4X4_ALGS,
-  L2C_4X4_ALGS,
-  L2E_4X4_ALGS,
-  OLL_PARITY_4X4_ALGS,
-  PLL_PARITY_4X4_ALGS,
+  AlgorithmEntry, BEGINNER_ALGS, F2L_ALGS, OLL_ALGS, PLL_ALGS, ROUX_ALGS, ZBLL_HIERARCHY_TREE,
+  CUBE_2X2_ALGS, LBL_2X2_ALGS, ORTEGA_OLL_ALGS, ORTEGA_PBL_ALGS, CLL_2X2_ALGS,
+  CUBE_4X4_ALGS, YAU_CROSS_4X4_ALGS, L2C_4X4_ALGS, L2E_4X4_ALGS, OLL_PARITY_4X4_ALGS, PLL_PARITY_4X4_ALGS,
 } from '../../data/algorithms';
-import {
-  ZbllRootSetNode,
-  CollGroupNode,
-} from '../../data/algorithms/zbllHierarchy';
+import { ZbllRootSetNode, CollGroupNode } from '../../data/algorithms/zbllHierarchy';
 import { ColorScheme, DEFAULT_COLOR_SCHEME } from '../../engine/algSimulator';
 import { sound } from '../../utils/audio';
 import { CustomAlgorithmData } from '../solver/Step3SolveInteractive';
 import { CubeSize } from '../../types/cubing';
 
-// Modular Feature Components
 import {
-  AlgFiltersBar,
-  LevelTab,
-  MasteryFilter,
-  CfopMode,
-  CfopCategory,
-  RouxFilter,
-  Filter2x2,
-  Filter4x4,
+  AlgFiltersBar, LevelTab, MasteryFilter, CfopMode, CfopCategory, RouxFilter, Filter2x2, Filter4x4,
 } from '../../features/algorithms/components/AlgFiltersBar';
-import {
-  AlgCardGrid,
-  MasteryStatus,
-} from '../../features/algorithms/components/AlgCardGrid';
+import { AlgCardGrid, MasteryStatus } from '../../features/algorithms/components/AlgCardGrid';
 import { AlgTrainerStudio } from '../../features/algorithms/components/AlgTrainerStudio';
 import { useAlgTrainer } from '../../features/algorithms/hooks/useAlgTrainer';
 
@@ -69,6 +40,7 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
 }) => {
   const [activeLevel, setActiveLevel] = useState<LevelTab>('level-2');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [masteryFilter, setMasteryFilter] = useState<MasteryFilter>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -156,25 +128,40 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
     return [...BEGINNER_ALGS, ...F2L_ALGS, ...OLL_ALGS, ...PLL_ALGS, ...ROUX_ALGS, ...zblls];
   }, [cubeSize]);
 
-  // Filtered algorithms by search query and mastery filter
+  // Filtered algorithms by deferred search query and mastery filter
   const filteredAlgs = useMemo<AlgorithmEntry[]>(() => {
     let list = baseLevelAlgs;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      list = allDatabaseAlgs.filter(
-        (a) =>
-          a.name.toLowerCase().includes(q) ||
-          a.mainAlg.toLowerCase().includes(q) ||
-          a.id.toLowerCase().includes(q) ||
-          a.category.toLowerCase().includes(q) ||
-          (a.subGroup && a.subGroup.toLowerCase().includes(q)),
-      );
+    const q = deferredSearchQuery.toLowerCase().trim();
+    if (q) {
+      const scored: { alg: AlgorithmEntry; score: number }[] = [];
+      const allowAlgMatch = q.length >= 3;
+
+      for (const a of allDatabaseAlgs) {
+        const nameLower = a.name.toLowerCase();
+        const idLower = a.id.toLowerCase();
+        const catLower = a.category.toLowerCase();
+        const subLower = a.subGroup ? a.subGroup.toLowerCase() : '';
+        const recLower = a.recognitionVN ? a.recognitionVN.toLowerCase() : '';
+
+        let score = 0;
+        if (nameLower.startsWith(q) || idLower.startsWith(q)) score = 4;
+        else if (nameLower.includes(q) || idLower.includes(q) || catLower.includes(q)) score = 3;
+        else if (subLower.includes(q) || recLower.includes(q)) score = 2;
+        else if (allowAlgMatch && a.mainAlg.toLowerCase().includes(q)) score = 1;
+
+        if (score > 0) {
+          scored.push({ alg: a, score });
+        }
+      }
+
+      scored.sort((x, y) => y.score - x.score);
+      list = scored.map((item) => item.alg);
     }
     if (masteryFilter !== 'all') {
       list = list.filter((a) => (masteryMap[a.id] || 'unlearned') === masteryFilter);
     }
     return list;
-  }, [baseLevelAlgs, searchQuery, masteryFilter, allDatabaseAlgs, masteryMap]);
+  }, [baseLevelAlgs, deferredSearchQuery, masteryFilter, allDatabaseAlgs, masteryMap]);
 
   // Trainer & Drill Mode Hook
   const trainer = useAlgTrainer(
@@ -194,7 +181,7 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
     }
   }, [cubeSize]);
 
-  const handleCycleMastery = (algId: string) => {
+  const handleCycleMastery = useCallback((algId: string) => {
     setMasteryMap((prev) => {
       const current = prev[algId] || 'unlearned';
       const next: MasteryStatus =
@@ -202,22 +189,28 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
       sound.playTick();
       return { ...prev, [algId]: next };
     });
-  };
+  }, []);
 
-  const handleSelectAlgForTrainer = (alg: AlgorithmEntry) => {
+  const { setIsDrillMode, setSelectedTrainerAlg, setTrainerMoveIdx, setIsTrainerPlaying, setIsMobileSheetOpen } = trainer;
+
+  const handleSelectAlgForTrainer = useCallback((alg: AlgorithmEntry) => {
     sound.playTick();
-    trainer.setIsDrillMode(false);
-    trainer.setSelectedTrainerAlg(alg);
-    trainer.setTrainerMoveIdx(0);
-    trainer.setIsTrainerPlaying(false);
-  };
+    setIsDrillMode(false);
+    setSelectedTrainerAlg(alg);
+    setTrainerMoveIdx(0);
+    setIsTrainerPlaying(false);
+  }, [setIsDrillMode, setSelectedTrainerAlg, setTrainerMoveIdx, setIsTrainerPlaying]);
 
-  const handleCopyFormula = (id: string, formula: string) => {
+  const handleOpenMobileSheet = useCallback(() => {
+    setIsMobileSheetOpen(true);
+  }, [setIsMobileSheetOpen]);
+
+  const handleCopyFormula = useCallback((id: string, formula: string) => {
     navigator.clipboard.writeText(formula);
     sound.playTick();
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 1800);
-  };
+  }, []);
 
   const masteryCounts = useMemo(() => {
     let mastered = 0;
@@ -289,7 +282,7 @@ export const AlgorithmsView: React.FC<AlgorithmsViewProps> = ({
             isDrillMode={trainer.isDrillMode}
             onSelectAlgForTrainer={handleSelectAlgForTrainer}
             onLoadInto3D={onLoadInto3D}
-            onOpenMobileSheet={() => trainer.setIsMobileSheetOpen(true)}
+            onOpenMobileSheet={handleOpenMobileSheet}
             colorScheme={colorScheme}
             copiedId={copiedId}
             onCopyFormula={handleCopyFormula}

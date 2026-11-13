@@ -5,7 +5,6 @@ import { Footer } from './components/Footer';
 import { ZenTimerStage } from './components/timer/ZenTimerStage';
 import { MetricCards } from './components/metrics/MetricCards';
 import { SolveVelocityCurve } from './components/metrics/SolveVelocityCurve';
-import { HardwareStatusBar } from './components/metrics/HardwareStatusBar';
 import { SessionHistoryCard } from './components/history/SessionHistoryCard';
 import { SolveAndLearnView } from './components/views/SolveAndLearnView';
 import { AlgorithmsView } from './components/views/AlgorithmsView';
@@ -15,20 +14,64 @@ import { ScrollToTopButton } from './components/ScrollToTopButton';
 import { PWAInstallBanner } from './components/common/PWAInstallBanner';
 import { SolveRecord, PenaltyType, CubeSize } from './types/cubing';
 import { SEED_SOLVES, computeSessionStats } from './utils/cubingStats';
-import { applyScrambleForNet, generateScrambleForSize, CubeNetState } from './utils/cubeState';
+import { applyScrambleForNet, CubeNetState } from './utils/cubeState';
+import {
+  ALL_TIMER_MODES,
+  TimerMode,
+  generateScrambleForMode,
+  getDefaultTimerModeForSize,
+} from './components/timer/substepScrambler';
 import { sound } from './utils/audio';
 import confetti from 'canvas-confetti';
 import { CustomAlgorithmData } from './components/solver/Step3SolveInteractive';
 import { DEFAULT_COLOR_SCHEME, PRESET_COLOR_SCHEMES } from './engine/algSimulator';
 
 const STORAGE_KEY = 'cubemaster_solves_v2_4';
+const SESSIONS_STORAGE_KEY = 'cubemaster_sessions_v2_4';
 const DEFAULT_SCRAMBLE = "D2 B2 R2 U' L2 F2 D R2 U' B2 U F R' U2 L' D2 B' F D' L2 R";
+
+type ModeSessionsMap = Record<TimerMode, SolveRecord[]>;
+
+function createEmptySessions(): ModeSessionsMap {
+  return ALL_TIMER_MODES.reduce((acc, mode) => {
+    acc[mode] = [];
+    return acc;
+  }, {} as ModeSessionsMap);
+}
+
+function loadInitialSessions(): ModeSessionsMap {
+  const empty = createEmptySessions();
+  try {
+    const savedSessions = localStorage.getItem(SESSIONS_STORAGE_KEY);
+    if (savedSessions) {
+      const parsed = JSON.parse(savedSessions);
+      if (parsed && typeof parsed === 'object') {
+        const hydrated = { ...empty };
+        for (const mode of ALL_TIMER_MODES) {
+          hydrated[mode] = Array.isArray(parsed[mode]) ? parsed[mode] : [];
+        }
+        return hydrated;
+      }
+    }
+    const legacySaved = localStorage.getItem(STORAGE_KEY);
+    if (legacySaved) {
+      const parsedLegacy = JSON.parse(legacySaved);
+      if (Array.isArray(parsedLegacy) && parsedLegacy.length > 0) {
+        return { ...empty, FULL: parsedLegacy };
+      }
+    }
+  } catch {
+    // Fallback
+  }
+  return { ...empty, FULL: SEED_SOLVES };
+}
 
 export const App: React.FC = () => {
   // Navigation - default to 'scramble-timer' to showcase the redesigned tab
   const [activeTab, setActiveTab] = useState<ActiveTab>('scramble-timer');
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
   const [cubeSize, setCubeSize] = useState<CubeSize>(3);
+  const [timerMode, setTimerMode] = useState<TimerMode>('FULL');
 
   // Custom Algorithm loaded for 3D exploration
   const [customAlgorithmFor3D, setCustomAlgorithmFor3D] = useState<CustomAlgorithmData | null>(null);
@@ -38,26 +81,28 @@ export const App: React.FC = () => {
   const [cubeNetState, setCubeNetState] = useState<CubeNetState>(() => applyScrambleForNet(DEFAULT_SCRAMBLE));
 
   const handleCubeSizeChange = useCallback((newSize: CubeSize) => {
+    const defaultMode = getDefaultTimerModeForSize(newSize);
     setCubeSize(newSize);
-    const nextScramble = generateScrambleForSize(newSize);
+    setTimerMode(defaultMode);
+    const nextScramble = generateScrambleForMode(newSize, defaultMode);
     setScramble(nextScramble);
     setCubeNetState(applyScrambleForNet(nextScramble));
     sound.playTick();
   }, []);
 
-  // Solve History from LocalStorage or Seed Data
-  const [solves, setSolves] = useState<SolveRecord[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // Fallback
-    }
-    return SEED_SOLVES;
-  });
+  // Mode-Isolated Solve Sessions from LocalStorage or Seed Data
+  const [sessions, setSessions] = useState<ModeSessionsMap>(loadInitialSessions);
+  const solves = sessions[timerMode] || [];
+
+  const setSolvesForActiveMode = useCallback(
+    (updater: (prev: SolveRecord[]) => SolveRecord[]) => {
+      setSessions((prev) => ({
+        ...prev,
+        [timerMode]: updater(prev[timerMode] || []),
+      }));
+    },
+    [timerMode],
+  );
 
   // Settings (15s inspection enabled by default per Stitch design)
   const [inspectionEnabled, setInspectionEnabled] = useState(true);
@@ -93,28 +138,40 @@ export const App: React.FC = () => {
   // Active solve selected for AI analysis
   const [selectedSolveForAnalysis, setSelectedSolveForAnalysis] = useState<SolveRecord | null>(null);
 
-  // Persist solves to localStorage
+  // Persist mode-isolated sessions to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(solves));
+      localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(sessions));
     } catch {
       // Storage full or unavailable
     }
-  }, [solves]);
+  }, [sessions]);
 
-  // Compute stats dynamically
+  // Compute stats dynamically for the active timerMode only
   const sessionStats = useMemo(() => computeSessionStats(solves), [solves]);
 
-  // Solve number display (42 on default seed, incrementing with new solves)
+  // Solve number display
   const currentSolveNumber = solves.length > 0 ? solves[0].id + 18 : 1;
+
+  // Switch Timer Substep Mode and immediately generate mode-specific scramble
+  const handleTimerModeChange = useCallback(
+    (newMode: TimerMode) => {
+      setTimerMode(newMode);
+      const next = generateScrambleForMode(cubeSize, newMode);
+      setScramble(next);
+      setCubeNetState(applyScrambleForNet(next));
+      sound.playTick();
+    },
+    [cubeSize],
+  );
 
   // Generate Next Scramble
   const handleNextScramble = useCallback(() => {
-    const next = generateScrambleForSize(cubeSize);
+    const next = generateScrambleForMode(cubeSize, timerMode);
     setScramble(next);
     setCubeNetState(applyScrambleForNet(next));
     sound.playTick();
-  }, [cubeSize]);
+  }, [cubeSize, timerMode]);
 
   // Global Alt+N Hotkey for Next Scramble
   useEffect(() => {
@@ -151,7 +208,7 @@ export const App: React.FC = () => {
       isPB: isNewPB,
     };
 
-    setSolves((prev) => [newSolve, ...prev]);
+    setSolvesForActiveMode((prev) => [newSolve, ...prev]);
 
     if (isNewPB && penalty !== 'dnf') {
       sound.playPBChord();
@@ -163,8 +220,8 @@ export const App: React.FC = () => {
       });
     }
 
-    // Prepare next scramble automatically
-    const nextScramble = generateScrambleForSize(cubeSize);
+    // Prepare next scramble automatically for current mode
+    const nextScramble = generateScrambleForMode(cubeSize, timerMode);
     setScramble(nextScramble);
     setCubeNetState(applyScrambleForNet(nextScramble));
   };
@@ -190,7 +247,7 @@ export const App: React.FC = () => {
       comment: 'Manual Entry',
     };
 
-    setSolves((prev) => [newSolve, ...prev]);
+    setSolvesForActiveMode((prev) => [newSolve, ...prev]);
 
     if (isNewPB && penalty !== 'dnf') {
       sound.playPBChord();
@@ -203,14 +260,14 @@ export const App: React.FC = () => {
     }
 
     // Refresh scramble for next solve
-    const nextScramble = generateScrambleForSize(cubeSize);
+    const nextScramble = generateScrambleForMode(cubeSize, timerMode);
     setScramble(nextScramble);
     setCubeNetState(applyScrambleForNet(nextScramble));
   };
 
   // Edit existing solve time
   const handleEditSolveTime = (id: number, newTimeMs: number) => {
-    setSolves((prev) =>
+    setSolvesForActiveMode((prev) =>
       prev.map((s) => {
         if (s.id !== id) return s;
         const seconds = newTimeMs / 1000;
@@ -227,27 +284,21 @@ export const App: React.FC = () => {
 
   // Penalty modification
   const handleUpdatePenalty = (id: number, penalty: PenaltyType) => {
-    setSolves((prev) =>
+    setSolvesForActiveMode((prev) =>
       prev.map((s) => (s.id === id ? { ...s, penalty } : s))
     );
   };
 
   // Delete a solve
   const handleDeleteSolve = (id: number) => {
-    setSolves((prev) => prev.filter((s) => s.id !== id));
+    setSolvesForActiveMode((prev) => prev.filter((s) => s.id !== id));
   };
 
-  // Reset/Clear entire session
+  // Reset/Clear entire session for active mode
   const handleClearSession = () => {
     if (window.confirm('Are you sure you want to clear current session solves?')) {
-      setSolves([]);
+      setSolvesForActiveMode(() => []);
     }
-  };
-
-  // Simulate a solve via hardware HUD button
-  const handleSimulateSolve = () => {
-    const simTimeMs = Math.floor(7400 + Math.random() * 2400);
-    handleSolveComplete(simTimeMs);
   };
 
   // Navigate to Solve & Learn tab with specific solve
@@ -338,23 +389,21 @@ export const App: React.FC = () => {
               onTogglePenalty={handleToggleLatestPenalty}
               inspectionEnabled={inspectionEnabled}
               onToggleInspection={() => setInspectionEnabled(!inspectionEnabled)}
-              displayTimeMs={solves.length > 0 ? solves[0].timeMs : 8420}
+              displayTimeMs={solves.length > 0 ? solves[0].timeMs : 0}
               onTimerRunningChange={setIsTimerRunning}
               cubeSize={cubeSize}
+              timerMode={timerMode}
+              onTimerModeChange={handleTimerModeChange}
             />
 
             {/* Apple-style Refined Bottom Dock & Session Split Grid */}
             <div className={`w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start transition-opacity duration-200 ${
               isTimerRunning ? 'opacity-0 pointer-events-none' : 'opacity-100'
             }`}>
-              {/* Left Side (7 Columns): Compact Metric Cards, Velocity Pace Curve, Hardware Dock */}
+              {/* Left Side (7 Columns): Compact Metric Cards, Velocity Pace Curve */}
               <div className="lg:col-span-7 flex flex-col gap-5">
                 <MetricCards stats={sessionStats} />
                 <SolveVelocityCurve solves={solves} />
-                <HardwareStatusBar
-                  onSimulateSolve={handleSimulateSolve}
-                  onOpenSettings={() => setIsSettingsModalOpen(true)}
-                />
               </div>
 
               {/* Right Side (5 Columns): Solve History Drawer / Panel */}

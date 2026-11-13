@@ -98,7 +98,7 @@ const CUBIE_GROUPS: { face: FaceKey; idx: number }[][] = [
   [{ face: 'D', idx: 7 }, { face: 'B', idx: 7 }], // DB
 ];
 
-export const DynamicCaseDiagram: React.FC<DynamicCaseDiagramProps> = ({
+export const DynamicCaseDiagram: React.FC<DynamicCaseDiagramProps> = React.memo(({
   id,
   mainAlg,
   setupAlg,
@@ -654,4 +654,4 @@ export const DynamicCaseDiagram: React.FC<DynamicCaseDiagramProps> = ({
       </svg>
     </div>
   );
-};
+});

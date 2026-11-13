@@ -144,9 +144,10 @@ describe('Empirical Challenger 1 — Milestone 3: Responsive UI/UX & Bundle Perf
       expect(headerSource).toContain('<span className="sm:hidden">Algs</span>');
       // Logo hides extra text on mobile
       expect(headerSource).toContain('CubeMaster<span className="hidden sm:inline"> AI</span>');
-      // Non-essential desktop widgets hidden on mobile
-      expect(headerSource).toContain('hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-mono-100/70');
-      expect(headerSource).toContain('hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white');
+      // Non-essential desktop widgets hidden on mobile & Bluetooth GAN UI pill removed
+      expect(headerSource).toContain('hidden sm:flex w-7 h-7 rounded-full bg-mono-950');
+      expect(headerSource).not.toContain('GAN UI');
+      expect(headerSource).not.toContain('Bluetooth');
     });
 
     it('verifies Step 1 bottom action dock does not occlude Level 4 card', () => {

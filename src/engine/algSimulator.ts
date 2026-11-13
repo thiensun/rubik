@@ -605,6 +605,9 @@ export function computePermutationArrows(cubeState: CubeNetState): PermutationAr
   return arrows;
 }
 
+const CASE_STATE_CACHE = new Map<string, CaseSimulationResult>();
+const MAX_CASE_STATE_CACHE_SIZE = 1000;
+
 /**
  * Takes a solved cube (defaulting to White=D, Yellow=U, Green=F, Red=R, Blue=B, Orange=L,
  * or customizable colorScheme), applies `invertAlg(mainAlg)`, and returns:
@@ -616,6 +619,12 @@ export function getCaseState(
   colorScheme?: Partial<ColorScheme> | string
 ): CaseSimulationResult {
   const { solvedCube, scheme } = createSolvedCubeForScheme(colorScheme);
+  const cacheKey = `${mainAlg}::${scheme.U}|${scheme.D}|${scheme.F}|${scheme.B}|${scheme.L}|${scheme.R}`;
+  const cached = CASE_STATE_CACHE.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   const tokens = tokenizeAlg(mainAlg);
   const inverseAlg = invertAlg(mainAlg);
 
@@ -647,7 +656,7 @@ export function getCaseState(
 
   const arrows = computePermutationArrows(cubeState);
 
-  return {
+  const result: CaseSimulationResult = {
     cubeState,
     topFaceColors,
     topFaceMask,
@@ -657,4 +666,11 @@ export function getCaseState(
     inverseAlg,
     moveCount: tokens.length,
   };
+
+  if (CASE_STATE_CACHE.size >= MAX_CASE_STATE_CACHE_SIZE) {
+    CASE_STATE_CACHE.clear();
+  }
+  CASE_STATE_CACHE.set(cacheKey, result);
+
+  return result;
 }

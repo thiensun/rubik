@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Sparkles,
   Layers,
+  X,
 } from 'lucide-react';
 import {
   ZbllRootSetNode,
@@ -143,14 +144,24 @@ export const AlgFiltersBar: React.FC<AlgFiltersBarProps> = ({
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
           <div className="relative min-w-[240px] sm:min-w-[280px]">
-            <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+            <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Tìm công thức, tên case (VD: T-Perm, Sune, F2L 12)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#F8F9FA] border border-[#EAECEF] rounded-xl pl-9 pr-3.5 py-2 text-xs font-mono text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-neutral-900 transition-all"
+              className="w-full bg-[#F8F9FA] border border-[#EAECEF] rounded-xl pl-9 pr-8 py-2 text-xs font-mono text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-neutral-900 transition-all"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                aria-label="Xóa tìm kiếm"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-neutral-400 hover:text-neutral-900 hover:bg-neutral-200/70 transition-colors cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           <button

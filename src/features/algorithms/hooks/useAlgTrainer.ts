@@ -62,7 +62,7 @@ export function useAlgTrainer(
 
   // Trainer auto-play interval
   useEffect(() => {
-    if (!isTrainerPlaying || isDrillMode) return;
+    if (!isTrainerPlaying || (isDrillMode && !drillRevealed)) return;
     const ms = trainerSpeed === '0.5x' ? 1600 : trainerSpeed === '2.0x' ? 500 : 950;
     const timer = window.setInterval(() => {
       setTrainerMoveIdx((prev) => {
@@ -79,32 +79,33 @@ export function useAlgTrainer(
       });
     }, ms);
     return () => clearInterval(timer);
-  }, [isTrainerPlaying, trainerSpeed, trainerMoves.length, isDrillMode]);
+  }, [isTrainerPlaying, trainerSpeed, trainerMoves.length, isDrillMode, drillRevealed]);
 
-  // Pick Next Drill Case
+  // Pick Next Drill Case from the currently selected category (excluding current case when possible)
   const pickNextDrillCase = useCallback(() => {
-    let pool: AlgorithmEntry[] = [];
-    if (drillPoolType === 'learning') {
-      pool = allDatabaseAlgs.filter((a) => masteryMap[a.id] === 'learning');
-    } else if (drillPoolType === 'mastered') {
-      pool = allDatabaseAlgs.filter((a) => masteryMap[a.id] === 'mastered');
-    }
-    if (pool.length === 0) {
-      pool = baseLevelAlgs;
-    }
+    const categoryPool = baseLevelAlgs.filter(
+      (a) => a.category === selectedTrainerAlg.category,
+    );
+    let pool = categoryPool.length > 0 ? categoryPool : baseLevelAlgs;
+    if (pool.length === 0) pool = allDatabaseAlgs;
     if (pool.length === 0) return;
 
-    const randomIndex = Math.floor(Math.random() * pool.length);
-    const chosen = pool[randomIndex] || pool[0];
+    const candidates = pool.filter((a) => a.id !== selectedTrainerAlg.id);
+    const pickFrom = candidates.length > 0 ? candidates : pool;
+    const randomIndex = Math.floor(Math.random() * pickFrom.length);
+    const chosen = pickFrom[randomIndex] || pickFrom[0];
     const randomAuf = PRE_AUF_OPTIONS[Math.floor(Math.random() * PRE_AUF_OPTIONS.length)];
 
+    setSelectedTrainerAlg(chosen);
+    setTrainerMoveIdx(0);
+    setIsTrainerPlaying(false);
     setDrillCase(chosen);
     setDrillPreAuf(randomAuf);
     setDrillRevealed(false);
     setDrillElapsedMs(0);
     setDrillTimerState('idle');
     sound.playTick();
-  }, [drillPoolType, allDatabaseAlgs, baseLevelAlgs, masteryMap]);
+  }, [allDatabaseAlgs, baseLevelAlgs, selectedTrainerAlg.category, selectedTrainerAlg.id]);
 
   // Drill Cube State
   const drillCubeState = useMemo<CubeNetState>(() => {
@@ -158,14 +159,16 @@ export function useAlgTrainer(
         }
         if (e.code === 'Space') {
           e.preventDefault();
-          if (drillTimerState === 'idle' || drillTimerState === 'stopped') {
-            setDrillTimerState('holding');
-          } else if (drillTimerState === 'running') {
-            const finalMs = Math.max(10, Math.round(performance.now() - drillStartRef.current));
-            setDrillElapsedMs(finalMs);
-            setDrillTimerState('stopped');
+          if (!drillRevealed) {
             setDrillRevealed(true);
-            sound.playPBChord();
+            sound.playTick();
+          } else {
+            setIsTrainerPlaying((prev) => {
+              if (!prev && trainerMoveIdx >= trainerMoves.length) {
+                setTrainerMoveIdx(0);
+              }
+              return !prev;
+            });
           }
         }
       } else {
@@ -181,26 +184,13 @@ export function useAlgTrainer(
       }
     };
 
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (isDrillMode && e.code === 'Space' && drillTimerState === 'holding') {
-        e.preventDefault();
-        drillStartRef.current = performance.now();
-        setDrillElapsedMs(0);
-        setDrillTimerState('running');
-        sound.playTick();
-      }
-    };
-
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
     };
   }, [
     isDrillMode,
-    drillTimerState,
+    drillRevealed,
     pickNextDrillCase,
     trainerMoveIdx,
     trainerMoves.length,

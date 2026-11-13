@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Bluetooth, SlidersHorizontal, User } from 'lucide-react';
+import { SlidersHorizontal, User } from 'lucide-react';
 import { CubeSize } from '../core/types';
 
 export type ActiveTab = 'solve-learn' | 'scramble-timer' | 'algorithms';
@@ -39,9 +39,26 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Brand Logo & Version + Cube Size Switcher */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className="w-6 h-6 rounded-md bg-mono-950 text-white flex items-center justify-center shadow-sm">
-              <Box className="w-3.5 h-3.5 stroke-[2.2]" />
-            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="w-8 h-8 lg:w-9 lg:h-9 shrink-0">
+              {/* Nền đen bo góc */}
+              <rect width="100" height="100" rx="24" fill="#111111" />
+              
+              {/* Lưới 9 chấm màu 3x3 */}
+              {/* Hàng 1 */}
+              <rect x="16" y="16" width="20" height="20" rx="5" fill="#F59E0B" /> {/* Cam */}
+              <rect x="40" y="16" width="20" height="20" rx="5" fill="#10B981" /> {/* Xanh lá */}
+              <rect x="64" y="16" width="20" height="20" rx="5" fill="#FFFFFF" /> {/* Trắng */}
+              
+              {/* Hàng 2 */}
+              <rect x="16" y="40" width="20" height="20" rx="5" fill="#EF4444" /> {/* Đỏ */}
+              <rect x="40" y="40" width="20" height="20" rx="5" fill="#3B82F6" /> {/* Xanh dương */}
+              <rect x="64" y="40" width="20" height="20" rx="5" fill="#FBBF24" /> {/* Vàng */}
+              
+              {/* Hàng 3 */}
+              <rect x="16" y="64" width="20" height="20" rx="5" fill="#F59E0B" /> {/* Cam */}
+              <rect x="40" y="64" width="20" height="20" rx="5" fill="#FFFFFF" /> {/* Trắng */}
+              <rect x="64" y="64" width="20" height="20" rx="5" fill="#10B981" /> {/* Xanh lá */}
+            </svg>
             <span className="font-bold tracking-tight text-[14px] sm:text-[15px] text-mono-950 font-sans">
               CubeMaster<span className="hidden sm:inline"> AI</span>
             </span>
@@ -115,23 +132,8 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </nav>
 
-        {/* Right Controls: Smart Cube Monochrome Indicator, Settings */}
-        {/* Preserves mobile hiding test: hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-mono-100/70 */}
+        {/* Right Controls: Settings & User Avatar */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-          {/* Smart Cube Sync Badge */}
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-mono-200/80 hover:border-mono-300 text-mono-800 text-xs font-medium shadow-sm transition-colors group cursor-pointer"
-            title="Smart Cube Bluetooth Telemetry"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 group-hover:scale-125 transition-transform" />
-            <span className="text-mono-600 text-[11px] font-mono">GAN UI</span>
-            <Bluetooth className="w-3.5 h-3.5 text-mono-500" />
-          </button>
-
-          <div className="hidden sm:block h-4 w-px bg-mono-200 mx-0.5" />
-
           {/* Settings Gear - Prominently sized for Apple HIG 44px tap target on mobile */}
           <button
             type="button"

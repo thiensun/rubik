@@ -85,9 +85,26 @@ export const PWAInstallBanner: React.FC = () => {
     >
       <div className="bg-white/95 backdrop-blur-md border border-[#EAECEF] rounded-2xl p-3 sm:p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.08)] flex items-start gap-3">
         {/* App Logo */}
-        <div className="w-10 h-10 rounded-xl bg-[#111111] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5 overflow-hidden border border-[#EAECEF]">
-          <img src="/icons/icon-192x192.png" alt="CubeMaster AI" className="w-full h-full object-cover rounded-xl" />
-        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" aria-label="CubeMaster AI" className="w-10 h-10 shrink-0 shadow-xs mt-0.5">
+          {/* Nền đen bo góc */}
+          <rect width="100" height="100" rx="24" fill="#111111" />
+          
+          {/* Lưới 9 chấm màu 3x3 */}
+          {/* Hàng 1 */}
+          <rect x="16" y="16" width="20" height="20" rx="5" fill="#F59E0B" /> {/* Cam */}
+          <rect x="40" y="16" width="20" height="20" rx="5" fill="#10B981" /> {/* Xanh lá */}
+          <rect x="64" y="16" width="20" height="20" rx="5" fill="#FFFFFF" /> {/* Trắng */}
+          
+          {/* Hàng 2 */}
+          <rect x="16" y="40" width="20" height="20" rx="5" fill="#EF4444" /> {/* Đỏ */}
+          <rect x="40" y="40" width="20" height="20" rx="5" fill="#3B82F6" /> {/* Xanh dương */}
+          <rect x="64" y="40" width="20" height="20" rx="5" fill="#FBBF24" /> {/* Vàng */}
+          
+          {/* Hàng 3 */}
+          <rect x="16" y="64" width="20" height="20" rx="5" fill="#F59E0B" /> {/* Cam */}
+          <rect x="40" y="64" width="20" height="20" rx="5" fill="#FFFFFF" /> {/* Trắng */}
+          <rect x="64" y="64" width="20" height="20" rx="5" fill="#10B981" /> {/* Xanh lá */}
+        </svg>
 
         {/* Content */}
         <div className="flex-1 min-w-0 pr-1">

@@ -2,9 +2,13 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { sound } from '../../utils/audio';
 import { haptic } from '../../utils/haptics';
 import { CubeNetState } from '../../utils/cubeState';
-import { parseTimeInput } from '../../utils/cubingStats';
 import { CubeSize } from '../../types/cubing';
 import { ScrambleHeader } from './ScrambleHeader';
+import { SplitBreakdownBar } from './SplitBreakdownBar';
+import { ManualTimeInput } from './ManualTimeInput';
+import { useZenTimerKeyboard } from './useZenTimerKeyboard';
+import { formatTimerDigits, getTimerColorClass, getTimerMicroHint } from './timerFormatting';
+import { TimerMode } from './substepScrambler';
 
 interface ZenTimerStageProps {
   scramble: string;
@@ -21,16 +25,12 @@ interface ZenTimerStageProps {
   displayTimeMs: number;
   onTimerRunningChange?: (isRunning: boolean) => void;
   cubeSize?: CubeSize;
+  timerMode?: TimerMode;
+  onTimerModeChange?: (mode: TimerMode) => void;
 }
 
 export type TimerState = 'idle' | 'holding' | 'ready' | 'running' | 'inspection' | 'stopped';
 
-/**
- * Responsive font size scaling for digital timer display:
- * Dynamically scales down font size for minute times (>= 7 chars, e.g. "1:12.34" or "12:34.56")
- * on narrow viewports (320px–360px) to prevent horizontal overflow while preserving large
- * commanding visual presence on wider viewports.
- */
 export const getTimerFontSizeClass = (formattedTime: string): string => {
   if (formattedTime.length > 5) {
     return 'text-5xl xs:text-6xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tight font-mono';
@@ -51,10 +51,18 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
   displayTimeMs,
   onTimerRunningChange,
   cubeSize = 3,
+  timerMode = 'FULL',
+  onTimerModeChange,
 }) => {
   const [timerState, setTimerState] = useState<TimerState>('idle');
   const [currentMs, setCurrentMs] = useState<number>(displayTimeMs);
   const [inspectionSeconds, setInspectionSeconds] = useState<number>(15);
+
+  // Manual Split Timer (CFOP Multi-Phase: Cross -> F2L -> OLL -> PLL)
+  const [isSplitMode, setIsSplitMode] = useState<boolean>(false);
+  const [splits, setSplits] = useState<number[]>([]);
+  const splitsRef = useRef<number[]>([]);
+  const effectiveSplitMode = cubeSize === 3 && timerMode === 'FULL' && isSplitMode;
 
   // Manual In-Place Time Input State
   const [isManualInputActive, setIsManualInputActive] = useState<boolean>(false);
@@ -68,19 +76,16 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
   const inspectionStartRef = useRef<number>(0);
   const pendingPenaltyRef = useRef<'none' | '+2' | 'dnf'>('none');
 
-  // Sync display time if external prop changes while idle/stopped
   useEffect(() => {
     if (timerState === 'idle' || timerState === 'stopped') {
       setCurrentMs(displayTimeMs);
     }
   }, [displayTimeMs, timerState]);
 
-  // Notify parent component of running state for Zen Focus
   useEffect(() => {
     onTimerRunningChange?.(timerState === 'running');
   }, [timerState, onTimerRunningChange]);
 
-  // Clean up timers on unmount
   useEffect(() => {
     return () => {
       if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
@@ -89,11 +94,8 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
     };
   }, []);
 
-  // Start 15s inspection countdown
   const startInspection = useCallback(() => {
-    if (inspectionIntervalRef.current) {
-      clearInterval(inspectionIntervalRef.current);
-    }
+    if (inspectionIntervalRef.current) clearInterval(inspectionIntervalRef.current);
     setTimerState('inspection');
     setInspectionSeconds(15);
     pendingPenaltyRef.current = 'none';
@@ -107,71 +109,39 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
         sound.playInspectionWarning();
         haptic.warning();
       }
-
-      if (remaining > 0) {
-        setInspectionSeconds(remaining);
-      } else if (remaining >= -2) {
-        setInspectionSeconds(remaining);
-        pendingPenaltyRef.current = '+2';
-      } else {
-        setInspectionSeconds(remaining);
-        pendingPenaltyRef.current = 'dnf';
-      }
+      setInspectionSeconds(remaining);
+      if (remaining <= 0 && remaining >= -2) pendingPenaltyRef.current = '+2';
+      else if (remaining < -2) pendingPenaltyRef.current = 'dnf';
     }, 200);
   }, []);
 
-  // Format time to 08.42 or 00.00
-  const formatDigits = (ms: number): string => {
-    if (timerState === 'inspection') {
-      if (inspectionSeconds < -2) return 'DNF';
-      if (inspectionSeconds <= 0) return '+2';
-      return inspectionSeconds.toString().padStart(2, '0');
-    }
-    if (timerState === 'ready') {
-      return '00.00';
-    }
-    const totalSeconds = Math.floor(ms / 1000);
-    const hundredths = Math.floor((ms % 1000) / 10);
-    const pad = (n: number) => n.toString().padStart(2, '0');
-
-    if (totalSeconds >= 60) {
-      const mins = Math.floor(totalSeconds / 60);
-      const secs = totalSeconds % 60;
-      return `${pad(mins)}:${pad(secs)}.${pad(hundredths)}`;
-    }
-    return `${pad(totalSeconds)}.${pad(hundredths)}`;
-  };
-
-  // Start the high-precision timer
   const startTimer = useCallback(() => {
     if (inspectionIntervalRef.current) {
       clearInterval(inspectionIntervalRef.current);
       inspectionIntervalRef.current = null;
     }
-
+    splitsRef.current = [];
+    setSplits([]);
     setTimerState('running');
     haptic.start();
     startTimeRef.current = performance.now();
 
     const loop = () => {
-      const elapsed = performance.now() - startTimeRef.current;
-      setCurrentMs(elapsed);
+      setCurrentMs(performance.now() - startTimeRef.current);
       animFrameRef.current = requestAnimationFrame(loop);
     };
-
     animFrameRef.current = requestAnimationFrame(loop);
   }, []);
 
-  // Stop running timer
-  const stopTimer = useCallback(() => {
+  const stopTimer = useCallback((overrideElapsedMs?: number) => {
     if (timerState !== 'running') return;
-
     if (animFrameRef.current) {
       cancelAnimationFrame(animFrameRef.current);
       animFrameRef.current = null;
     }
 
-    const finalElapsed = Math.round(performance.now() - startTimeRef.current);
+    const finalElapsed =
+      overrideElapsedMs ?? Math.round(performance.now() - startTimeRef.current);
     setCurrentMs(finalElapsed);
     setTimerState('stopped');
     sound.playTimerStop();
@@ -182,19 +152,36 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
     onSolveComplete(finalElapsed, penalty);
   }, [timerState, onSolveComplete]);
 
-  // Trigger Hold / Prime logic
-  const handleHoldStart = useCallback(() => {
-    if (timerState === 'running') {
+  const handleRunningTapOrSplit = useCallback(() => {
+    if (timerState !== 'running') return;
+    if (!effectiveSplitMode) {
       stopTimer();
       return;
     }
 
+    const elapsed = Math.max(1, Math.round(performance.now() - startTimeRef.current));
+    const nextSplits = [...splitsRef.current, elapsed];
+    splitsRef.current = nextSplits;
+    setSplits(nextSplits);
+
+    if (nextSplits.length < 4) {
+      sound.playTick();
+      haptic.start();
+    } else {
+      stopTimer(elapsed);
+    }
+  }, [timerState, effectiveSplitMode, stopTimer]);
+
+  const handleHoldStart = useCallback(() => {
+    if (timerState === 'running') {
+      handleRunningTapOrSplit();
+      return;
+    }
     if (timerState === 'idle' || timerState === 'stopped') {
       if (inspectionEnabled) {
         startInspection();
         return;
       }
-
       setTimerState('holding');
       holdTimerRef.current = window.setTimeout(() => {
         setTimerState('ready');
@@ -209,7 +196,7 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
         haptic.ready();
       }, 350);
     }
-  }, [timerState, inspectionEnabled, stopTimer, startInspection]);
+  }, [timerState, inspectionEnabled, handleRunningTapOrSplit, startInspection]);
 
   const handleHoldRelease = useCallback(() => {
     if (timerState === 'ready') {
@@ -217,124 +204,41 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       startTimer();
     } else if (timerState === 'holding') {
       if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
-      if (inspectionEnabled && inspectionIntervalRef.current) {
-        setTimerState('inspection');
-      } else {
-        setTimerState('idle');
-      }
+      setTimerState(inspectionEnabled && inspectionIntervalRef.current ? 'inspection' : 'idle');
     }
   }, [timerState, startTimer, inspectionEnabled]);
 
-  // Keyboard controls: Space, Esc, +2
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
+  useZenTimerKeyboard({
+    timerState,
+    animFrameRef,
+    holdTimerRef,
+    inspectionIntervalRef,
+    splitsRef,
+    setSplits,
+    setTimerState,
+    setCurrentMs,
+    handleRunningTapOrSplit,
+    handleHoldStart,
+    handleHoldRelease,
+    onReset,
+    onTogglePenalty,
+  });
 
-      if (e.code === 'Space') {
-        e.preventDefault();
-        if (!e.repeat) {
-          if (timerState === 'running') {
-            stopTimer();
-          } else {
-            handleHoldStart();
-          }
-        }
-        return;
-      }
-
-      if (e.code === 'Escape') {
-        e.preventDefault();
-        if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-        if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
-        if (inspectionIntervalRef.current) clearInterval(inspectionIntervalRef.current);
-        setTimerState('idle');
-        setCurrentMs(0);
-        onReset();
-        return;
-      }
-
-      if (timerState === 'running') {
-        e.preventDefault();
-        stopTimer();
-        return;
-      }
-
-      if (e.key === '+' || e.key === '2') {
-        if (timerState === 'stopped' || timerState === 'idle') {
-          e.preventDefault();
-          onTogglePenalty();
-        }
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
-        handleHoldRelease();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, [timerState, handleHoldStart, handleHoldRelease, stopTimer, onReset, onTogglePenalty]);
-
-  // Zen Color Mapping
-  const getTimerColorClass = () => {
-    if (timerState === 'inspection') {
-      if (inspectionSeconds < -2) return 'text-rose-600';
-      if (inspectionSeconds <= 0) return 'text-orange-600';
-      if (inspectionSeconds <= 3) return 'text-red-600';
-      return 'text-indigo-600';
-    }
-    if (timerState === 'holding') return 'text-[#D97706]';
-    if (timerState === 'ready') return 'text-[#059669]';
-    return 'text-[#111111]';
-  };
-
-  // Tiny monospace micro-hint
-  const renderMicroHint = () => {
-    if (timerState === 'running') return null;
-
-    let hintText = 'Giữ để bắt đầu';
-    let hintClass = 'text-neutral-400';
-
-    if (timerState === 'inspection') {
-      hintText = `Quan sát: ${inspectionSeconds}s · Giữ để sẵn sàng`;
-      hintClass = inspectionSeconds <= 3 ? 'text-red-500 animate-pulse font-bold' : 'text-indigo-600';
-    } else if (timerState === 'holding') {
-      hintText = 'Đang chuẩn bị...';
-      hintClass = 'text-[#D97706] font-bold';
-    } else if (timerState === 'ready') {
-      hintText = 'Thả để đếm giờ!';
-      hintClass = 'text-[#059669] font-bold animate-pulse';
-    }
-
-    return (
-      <div className={`transition-opacity duration-200 mt-3 text-center ${timerState === 'running' ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-        <span className={`inline-block font-mono text-xs tracking-wider uppercase ${hintClass}`}>
-          {hintText}
-        </span>
-      </div>
-    );
-  };
+  const formattedTime = formatTimerDigits(currentMs, timerState, inspectionSeconds);
+  const microHint = getTimerMicroHint(timerState, inspectionSeconds, effectiveSplitMode);
 
   return (
     <section
       id="timer-arena"
+      style={{ touchAction: 'manipulation' }}
       onPointerDown={(e) => {
         const target = e.target as HTMLElement;
         if (
           e.button === 0 &&
           !target.closest('button') &&
           !target.closest('input') &&
-          !target.closest('#net-popover')
+          !target.closest('#net-popover') &&
+          !target.closest('#split-breakdown-container')
         ) {
           handleHoldStart();
         }
@@ -342,24 +246,17 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
       onPointerUp={(e) => {
         const target = e.target as HTMLElement;
         if (!target.closest('button') && !target.closest('input') && !target.closest('#net-popover')) {
-          if (timerState === 'holding' || timerState === 'ready') {
-            handleHoldRelease();
-          }
+          if (timerState === 'holding' || timerState === 'ready') handleHoldRelease();
         }
       }}
       onPointerLeave={() => {
         if (timerState === 'holding') {
           if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
-          if (inspectionEnabled && inspectionIntervalRef.current) {
-            setTimerState('inspection');
-          } else {
-            setTimerState('idle');
-          }
+          setTimerState(inspectionEnabled && inspectionIntervalRef.current ? 'inspection' : 'idle');
         }
       }}
       className="w-full relative flex flex-col items-center justify-between min-h-[65vh] sm:min-h-[72vh] md:min-h-[75vh] pt-4 sm:pt-6 pb-6 sm:pb-8 px-3 sm:px-8 select-none touch-manipulation bg-white rounded-[24px] border border-[#EAECEF] shadow-sm transition-all overflow-hidden"
     >
-      {/* Dynamic Background Halo during Holding / Ready */}
       <div
         id="halo-glow"
         className={`absolute inset-0 transition-opacity duration-300 pointer-events-none rounded-[24px] ${
@@ -371,90 +268,74 @@ export const ZenTimerStage: React.FC<ZenTimerStageProps> = ({
         }`}
       />
 
-      {/* Scramble Header Component */}
       <ScrambleHeader
         scramble={scramble}
         onNextScramble={onNextScramble}
         cubeNetState={cubeNetState}
         inspectionEnabled={inspectionEnabled}
         onToggleInspection={onToggleInspection}
+        timerMode={timerMode}
+        onTimerModeChange={(nextMode) => {
+          splitsRef.current = [];
+          setSplits([]);
+          onTimerModeChange?.(nextMode);
+        }}
+        isSplitMode={isSplitMode}
+        onToggleSplitMode={() => {
+          setIsSplitMode((prev) => !prev);
+          splitsRef.current = [];
+          setSplits([]);
+        }}
         isManualInputActive={isManualInputActive}
         onToggleManualInput={() => {
           setIsManualInputActive((prev) => {
-            const next = !prev;
-            if (next) {
-              setManualInputVal('');
-              setTimeout(() => manualInputRef.current?.focus(), 50);
-            }
-            return next;
+            if (!prev) { setManualInputVal(''); setTimeout(() => manualInputRef.current?.focus(), 50); }
+            return !prev;
           });
         }}
         isTimerRunning={timerState === 'running'}
         cubeSize={cubeSize}
       />
 
-      {/* Entire Area Below Scramble Card: Responsive Touch-Down Surface & Grand Digits */}
       <div
         id="click-trigger-area"
+        style={{ touchAction: 'manipulation' }}
         className="relative z-10 flex-1 w-full flex flex-col items-center justify-center cursor-pointer select-none touch-manipulation max-w-full overflow-hidden my-auto py-4"
       >
         {isManualInputActive ? (
-          <div
-            className="flex items-baseline justify-center max-w-full px-1 w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <input
-              ref={manualInputRef}
-              type="text"
-              value={manualInputVal}
-              placeholder={formatDigits(currentMs)}
-              onChange={(e) => setManualInputVal(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  const parsed = parseTimeInput(manualInputVal);
-                  if (parsed !== null && parsed > 0) {
-                    if (onManualTimeEntry) {
-                      onManualTimeEntry(parsed);
-                    } else {
-                      onSolveComplete(parsed);
-                    }
-                    setCurrentMs(parsed);
-                    setIsManualInputActive(false);
-                    setManualInputVal('');
-                  } else {
-                    alert('Vui lòng nhập định dạng thời gian hợp lệ (ví dụ: 9.31, 1:04.25 hoặc 931)');
-                  }
-                } else if (e.key === 'Escape') {
-                  setIsManualInputActive(false);
-                  setManualInputVal('');
-                }
-              }}
-              className={`font-mono leading-none font-bold tabular-nums text-[#111111] bg-transparent border-none text-center focus:outline-none focus:ring-0 p-0 m-0 w-full max-w-full caret-[#111111] ${getTimerFontSizeClass(
-                manualInputVal || formatDigits(currentMs)
-              )}`}
-            />
-          </div>
+          <ManualTimeInput
+            inputRef={manualInputRef}
+            value={manualInputVal}
+            placeholder={formattedTime}
+            fontSizeClass={getTimerFontSizeClass(manualInputVal || formattedTime)}
+            onChange={setManualInputVal}
+            onSubmitMs={(parsed) => {
+              if (onManualTimeEntry) onManualTimeEntry(parsed);
+              else onSolveComplete(parsed);
+              setCurrentMs(parsed); setIsManualInputActive(false); setManualInputVal('');
+            }}
+            onCancel={() => { setIsManualInputActive(false); setManualInputVal(''); }}
+          />
         ) : (
           <div className="flex items-baseline justify-center max-w-full px-1">
-            {(() => {
-              const formattedTime = formatDigits(currentMs);
-              return (
-                <span
-                  id="timer-main"
-                  className={`font-mono leading-none font-bold tabular-nums transition-colors select-none ${getTimerFontSizeClass(
-                    formattedTime
-                  )} ${getTimerColorClass()}`}
-                >
-                  {formattedTime}
-                </span>
-              );
-            })()}
+            <span
+              id="timer-main"
+              className={`font-mono leading-none font-bold tabular-nums transition-colors select-none ${getTimerFontSizeClass(formattedTime)} ${getTimerColorClass(timerState, inspectionSeconds)}`}
+            >
+              {formattedTime}
+            </span>
           </div>
         )}
 
-        {/* Tiny Monospace Micro-Hint */}
-        {renderMicroHint()}
+        {microHint && (
+          <div className="transition-opacity duration-200 mt-3 text-center opacity-100">
+            <span className={`inline-block font-mono text-xs tracking-wider uppercase ${microHint.className}`}>
+              {microHint.text}
+            </span>
+          </div>
+        )}
+
+        <SplitBreakdownBar isSplitMode={effectiveSplitMode} timerState={timerState} splits={splits} />
       </div>
     </section>
   );
